@@ -1,0 +1,20 @@
+# Las ISO y sus copias de seguridad nunca van al repositorio: pesan GB y GitHub
+# rechaza ficheros de mas de 100 MB. Se publican como Releases aparte.
+*.iso
+*.iso.tmp
+*.iso.bak*
+*.sha256
+out/
+iso/
+
+# Basura de editores y del arbol de compilacion local
+*~
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+chroot/
+binary/
+cache/
+.build/
+*.log

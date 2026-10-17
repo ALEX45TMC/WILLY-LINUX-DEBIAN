@@ -1,0 +1,9 @@
+# Todo el arbol de live-build se compila en Linux (WSL). Si Git convierte los
+# finales de linea a CRLF al clonar en Windows, los hooks y las listas de
+# paquetes dejan de funcionar, y el fallo solo aparece al compilar.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.svg text
