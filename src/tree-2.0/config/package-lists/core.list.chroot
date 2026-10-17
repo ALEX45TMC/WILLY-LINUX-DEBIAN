@@ -1,0 +1,15 @@
+systemd-sysv
+libpam-systemd
+dbus
+sudo
+apt
+procps
+iproute2
+iputils-ping
+less
+nano
+locales
+keyboard-configuration
+console-setup
+ca-certificates
+curl

@@ -1,0 +1,116 @@
+#!/bin/sh
+# Willy Linux 2.5: arranque grafico con SDDM + Plasma y ajustes de primera sesion.
+set -e
+
+# SDDM toma el control de la consola grafica. En la 2.1 el escritorio arrancaba
+# por autologin en tty1 + startx desde .bash_profile; con Plasma eso se sustituye
+# por el autologin de SDDM (etc/sddm.conf.d/willy.conf).
+ln -sf /lib/systemd/system/sddm.service /etc/systemd/system/display-manager.service
+ln -sf /lib/systemd/system/graphical.target /etc/systemd/system/default.target
+
+# live-build y live-config no dejan poner el nombre completo del usuario live: siempre
+# sale "Debian Live user" en SDDM y en el modulo de usuarios. El servicio
+# willy-nombre.service lo cambia a "Willy" al arrancar; aqui solo se activa, y se
+# enlaza a mano porque dentro del chroot systemctl no puede hablar con systemd.
+mkdir -p /etc/systemd/system/multi-user.target.wants
+ln -sf /etc/systemd/system/willy-nombre.service /etc/systemd/system/multi-user.target.wants/willy-nombre.service
+
+# El tema de iconos propio (willy-dark, que hereda de breeze-dark y pone el lobito
+# en el lanzador) y el hicolor con el logo nuevo necesitan su cache generada: sin
+# ella Plasma tarda en resolverlos y muestra la letra suelta "W".
+for T in hicolor willy-dark; do
+	gtk-update-icon-cache -q -t -f "/usr/share/icons/$T" 2>/dev/null || true
+done
+
+# Lo que se hace la primera vez que el usuario entra en el escritorio.
+cat > /usr/local/bin/willy-panel <<'EOF'
+#!/bin/sh
+# Willy Linux: mueve los iconos de la barra de tareas de Plasma.
+# "alignment" es un Qt::Alignment: 1=izquierda, 2=derecha, 4=centrado.
+#
+# En Plasma 6 (4:6.3.6 de trixie) la API de scripts expone panelIds y panelById() como
+# funciones GLOBALES, igual que hacen las plantillas de escritorio de
+# /usr/share/plasma/layout-templates. El contenedor del escritorio NO tiene "panelIds":
+# leerlo da undefined, asi que la version anterior de este script no tocaba ninguna
+# barra y aun asi salia con exito 0 (silencio total). Ahora se avisa siempre.
+modo=${1:-centrar}
+case "$modo" in
+	centrar) A=4 ;;
+	izquierda) A=1 ;;
+	derecha) A=2 ;;
+	*) echo "willy-panel: modo desconocido ($modo)" >&2; exit 2 ;;
+esac
+
+js='var n=0; for (var i=0; i<panelIds.length; ++i) { var p=panelById(panelIds[i]); if (!p) continue; p.alignment='A'; try { p.writeConfig("alignment", 'A'); } catch (e) {} ++n; } n;'
+
+if command -v dbus-send >/dev/null 2>&1; then
+	rep=$(dbus-send --session --print-reply --dest=org.kde.plasmashell /PlasmaShell \
+		org.kde.PlasmaShell.evaluateScript string:"$js" 2>&1)
+elif command -v qdbus6 >/dev/null 2>&1; then
+	rep=$(qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "$js" 2>&1)
+else
+	echo "willy-panel: hace falta dbus-send o qdbus6" >&2
+	exit 1
+fi
+
+case "$rep" in
+	*Error*)
+		echo "willy-panel: Plasma no ha contestado: $rep" >&2
+		exit 1 ;;
+	# Solo dbus-send imprime el valor devuelto; ahi se puede ver si no habia barras.
+	*"int32 0"*)
+		echo "willy-panel: Plasma no ve ninguna barra que mover" >&2
+		exit 1 ;;
+esac
+
+echo "willy-panel: alineacion $A enviada a la barra."
+echo "Si los iconos no se han movido, tu Plasma decide la alineacion a mano:"
+echo "clic derecho en la barra > Configurar barra de tareas > Alineacion."
+exit 0
+EOF
+chmod 755 /usr/local/bin/willy-panel
+
+cat > /usr/local/bin/willy-primera-vez <<'EOF'
+#!/bin/sh
+# Willy Linux: arreglo de primera sesion. Todo esto se hace UNA sola vez: lo que el
+# usuario cambie despues (contrasena, volumen, fondo, barra) ya no se pisa, porque el
+# sistema es suyo y solo el decide cuando sustituirlo.
+MARCA="$HOME/.config/willylinux/primera-vez"
+[ -f "$MARCA" ] && exit 0
+YO=$(id -un)
+
+# El usuario live no trae contrasena y el bloqueo de Plasma no deja entrar sin una:
+# se le asigna "willy" la primera vez. Luego se cambia o se quita desde "Mi usuario".
+# En un disco instalado nunca se toca: ahi la contrasena ya la eligio el instalador
+# y escribirle otra la borraria sin avisar.
+if ! willy-medio >/dev/null 2>&1; then
+	echo "instalado: se respeta la contrasena que se eligio al instalar" >&2
+elif ! printf '%s\n' "$YO:willy" | sudo -n chpasswd 2>/dev/null; then
+	echo "willy no se pudo asignar" >&2
+fi
+
+# El titulo del lanzador de Plasma saca el nombre del campo real del usuario, y
+# live-config lo deja en "Debian Live user"; desentona con el resto del sistema.
+sudo -n usermod -c "Willy Linux" "$YO" 2>/dev/null || true
+
+# Muchas tarjetas salen muteadas de fabrica y PipeWire respeta ese estado.
+for m in Master Headphone Speaker PCM; do
+	amixer -q sset "$m" unmute >/dev/null 2>&1 || true
+done
+amixer -q sset Master 80% >/dev/null 2>&1 || true
+
+# Foto de perfil para SDDM y para el menu de Plasma: el lobito.
+cp /usr/share/icons/hicolor/128x128/apps/willylinux.png "$HOME/.face.icon" 2>/dev/null || true
+FONDO=$(cat "$HOME/.config/willylinux/escritorio" 2>/dev/null)
+[ -f "$FONDO" ] || FONDO=/usr/share/backgrounds/willylinux/willylinux.png
+# Herramienta oficial de Plasma 6: recorre todos los escritorios y escribe la
+# disposicion por D-Bus, asi que no hace falta conocer el id del contenedor.
+plasma-apply-wallpaperimage "$FONDO" >/dev/null 2>&1 || true
+# La barra se queda como la trae Plasma: en Plasma 6 no hay forma fiable de centrarla
+# por script (willy-panel lo intenta, pero el resultado depende de la version). El
+# usuario la mueve cuando quiere desde el asistente de bienvenida o a mano con
+# clic derecho en la barra > Configurar barra de tareas > Alineacion.
+mkdir -p "$HOME/.config/willylinux"
+: > "$MARCA"
+EOF
+chmod 755 /usr/local/bin/willy-primera-vez

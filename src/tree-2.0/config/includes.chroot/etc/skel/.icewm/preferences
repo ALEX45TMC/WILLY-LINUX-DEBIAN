@@ -1,0 +1,15 @@
+# Willy Linux: preferencias de IceWM pensadas para equipos poco potentes.
+# Mover las ventanas por contorno (sin repintar) va mucho mas suave en graficas pobres.
+OpaqueMove=0
+ClickToFocus=1
+FocusMode=clicktofocus
+AutoRaise=0
+TaskBarShowCPUStatus=1
+TaskBarShowNetStatus=1
+TaskBarShowWindowListMenu=1
+TaskBarShowWorkspaces=1
+TaskBarShowShowDesktopButton=1
+TaskBarShowMailboxStatus=0
+# bateria en la barra solo cuando el equipo la tiene
+TaskBarShowAPMAuto=1
+ExitDialogOnQuit=1

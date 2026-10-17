@@ -1,0 +1,8 @@
+# Impresion: servidor de impresion y su configurador grafico
+cups
+cups-ipp-utils
+cups-browsed
+avahi-daemon
+system-config-printer
+printer-driver-gutenprint
+printer-driver-cups-pdf

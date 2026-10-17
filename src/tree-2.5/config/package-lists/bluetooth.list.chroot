@@ -1,0 +1,4 @@
+# Bluetooth: pila BlueZ y el gestor propio de Plasma (bluedevil), que sustituye a Blueman.
+bluez
+bluedevil
+bluez-obexd

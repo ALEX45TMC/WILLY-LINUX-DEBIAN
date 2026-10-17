@@ -1,0 +1,27 @@
+# Aplicaciones por defecto de Willy Linux (xdg-open, PCManFM, escritorio)
+[Default Applications]
+x-scheme-handler/http=firefox-esr.desktop
+x-scheme-handler/https=firefox-esr.desktop
+text/html=firefox-esr.desktop
+inode/directory=pcmanfm.desktop
+text/plain=mousepad.desktop
+text/x-shellscript=mousepad.desktop
+application/pdf=mupdf.desktop
+application/postscript=mupdf.desktop
+image/png=feh.desktop
+image/jpeg=feh.desktop
+image/gif=feh.desktop
+image/webp=feh.desktop
+image/svg+xml=feh.desktop
+audio/mpeg=mpv.desktop
+audio/ogg=mpv.desktop
+audio/mp4=mpv.desktop
+video/mp4=mpv.desktop
+video/x-matroska=mpv.desktop
+video/webm=mpv.desktop
+application/zip=xarchiver.desktop
+application/x-7z-compressed=xarchiver.desktop
+application/x-rar-compressed=xarchiver.desktop
+application/x-tar=xarchiver.desktop
+application/gzip=xarchiver.desktop
+application/x-desktop=mousepad.desktop

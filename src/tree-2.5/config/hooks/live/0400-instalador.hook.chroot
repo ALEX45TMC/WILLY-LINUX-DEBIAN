@@ -1,0 +1,466 @@
+#!/bin/sh
+# Willy Linux 2.5: instalador al disco, persistencia en el USB y actualizador.
+set -e
+
+BIN=/usr/local/bin
+
+# --- Instalador al disco ------------------------------------------------------
+cat > "$BIN/willy-instalar" <<'WLYINSTALL'
+#!/bin/sh
+# Instala en un disco el sistema que esta corriendo en modo live.
+# Particiona, copia con rsync, escribe fstab por UUID y deja GRUB para BIOS o UEFI.
+SUDO="sudo -n"
+OBJ=/willy-target
+LOG=/tmp/willy-instalar.log
+: > "$LOG" 2>/dev/null || true
+
+T() { yad --title="Instalar Willy Linux" --center --width=560 --info --text="$1" --button="Aceptar:0" >/dev/null 2>&1 || true; }
+E() { yad --title="Instalar Willy Linux" --center --width=560 --error --text="$1" --button="Cerrar:0" >/dev/null 2>&1 || true; }
+F() { echo "$(date '+%T') $*" >> "$LOG"; }
+
+if ! willy-medio >/dev/null 2>&1; then
+	E "Esto solo funciona desde el USB de Willy Linux (sesion live), no desde un sistema ya instalado."
+	exit 1
+fi
+# En la sesion live sudo no pide clave; si alguien lanza esto sin ella, willy-sudo
+# la pregunta una vez y el resto del instalador ya trabaja con esa clave.
+PREP=$(willy-sudo --preparar) || { E "Falta permiso de administrador."; exit 1; }
+eval "$PREP"
+$SUDO true 2>/dev/null || { E "Falta permiso de administrador."; exit 1; }
+
+[ -d /sys/firmware/efi ] && MODO=uefi || MODO=bios
+
+# Antes de borrar nada se comprueba que este sistema puede dejar un disco arrancable:
+# grub-install viene con grub2-common y grub-bios-setup con grub-pc. Si falta uno de
+# dos, la copia quedaria perfecta pero el equipo no encenderia desde el disco.
+# Se miran las rutas directamente porque la sesion live no trae /usr/sbin en el PATH.
+if [ ! -x /usr/sbin/grub-install ] && [ ! -x /usr/bin/grub-install ]; then
+	E "A Willy Linux le falta <b>grub-install</b> (paquete grub2-common).\n\nSin esa orden el disco instalado no puede arrancar, asi que la instalacion se cancela antes de tocar tu disco."
+	exit 1
+fi
+if [ "$MODO" = bios ] && [ ! -x /usr/sbin/grub-bios-setup ] && [ ! -x /usr/lib/grub/i386-pc/grub-bios-setup ]; then
+	E "A Willy Linux le falta <b>grub-bios-setup</b> (paquete grub-pc).\n\nEste equipo arranca en modo BIOS y sin esa herramienta el disco no quedaria arrancable, asi que se cancela antes de tocar nada."
+	exit 1
+fi
+
+# El GRUB que instala Willy Linux no va firmado por Microsoft, así que con Secure
+# Boot activado el firmware rechaza arrancarlo. Se avisa antes de empezar: el
+# usuario puede instalar igual y solo le queda tocar ese ajuste despues.
+if [ "$MODO" = uefi ]; then
+	SB=""
+	for v in /sys/firmware/efi/efivars/SecureBoot-*; do
+		[ -f "$v" ] || continue
+		# efivars guarda 4 bytes de atributos y despues 1 byte con el estado.
+		b=$($SUDO od -An -tu1 -j4 -N1 "$v" 2>/dev/null | tr -dc '0-9')
+		[ "$b" = "1" ] && SB=1
+	done
+	[ -z "$SB" ] || T "Tu equipo tiene <b>Secure Boot activado</b>.\n\nWilly Linux usa su propio cargador sin firmar, asi que con Secure Boot puesto no arrancara desde el disco. La instalacion se guarda bien: luego tendras que desactivar Secure Boot en la BIOS del fabricante (suele estar en Boot o Security).\n\nSi prefieres, cancela ahora, desactiva Secure Boot y vuelve a empezar."
+fi
+
+# 1) Descartar el medio live y los USB: solo discos internos.
+# PKNAME da el disco padre sea cual sea el nombre de la particion (sda2, nvme0n1p1,
+# mmcblk0p1); el recorte de digitos finales se queda en "mmcblk0p" y falla.
+MEDIO_DEV=$(willy-medio dev 2>/dev/null)
+MEDIO=$(lsblk -dno PKNAME "$MEDIO_DEV" 2>/dev/null | tr -d ' ')
+[ -n "$MEDIO" ] && MEDIO="/dev/$MEDIO" || MEDIO=$(echo "$MEDIO_DEV" | sed 's/[0-9]*$//')
+DISCS=""
+for d in $(lsblk -dno NAME,TYPE | awk '$2=="disk"{print $1}'); do
+	[ "/dev/$d" = "$MEDIO" ] && continue
+	# zram sale como TYPE=disk en lsblk y es RAM comprimida: instalar ahi no deja
+	# sistema en ninguna parte y borrar la sesion en marcha. fd son disquetes.
+	case "$d" in loop*|ram*|zram*|fd*) continue ;; esac
+	[ "$(lsblk -dno RM "/dev/$d" 2>/dev/null | tr -d ' ')" = "1" ] && continue
+	DISCS="$DISCS /dev/$d"
+done
+[ -n "$DISCS" ] || { E "No veo ningun disco interno donde instalar."; exit 1; }
+
+# Cada argumento de yad --list es UNA celda: las filas se forman de tantas celdas
+# como columnas declares, y el separador solo afecta a lo que yad imprime al
+# salir. Empaquetar la fila en un solo argumento ("a|b|c") mete el texto entero
+# en la primera columna y descuadra la lista; se comprobo en la VM el 17-10-2026.
+set --
+for d in $DISCS; do
+	gb=$(( $(lsblk -bdno SIZE "$d" 2>/dev/null) / 1000000000 ))
+	modelo=$(lsblk -dno MODEL "$d" 2>/dev/null | sed 's/   *$//')
+	[ -n "$modelo" ] || modelo="disco"
+	set -- "$@" "$d" "${gb} GB" "$modelo" "$d"
+done
+DISK=$(yad --title="Instalar Willy Linux" --center --width=560 --list --hide-column=4 \
+	--text="¿Donde quieres instalar Willy Linux?  Arrancara en modo $( [ "$MODO" = uefi ] && echo UEFI || echo BIOS )" \
+	--column="Disco" --column="Tamano" --column="Modelo" --column="" "$@" 2>/dev/null | cut -d'|' -f1)
+[ -n "$DISK" ] || exit 1
+
+case "$(lsblk -dno NAME "$DISK")" in *nvme*|*mmcblk*) SUF=p ;; *) SUF='' ;; esac
+PARTS=$(lsblk -rnpo NAME,SIZE,FSTYPE "$DISK" 2>/dev/null | sed 's/^/    /')
+[ -n "$PARTS" ] || PARTS="    (sin particiones)"
+
+# 2) Aviso destructivo con confirmacion escrita.
+HAYWIN=""
+for p in $(lsblk -rnpo NAME "$DISK" 2>/dev/null) $DISK; do
+	tipo=$($SUDO blkid -c /dev/null -o value -s TYPE "$p" 2>/dev/null)
+	case "$tipo" in *NTFS*|*ntfs*|*BitLocker*|*bitlocker*) HAYWIN=1 ;; esac
+done
+AVISO_WIN=""
+[ -n "$HAYWIN" ] && AVISO_WIN="\n\n<b>Ojo: en este disco hay particiones de Windows.</b> Se iran tambien ellas. Si quieres los dos sistemas, cancela y particiona antes a mano."
+
+TXT=$(yad --title="Atencion" --center --width=560 --entry \
+	--text="Se van a BORRAR los datos de <b>$DISK</b>:\n$PARTS$AVISO_WIN\n\nEscribe BORRAR para continuar:" 2>/dev/null)
+[ "$TXT" = "BORRAR" ] || exit 1
+
+# 3) Esquema: automatico o repartir antes a mano con cfdisk.
+ESQ=$(yad --title="Instalar Willy Linux" --center --width=560 --list --hide-column=2 \
+	--text="¿Como preparas el disco?" \
+	--column="Opcion" --column="" \
+	"Borrar el disco entero y particionar solo (recomendado)" "auto" \
+	"Particionar antes con cfdisk y usar eso" "manual" 2>/dev/null | cut -d'|' -f2)
+[ -n "$ESQ" ] || exit 1
+
+# 3b) Contrasena del usuario en el equipo instalado. En el USB no hace falta porque
+# la sesion live entra directa y manda sin clave; en un disco ya es un sistema
+# normal: sin contrasena no se puede ni actualizar ni guardar cambios.
+YO=$(id -un)
+CLAVE=""
+vueltas=0
+while [ -z "$CLAVE" ] && [ "$vueltas" -lt 3 ]; do
+	vueltas=$(( vueltas + 1 ))
+	CLAVE=$(yad --title="Instalar Willy Linux" --center --width=560 --entry --hide-text \
+		--text="Contrasena de <b>$YO</b> en el equipo instalado.\n\nSe pedira al encender el equipo y cuando Willy Linux necesite permisos." \
+		--button="Continuar:0" --button="Cancelar:1" 2>/dev/null) || exit 1
+	[ -n "$CLAVE" ] || continue
+	REP=$(yad --title="Instalar Willy Linux" --center --width=480 --entry --hide-text \
+		--text="Repite la contrasena:" --button="Continuar:0" --button="Cancelar:1" 2>/dev/null) || exit 1
+	if [ "$REP" != "$CLAVE" ]; then
+		E "Las dos contrasenas no coinciden. Vuelve a escribirla."
+		CLAVE=""
+	fi
+done
+[ -n "$CLAVE" ] || exit 1
+
+RAMKI=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)
+DISKB=$(lsblk -bdno SIZE "$DISK")
+GBTOTAL=$(( DISKB / 1000000000 ))
+SWAPSI="0"
+# Willy Linux esta pensado para equipos de 6-7 GB de RAM: sin swap, el navegador se
+# queda sin sitio cuando la memoria llena. Con 8 GB o mas ya no hace falta.
+if [ "${RAMKI:-9999}" -lt 8192 ] && [ "$GBTOTAL" -ge 20 ]; then SWAPSI="2"; fi
+# parted NO acepta el tamano negativo "-2GiB" que significa "hasta el final": getopt se
+# lo come como opciones ("opcion invalida -- '2'") y el particionado aborta. Se calcula
+# en bytes absolutos, que es lo unico que parted entiende siempre.
+# El final de la raiz se deja un sector antes del arranque del swap: parted trata el
+# byte final como incluido, y si coinciden da "the closest location we can manage".
+# Redondear a GiB enteros mantiene el swap alineado a 2048 sectores (avisa si no).
+GIB=$(( 1024 * 1024 * 1024 ))
+if [ "$SWAPSI" = "0" ]; then
+	FINRAIZ="100%"
+	INISWAP=""
+else
+	INISWAP=$(( (DISKB / GIB - SWAPSI) * GIB ))
+	FINRAIZ="$(( INISWAP - 512 ))B"
+fi
+
+RAIZ="" EFI="" SWAP=""
+if [ "$MODO" = uefi ]; then NUMRAIZ=2; else NUMRAIZ=1; fi
+
+preparar() {
+	$SUDO umount -R "$OBJ" >/dev/null 2>&1 || true
+	for p in $(lsblk -rnpo NAME "$DISK" 2>/dev/null); do $SUDO umount "$p" >/dev/null 2>&1 || true; done
+	if [ "$MODO" = uefi ]; then
+		$SUDO parted -s "$DISK" mklabel gpt >>"$LOG" 2>&1 || return 1
+		$SUDO parted -s "$DISK" mkpart WillyEFI fat32 1MiB 513MiB >>"$LOG" 2>&1 || return 1
+		$SUDO parted -s "$DISK" set 1 esp on >>"$LOG" 2>&1
+		EFI="${DISK}${SUF}1"
+		$SUDO parted -s "$DISK" mkpart Willy ext4 513MiB "$FINRAIZ" >>"$LOG" 2>&1 || return 1
+	else
+		$SUDO parted -s "$DISK" mklabel msdos >>"$LOG" 2>&1 || return 1
+		$SUDO parted -s "$DISK" mkpart Willy ext4 1MiB "$FINRAIZ" >>"$LOG" 2>&1 || return 1
+		$SUDO parted -s "$DISK" set 1 boot on >>"$LOG" 2>&1
+	fi
+	if [ "$SWAPSI" != "0" ]; then
+		$SUDO parted -s "$DISK" mkpart WillySwap linux-swap "${INISWAP}B" 100% >>"$LOG" 2>&1 || return 1
+		SWAP="${DISK}${SUF}$(( NUMRAIZ + 1 ))"
+	fi
+	$SUDO partprobe "$DISK" >>"$LOG" 2>&1
+	sleep 3
+	RAIZ="${DISK}${SUF}${NUMRAIZ}"
+	[ "$MODO" = uefi ] || RAIZ="${DISK}${SUF}1"
+	return 0
+}
+
+elegir() {
+	konsole -e sh -c "sudo cfdisk $DISK" || true
+	$SUDO partprobe "$DISK" >/dev/null 2>&1; sleep 2
+	# TYPE=part: lsblk -p tambien saca la fila del disco entero, y esa como raiz
+	# borraria la tabla de particiones recien hecha. Con -r las columnas van separadas
+	# por un espacio y una vacia desplaza a las demas, asi que en cada consulta lo
+	# opcional (FSTYPE/PARTTYPE) va al final y TYPE/SIZE delante.
+	RAIZ=$(yad --title="Instalar Willy Linux" --center --width=520 --list --hide-column=3 \
+		--text="¿Cual particion sera la raiz (/)?  Se formateara como ext4." \
+		--column="Particion" --column="Tamano" --column="" \
+		$(lsblk -rnpo NAME,TYPE,SIZE,FSTYPE "$DISK" | awk '$2=="part" && $4!="swap" {printf "%s %s %s\n", $1, $3, ($4=="" ? "sin-formato" : $4)}') 2>/dev/null | cut -d'|' -f1)
+	[ -n "$RAIZ" ] || return 1
+	# El lsblk de trixie deja PARTFLAGS vacio en GPT, asi que el flag "esp" nunca casa
+	# ahi. El GUID de tipo si sale: c12a7328 es la EFI System y 0657fd6d la linux-swap,
+	# que ademas aun no tiene FSTYPE hasta que se formatea.
+	ESGUID=$(lsblk -rnpo NAME,TYPE,PARTTYPE "$DISK" | awk 'tolower($3) ~ /^c12a7328/ {print $1; exit}')
+	GUIDSWAP=$(lsblk -rnpo NAME,TYPE,PARTTYPE "$DISK" | awk 'tolower($3) ~ /^0657fd6d/ {print $1; exit}')
+	SWAP=$(lsblk -rnpo NAME,TYPE,FSTYPE "$DISK" | awk '$2=="part" && $3=="swap" {print $1; exit}')
+	[ -n "$SWAP" ] || SWAP="$GUIDSWAP"
+	[ "$MODO" = uefi ] && EFI="$ESGUID"
+	if [ "$MODO" = uefi ] && [ -z "$EFI" ]; then
+		E "No hay particion EFI (esp) en el disco. Prueba el esquema recomendado."
+		return 1
+	fi
+	return 0
+}
+
+if [ "$ESQ" = auto ]; then preparar || { E "No se pudo particionar. Mira el registro $LOG"; exit 1; }
+else elegir || exit 1; fi
+[ -b "$RAIZ" ] || { E "La particion raiz no existe ($RAIZ)."; exit 1; }
+F "destino: raiz=$RAIZ efi=$EFI swap=$SWAP modo=$MODO"
+
+# 4) Formatear y montar
+$SUDO mkfs.ext4 -q -F -L willyroot "$RAIZ" >>"$LOG" 2>&1 || { E "No se pudo formatear $RAIZ."; exit 1; }
+if [ -n "$EFI" ] && ! $SUDO blkid -c /dev/null -o value -s UUID "$EFI" 2>/dev/null | grep -q .; then
+	$SUDO mkfs.vfat -F32 -n WILLYEFI "$EFI" >>"$LOG" 2>&1 || { E "No se pudo formatear la particion EFI."; exit 1; }
+fi
+[ -n "$SWAP" ] && [ -b "$SWAP" ] && $SUDO mkswap -L willyswap "$SWAP" >>"$LOG" 2>&1
+
+$SUDO mkdir -p "$OBJ"
+$SUDO mount "$RAIZ" "$OBJ" >>"$LOG" 2>&1 || { E "No se pudo montar $RAIZ en $OBJ."; exit 1; }
+$SUDO mkdir -p "$OBJ/boot/efi" "$OBJ/proc" "$OBJ/sys" "$OBJ/dev/pts" "$OBJ/run" \
+	"$OBJ/mnt" "$OBJ/media" "$OBJ/tmp" "$OBJ/var/tmp" "$OBJ/live"
+if [ "$MODO" = uefi ]; then
+	$SUDO mount "$EFI" "$OBJ/boot/efi" >>"$LOG" 2>&1 || { E "No se pudo montar $EFI."; exit 1; }
+fi
+$SUDO chmod 1777 "$OBJ/tmp" "$OBJ/var/tmp"
+
+desmontar() { $SUDO umount -R "$OBJ" >/dev/null 2>&1 || true; }
+trap 'desmontar' EXIT INT TERM
+
+# 5) Comprobar que cabe y copiar
+LIBRE=$($SUDO df -BM --output=avail "$RAIZ" 2>/dev/null | tail -1 | tr -dc '0-9')
+NECES=$($SUDO du -sxm --exclude=/live --exclude=/proc --exclude=/sys --exclude=/dev --exclude=/run \
+	--exclude=/media --exclude=/mnt --exclude=/willy-target / 2>/dev/null | cut -f1)
+if [ "${LIBRE:-0}" -lt $(( ${NECES:-0} + 300 )) ]; then
+	E "No cabe: el sistema ocupa unos ${NECES} MB y el destino tiene ${LIBRE} MB libres."
+	exit 1
+fi
+F "copiando sistema: ${NECES} MB hacia ${LIBRE} MB libres"
+$SUDO rsync -aHAX --one-file-system --info=progress2 \
+	--exclude=/live --exclude=/willy-target --exclude=/mnt --exclude=/media --exclude=/cdrom \
+	--exclude=/proc --exclude=/sys --exclude=/dev --exclude=/run --exclude=/tmp --exclude=/var/tmp \
+	--exclude=/var/cache/apt/archives \
+	/ "$OBJ/" >>"$LOG" 2>&1 || { E "La copia fallo. Mira $LOG"; exit 1; }
+for n in null zero random urandom tty console; do
+	$SUDO rm -rf "$OBJ/dev/$n" 2>/dev/null || true
+done
+$SUDO mknod "$OBJ/dev/null" c 1 3 2>/dev/null || true
+$SUDO mknod "$OBJ/dev/zero" c 1 5 2>/dev/null || true
+$SUDO mknod "$OBJ/dev/random" c 1 8 2>/dev/null || true
+$SUDO mknod "$OBJ/dev/urandom" c 1 9 2>/dev/null || true
+$SUDO mknod "$OBJ/dev/tty" c 5 0 2>/dev/null || true
+$SUDO chmod 666 "$OBJ/dev/null" "$OBJ/dev/zero" "$OBJ/dev/random" "$OBJ/dev/urandom" "$OBJ/dev/tty" 2>/dev/null || true
+
+# 6) fstab por UUID
+uuid() { $SUDO blkid -c /dev/null -o value -s UUID "$1" 2>/dev/null; }
+{
+	printf 'UUID=%s / ext4 errors=remount-ro 0 1\n' "$(uuid "$RAIZ")"
+	[ -n "$EFI" ] && printf 'UUID=%s /boot/efi vfat umask=002,shortname=winnt 0 2\n' "$(uuid "$EFI")"
+	[ -n "$SWAP" ] && printf 'UUID=%s none swap sw 0 0\n' "$(uuid "$SWAP")"
+} | $SUDO tee "$OBJ/etc/fstab" > /dev/null
+
+# 7) Preparar el interior del sistema nuevo
+$SUDO mount --bind /dev "$OBJ/dev" >>"$LOG" 2>&1
+$SUDO mount --bind /dev/pts "$OBJ/dev/pts" >>"$LOG" 2>&1
+$SUDO mount -t proc proc "$OBJ/proc" >>"$LOG" 2>&1
+$SUDO mount -t sysfs sys "$OBJ/sys" >>"$LOG" 2>&1
+# efivarfs es lo que permite a grub-install escribir su propia entrada en el NVRAM.
+# Si falla (firmware raras) se usara la ruta de arranque alternativa.
+if [ "$MODO" = uefi ]; then
+	$SUDO mkdir -p "$OBJ/sys/firmware/efi/efivars" >>"$LOG" 2>&1 || true
+	$SUDO mount -t efivarfs efivarfs "$OBJ/sys/firmware/efi/efivars" >>"$LOG" 2>&1 \
+		|| F "aviso: sin efivars no se puede registrar el arranque UEFI, se usara la ruta alternativa"
+fi
+
+# live-boot ya no debe gobernar el sistema instalado
+$SUDO chroot "$OBJ" apt-get purge -y live-boot live-boot-initramfs-tools live-config live-config-systemd user-setup >>"$LOG" 2>&1 || true
+$SUDO chroot "$OBJ" dpkg --configure -a >>"$LOG" 2>&1 || F "aviso: dpkg dejo paquetes a medio configurar"
+# Al purgar live-config/user-setup el disco se queda sin quien creaba al usuario live:
+# se asegura que ese usuario sigue siendo administrador, si no sudo no funcionaria nunca.
+$SUDO chroot "$OBJ" usermod -aG sudo "$YO" >>"$LOG" 2>&1 || F "aviso: no se pudo meter a $YO en el grupo sudo"
+QUEDAN=$($SUDO chroot "$OBJ" dpkg-query -W -f='${Status}\n' live-boot live-config user-setup 2>/dev/null | grep -c 'install ok installed')
+[ "${QUEDAN:-0}" = "0" ] || F "aviso: quedan $QUEDAN paquetes live en el disco instalado"
+# El sudo sin contrasena es solo para la sesion live; en el disco se paga con la clave.
+$SUDO rm -f "$OBJ/etc/sudoers.d/willy-live"
+# La contrasena elegida antes de copiar es la del usuario en el disco (root sigue bloqueado).
+printf '%s:%s\n' "$YO" "$CLAVE" | $SUDO chroot "$OBJ" chpasswd >>"$LOG" 2>&1 \
+	|| F "aviso: no se pudo poner la contrasena en el disco"
+# En el disco se entra escribiendo la contrasena: se quita el acceso directo de la live.
+if [ -f "$OBJ/etc/sddm.conf.d/willy.conf" ]; then
+	$SUDO sed -i 's|^User=.*|;User=|' "$OBJ/etc/sddm.conf.d/willy.conf"
+fi
+# Cada equipo instalado necesita su propia identidad de systemd y de dbus.
+$SUDO truncate -s 0 "$OBJ/etc/machine-id" >>"$LOG" 2>&1 || true
+$SUDO rm -f "$OBJ/var/lib/dbus/machine-id" >>"$LOG" 2>&1 || true
+$SUDO chroot "$OBJ" systemd-machine-id-setup >>"$LOG" 2>&1 || true
+$SUDO chroot "$OBJ" update-initramfs -u -k all >>"$LOG" 2>&1 || F "aviso: update-initramfs fallo"
+grep -q '^GRUB_DISABLE_OS_PROBER=false' "$OBJ/etc/default/grub" 2>/dev/null || \
+	printf 'GRUB_DISABLE_OS_PROBER=false\n' | $SUDO tee -a "$OBJ/etc/default/grub" >/dev/null
+
+# 8) GRUB
+if [ "$MODO" = uefi ]; then
+	# Primero se registra la entrada en el NVRAM de la firmware: asi Willy Linux aparece
+	# en la lista de arranque sin pisar el cargador de Windows.
+	if ! $SUDO chroot "$OBJ" grub-install --target=x86_64-efi --efi-directory=/boot/efi >>"$LOG" 2>&1; then
+		F "aviso: el NVRAM no acepto la entrada; se deja la ruta de arranque alternativa"
+		# EFI/BOOT/BOOTX64.EFI es la ruta que toda firmware UEFI busca aunque no tenga entrada.
+		$SUDO chroot "$OBJ" grub-install --target=x86_64-efi --efi-directory=/boot/efi \
+			--removable --no-nvram >>"$LOG" 2>&1 || F "aviso: grub-install UEFI fallo"
+	fi
+else
+	$SUDO chroot "$OBJ" grub-install --target=i386-pc --boot-directory=/boot "$DISK" >>"$LOG" 2>&1 || F "aviso: grub-install BIOS fallo"
+fi
+$SUDO chroot "$OBJ" grub-mkconfig -o /boot/grub/grub.cfg >>"$LOG" 2>&1 || F "aviso: grub-mkconfig fallo"
+
+if ! $SUDO test -s "$OBJ/boot/grub/grub.cfg"; then
+	E "GRUB no quedo instalado. Revisa $LOG antes de reiniciar: el equipo puede seguir arrancando del USB."
+	desmontar; trap - EXIT; exit 1
+fi
+desmontar
+trap - EXIT
+
+T "\nWilly Linux quedo instalado en <b>$RAIZ</b>.\n\nUsuario: $YO\nContrasena: la que acabas de escribir\n\nAl encender el equipo se pedira esa contrasena, y tambien cuando Willy Linux necesite permisos.\n\nApaga el equipo, quita el USB y enciende normal.\nSi en modo UEFI no arranca, desactiva Secure Boot en la BIOS del fabricante.\n\nPara cambiar despues tu nombre o tu contrasena: Menu de aplicaciones > <b>Mi usuario</b>."
+if yad --title="Instalar Willy Linux" --center --width=520 --question \
+	--text="¿Reiniciar ahora para probar el disco?" \
+	--button="Reiniciar:0" --button="Seguir en el USB:1" >/dev/null 2>&1; then
+	$SUDO reboot
+fi
+WLYINSTALL
+
+# --- Persistencia en el USB ---------------------------------------------------
+cat > "$BIN/willy-persistencia" <<'WLYPERSIST'
+#!/bin/sh
+# Aprovecha el hueco libre del USB para que Willy Linux guarde los cambios.
+SUDO="sudo -n"
+T() { yad --title="Guardar en el USB" --center --width=560 --info --text="$1" --button="Aceptar:0" >/dev/null 2>&1 || true; }
+E() { yad --title="Guardar en el USB" --center --width=560 --error --text="$1" --button="Cerrar:0" >/dev/null 2>&1 || true; }
+
+ESTADO=$(command -v willy-guardado >/dev/null 2>&1 && willy-guardado || echo volatil)
+# En el disco instalado no hay USB que guardar: lo que se cambie ya se queda. Se dice
+# aqui, antes de buscar el medio, para que el mensaje no salga como un fallo.
+if [ "$ESTADO" = instalado ]; then
+	T "Estas en un disco instalado: aqui todo se guarda solo.\n\n\"Guardar en el USB\" solo tiene sentido cuando arrancas desde la memoria USB."
+	exit 0
+fi
+
+MEDIO_DEV=$(willy-medio dev 2>/dev/null)
+MEDIO=$(lsblk -dno PKNAME "$MEDIO_DEV" 2>/dev/null | tr -d ' ')
+[ -n "$MEDIO" ] && MEDIO="/dev/$MEDIO" || MEDIO=$(echo "$MEDIO_DEV" | sed 's/[0-9]*$//')
+[ -n "$MEDIO_DEV" ] || { E "No localizo el USB desde el que arrancas."; exit 1; }
+case "$MEDIO" in /dev/sr*) E "Estas arrancando desde DVD: ahi no se puede guardar. Usa un USB."; exit 1 ;; esac
+# Ya se comprobe que es una sesion live, y ahi sudo no pide clave; aun asi se usa
+# willy-sudo por si el guardado se llegara a intentar desde un disco instalado.
+PREP=$(willy-sudo --preparar) || exit 1
+eval "$PREP"
+
+# Si ya hay guardado activo no hace falta crear nada: se lo decimos y le dejamos
+# quitarlo si prefiere que el USB vuelva a empezar limpio cada vez.
+if [ "$ESTADO" = persistente ]; then
+	if yad --title="Guardar en el USB" --center --width=600 --question \
+		--text="Este USB <b>ya guarda tus cambios</b>: archivos, programas, contrasenas e idioma se mantienen al apagar.\n\n¿Quieres quitar ese guardado y que el USB vuelva a empezar limpio?" \
+		--button="Quitar el guardado:0" --button="Dejarlo como esta:1" >/dev/null 2>&1; then
+		PAR=$(findmnt -n -o SOURCE "$(willy-medio | sed 's|/medium$|/persistence|')" 2>/dev/null | sed 's/[0-9]*$//')
+		[ -b "$PAR" ] || { E "No localizo la particion de guardado."; exit 1; }
+		$SUDO mkdir -p /tmp/willy-persist
+		$SUDO mount "$PAR" /tmp/willy-persist || { E "No se pudo montar $PAR."; exit 1; }
+		$SUDO rm -f /tmp/willy-persist/persistence.conf
+		$SUDO umount /tmp/willy-persist
+		T "\nEl guardado queda quitado: al apagar se pierde todo y el USB vuelve a su estado original.\n\n(Tus archivos siguen dentro de la particion del USB hasta que la formatees; puedes volver a activarlo.)"
+	fi
+	exit 0
+fi
+
+HUECO=$(parted -s "$MEDIO" unit MiB free print 2>/dev/null | awk '/Free/ {gsub(/[A-Za-z]/,"",$1); gsub(/[A-Za-z]/,"",$2); if ($2-$1 > m) {m=$2-$1; s=$1; e=$2}} END{if (m>0) print s" "e}')
+INI=${HUECO% *}; FIN=${HUECO#* }
+if [ -z "$INI" ] || [ $(( FIN - INI )) -lt 300 ]; then
+	E "\nEl USB no deja un hueco libre de al menos 300 MB.\n\nBorra alguna particion (con gparted o cfdisk) y vuelve a intentarlo."
+	exit 1
+fi
+
+ALC=$(yad --title="Guardar en el USB" --center --width=560 --list \
+	--text="¿Que quieres guardar en el USB?  Hueco libre: $(( FIN - INI )) MB." \
+	--column="Opcion" --column="Codigo" \
+	"Todo el sistema (archivos y cambios)" "sistema" \
+	"Solo mis archivos de /home" "home" 2>/dev/null | cut -d'|' -f2)
+[ -n "$ALC" ] || exit 1
+
+$SUDO parted -s "$MEDIO" mkpart Persistent ext4 "${INI}MiB" "${FIN}MiB" 2>/dev/null || { E "parted no pudo crear la particion."; exit 1; }
+$SUDO partprobe "$MEDIO" 2>/dev/null; sleep 2
+PAR=$(lsblk -rnpo NAME "$MEDIO" | tail -1)
+[ -b "$PAR" ] || { E "No se ve la particion nueva."; exit 1; }
+$SUDO mkfs.ext4 -q -F -L live-rw "$PAR" 2>/dev/null || { E "No se pudo formatear $PAR."; exit 1; }
+
+$SUDO mkdir -p /tmp/willy-persist
+$SUDO mount "$PAR" /tmp/willy-persist || { E "No se pudo montar $PAR."; exit 1; }
+if [ "$ALC" = home ]; then
+	$SUDO sh -c 'printf "/home\n" > /tmp/willy-persist/persistence.conf'
+else
+	$SUDO sh -c 'printf "/\n" > /tmp/willy-persist/persistence.conf'
+fi
+$SUDO umount /tmp/willy-persist
+
+T "\nEl USB guarda cambios a partir del proximo arranque ($ALC).\n\nSe guardan tus archivos, los programas que instales, el idioma, el teclado, el fondo, la barra y la contrasena de tu usuario. Nada de eso se toca solo: cambia cuando tu quieras.\n\nSi arrancas en otro equipo con otro USB igual, ese no guardara nada: es normal."
+WLYPERSIST
+
+# --- Actualizador -------------------------------------------------------------
+cat > "$BIN/willy-actualizar-run" <<'WLYUPDATE'
+#!/bin/sh
+# Busca e instala actualizaciones. Necesita internet.
+echo "== Actualizando Willy Linux · $(date) =="
+sudo apt-get update || echo "(aviso: no baje las listas; mira la conexion)"
+sudo apt-get -y --no-install-recommends dist-upgrade || echo "(aviso: la actualizacion no termino)"
+echo
+echo "En una sesion live sin USB persistente, esto se pierde al apagar."
+printf 'Pulsa Intro para cerrar: '
+read -r _
+WLYUPDATE
+
+cat > "$BIN/willy-actualizar" <<'WLYUPDGUI'
+#!/bin/sh
+# Pide confirmacion y lanza la actualizacion en una terminal.
+yad --title="Actualizar Willy Linux" --center --width=560 --question \
+	--text="Se buscaran e instalaran actualizaciones por internet.\n\nDura mientras el equipo este encendido, o para siempre si ya activaste 'Guardar en el USB'.\n\n¿Actualizar ahora?" \
+	--button="Actualizar:0" --button="Cancelar:1" >/dev/null 2>&1 || exit 1
+exec konsole -e /usr/local/bin/willy-actualizar-run
+WLYUPDGUI
+
+chmod 755 "$BIN/willy-instalar" "$BIN/willy-persistencia" "$BIN/willy-actualizar" "$BIN/willy-actualizar-run"
+
+cat > /usr/share/applications/willy-instalar.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Instalar Willy Linux
+Name[es]=Instalar Willy Linux
+GenericName=Install system
+Comment=Pasar Willy Linux al disco del ordenador
+Exec=willy-instalar
+Icon=willylinux
+Terminal=false
+Categories=System;Settings;
+Keywords=install;disco;sistema;instalar;
+EOF
+
+cat > /usr/share/applications/willy-actualizar.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Actualizar Willy Linux
+Exec=willy-actualizar
+Icon=package-x-generic
+Terminal=false
+Categories=System;Settings;
+EOF
+
+# La cola de impresion se arranca con el sistema.
+mkdir -p /etc/systemd/system/multi-user.target.wants
+[ -f /lib/systemd/system/cups.service ] && \
+	ln -sf /lib/systemd/system/cups.service /etc/systemd/system/multi-user.target.wants/cups.service

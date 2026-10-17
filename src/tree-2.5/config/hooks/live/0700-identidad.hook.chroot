@@ -1,0 +1,213 @@
+#!/bin/sh
+# Willy Linux 2.5: identidad del usuario (contrasena, nombre visible y nombre de
+# acceso) y aviso de si esos cambios van a sobrevivir al apagar.
+set -e
+
+BIN=/usr/local/bin
+
+cat > "$BIN/willy-medio" <<'EOF'
+#!/bin/sh
+# Ruta (o dispositivo) del medio del que arranco esta sesion live, y si lo es.
+# live-boot 1:20250815, el de la 2.5, cambio el punto de montaje de /lib/live/mount
+# a /run/live. Con la ruta antigua el instalador y el guardado tomaban un USB live
+# por sistema instalado: decian que no se podia instalar ni se podia guardar.
+for d in /run/live/medium /lib/live/mount/medium /run/live/media /live/medium; do
+	[ -d "$d" ] || continue
+	if [ "${1:-dir}" = dev ]; then
+		findmnt -n -o SOURCE "$d" 2>/dev/null
+	else
+		echo "$d"
+	fi
+	exit 0
+done
+exit 1
+EOF
+chmod 755 "$BIN/willy-medio"
+
+# La pantalla de identidad y la de "guardar en el USB" necesitan decir la verdad:
+# en una sesion live sin USB persistente los cambios se pierden al apagar, y en un
+# disco instalado se quedan para siempre.
+cat > "$BIN/willy-guardado" <<'EOF'
+#!/bin/sh
+# Donde se guarda lo que cambie el usuario y si eso va a durar.
+MEDIUM=$(willy-medio 2>/dev/null) || { echo "instalado"; exit 0; }
+if [ -d "${MEDIUM%/medium}/persistence" ]; then
+	echo "persistente"
+else
+	echo "volatil"
+fi
+EOF
+chmod 755 "$BIN/willy-guardado"
+
+cat > "$BIN/willy-renombre-aplicar" <<'EOF'
+#!/bin/sh
+# Renombra el usuario de acceso. Se ejecuta al arrancar, antes de SDDM, porque con
+# la sesion abierta usermod deja procesos dueños de un usuario que ya no existe.
+PEDIDO=/etc/willylinux/renombrar
+[ -f "$PEDIDO" ] || exit 0
+VIEJO=$(sed -n 1p "$PEDIDO")
+NUEVO=$(sed -n 2p "$PEDIDO")
+rm -f "$PEDIDO"
+
+case "$NUEVO" in
+[a-z_][a-z0-9_-]*) ;;
+*) exit 0 ;;
+esac
+[ -n "$VIEJO" ] && [ "$VIEJO" != "$NUEVO" ] || exit 0
+id "$VIEJO" >/dev/null 2>&1 || exit 0
+if id "$NUEVO" >/dev/null 2>&1; then
+	# El nombre elegido ya existe: no se toca nada y se avisa en el proximo arranque
+	# grafico con un archivo de estado.
+	printf 'El nombre %s ya esta en uso, sigue %s.\n' "$NUEVO" "$VIEJO" > /run/willy-renombre-aviso
+	exit 0
+fi
+
+usermod -l "$NUEVO" "$VIEJO" || exit 0
+# El grupo personal solo se renombra si se llamaba igual que el usuario.
+if getent group "$VIEJO" >/dev/null 2>&1; then
+	groupmod -n "$NUEVO" "$VIEJO" 2>/dev/null || true
+fi
+
+# Tres sitios mas apuntan al nombre viejo y hay que moverlos:
+#   - el autologin de SDDM (si no, el equipo se queda en la pantalla de entrada)
+#   - el sudo sin clave de la sesion live
+#   - la marca de primera sesion no depende del nombre, no hace falta tocarla
+if [ -f /etc/sddm.conf.d/willy.conf ]; then
+	sed -i "s/^User=.*/User=$NUEVO/" /etc/sddm.conf.d/willy.conf
+fi
+if [ -f /etc/sudoers.d/willy-live ]; then
+	printf '%s ALL=(ALL:ALL) NOPASSWD: ALL\n' "$NUEVO" > /etc/sudoers.d/willy-live
+	chmod 440 /etc/sudoers.d/willy-live
+	visudo -c -q -f /etc/sudoers.d/willy-live 2>/dev/null || true
+fi
+# El dueno del home ya es el mismo uid: usermod no cambia numeros, solo el nombre.
+printf 'Se llamo %s en el arranque de %s.\n' "$NUEVO" "$VIEJO" > /run/willy-renombre-aviso
+exit 0
+EOF
+chmod 755 "$BIN/willy-renombre-aplicar"
+
+cat > "$BIN/willy-identidad" <<'EOF'
+#!/bin/sh
+# Willy Linux: quien soy en este equipo. Contrasena, nombre visible y nombre de acceso.
+SUDO="sudo -n"
+YO=$(id -un)
+MODO=$(/usr/local/bin/willy-guardado)
+# En el disco instalado sudo si pide clave: willy-sudo la pregunta una sola vez.
+PREP=$(willy-sudo --preparar) || exit 1
+eval "$PREP"
+
+aviso() { yad --title="Mi usuario" --center --width=560 --info --text="$1" --button="Aceptar:0" >/dev/null 2>&1 || true; }
+
+segon_guardado() {
+	case "$MODO" in
+	instalado) printf '\nEstas en un disco instalado: lo que cambies se guarda para siempre.\n' ;;
+	persistente) printf '\nEstas en el USB con "Guardar en el USB" activado: lo que cambies se mantiene al apagar.\n' ;;
+	*) printf '\n<b>Ojo:</b> estas en el USB sin guardado permanente. Lo que cambies funciona ahora y se pierde al apagar, salvo que elijas "Guardar en el USB".\n' ;;
+	esac
+}
+
+while :; do
+	sel=$(yad --title="Mi usuario" --center --width=600 --height=420 \
+		--image=/usr/share/icons/hicolor/128x128/apps/willylinux.png --image-on-top \
+		--text="<b>Mi usuario en Willy Linux</b>$(segon_guardado)
+
+Usuario de acceso: <b>$YO</b>  ·  Nombre que se muestra: <b>$(getent passwd "$YO" | cut -d: -f5 | cut -d, -f1)</b>" \
+		--list --column="" --column="Cambiar" --hide-column=1 \
+		"1" "Poner contrasena nueva" \
+		"2" "Quitar la contrasena (entrar sin clave)" \
+		"3" "Cambiar el nombre que se muestra (en el menu y al bloquear)" \
+		"4" "Cambiar el nombre de acceso (se aplica al reiniciar)" \
+		"5" "Guardar mis cambios en el USB (persistencia)" \
+		"6" "Ver el estado del guardado" 2>/dev/null | cut -d'|' -f1)
+	[ -n "$sel" ] || exit 0
+	case "$sel" in
+	1)
+		p1=$(yad --title="Contrasena" --center --width=420 --entry --hide-text \
+			--text="Nueva contrasena de $YO (la pide el bloqueo de pantalla):" 2>/dev/null)
+		[ -n "$p1" ] || continue
+		p2=$(yad --title="Contrasena" --center --width=420 --entry --hide-text \
+			--text="Repetirla:" 2>/dev/null)
+		[ "$p1" = "$p2" ] || { aviso "Las dos contrasenas no coinciden."; continue; }
+		if printf '%s:%s\n' "$YO" "$p1" | $SUDO chpasswd 2>/dev/null; then
+			aviso "Contrasena puesta para $YO.$(segon_guardado)"
+		else
+			aviso "No se pudo cambiar: falta permiso de administrador."
+		fi
+		;;
+	2)
+		$SUDO passwd -d "$YO" >/dev/null 2>&1 \
+			&& aviso "Sin contrasena. El bloqueo de pantalla pedira una para volver a entrar." \
+			|| aviso "No se pudo quitar la contrasena."
+		;;
+	3)
+		n=$(yad --title="Nombre que se muestra" --center --width=520 --entry \
+			--text="Como quieres que aparezca tu nombre (SDDM, menu de Plasma y el modulo de usuarios):" \
+			--entry-text="$(getent passwd "$YO" | cut -d: -f5 | cut -d, -f1)" 2>/dev/null)
+		[ -n "$n" ] || continue
+		$SUDO usermod -c "$n" "$YO" 2>/dev/null \
+			&& aviso "A partir de ahora te llamas $n.$(segon_guardado)" \
+			|| aviso "No se pudo cambiar el nombre."
+		;;
+	4)
+		n=$(yad --title="Nombre de acceso" --center --width=540 --entry \
+			--text="Nombre de usuario con el que entras (sin espacios, minusculas, empieza por letra).\nAhora es <b>$YO</b>. Willy Linux sigue siendo Willy Linux: solo cambia tu nombre." \
+			--entry-text="$YO" 2>/dev/null)
+		[ -n "$n" ] || continue
+		if [ "$n" = "$YO" ]; then continue; fi
+		case "$n" in
+		[a-z_][a-z0-9_-]*) ;;
+		*) aviso "Ese nombre no vale: minusculas, sin espacios, y no empezar con numero."; continue ;;
+		esac
+		case "$n" in
+		live|root|daemon|bin|sys|nobody|messagebus) aviso "Mejor no usar $n: es nombre de sistema."; continue ;;
+		esac
+		printf '%s\n%s\n' "$YO" "$n" | $SUDO tee /etc/willylinux/renombrar > /dev/null
+		aviso "Se cambiara a <b>$n</b> la proxima vez que enciendas el equipo.\nCierra la sesion y reinicia. El nombre viejo era $YO, por si lo necesitas."
+		;;
+	5) willy-persistencia ;;
+	6)
+		case "$MODO" in
+		instalado) aviso "Sistema instalado en disco: todo se guarda." ;;
+		persistente) aviso "USB con guardado activo: archivos, programas, contrasenas e idioma se mantienen al apagar." ;;
+		*) aviso "Sesion live sin guardado: nada se conserva al apagar. Pulsa 'Guardar mis cambios en el USB' en esta ventana." ;;
+		esac
+		;;
+	esac
+done
+EOF
+chmod 755 "$BIN/willy-identidad"
+
+# La unidad se activa aqui dentro: los enlaces de systemd no se pueden crear del
+# lado de Windows. La condicion de que exista /etc/willylinux/renombrar hace que
+# en un arranque normal no haga absolutamente nada.
+mkdir -p /etc/systemd/system/multi-user.target.wants
+cat > /etc/systemd/system/willy-renombre.service <<'EOF'
+[Unit]
+Description=Willy Linux: renombrar el usuario de acceso si se pidio
+ConditionPathExists=/etc/willylinux/renombrar
+Before=sddm.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/willy-renombre-aplicar
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+ln -sf /etc/systemd/system/willy-renombre.service /etc/systemd/system/multi-user.target.wants/willy-renombre.service
+
+mkdir -p /etc/willylinux
+chmod 755 /etc/willylinux
+
+cat > /usr/share/applications/willy-identidad.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Mi usuario
+Name[es]=Mi usuario
+Comment=Contrasena, nombre visible y nombre de acceso
+Exec=willy-identidad
+Icon=system-users
+Terminal=false
+Categories=Settings;System;
+EOF

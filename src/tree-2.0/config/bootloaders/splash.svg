@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="640" height="480" viewBox="0 0 640 480">
+  <!-- Arranque minimalista: solo el logo y el nombre sobre negro. -->
+  <defs>
+    <clipPath id="recorte">
+      <rect x="374" y="93" width="281" height="400"/>
+    </clipPath>
+  </defs>
+  <rect width="640" height="480" fill="#000000"/>
+  <g transform="translate(-195,-68)">
+    <image x="0" y="0" width="1040" height="580" clip-path="url(#recorte)"
+           xlink:href="usr/share/backgrounds/willylinux/willylinux.png"/>
+  </g>
+  <text x="320" y="466" font-family="DejaVu Sans" font-size="12"
+        fill="#8fbfb0" text-anchor="middle">Willy Linux v@VERSION@ - @ARCHITECTURE@</text>
+</svg>

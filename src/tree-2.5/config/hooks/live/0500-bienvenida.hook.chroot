@@ -1,0 +1,189 @@
+#!/bin/sh
+# Willy Linux 2.5: asistente de bienvenida y decision sobre Qoder.
+set -e
+
+BIN=/usr/local/bin
+
+# El asistente usa los módulos de ajuste nativos de Plasma (nombres verificados en
+# los paquetes de trixie: plasma-workspace trae kcm_regionandlang, kcm_wallpaper,
+# kcm_users y kcm_lookandfeel; plasma-desktop trae kcm_keyboard, que es donde
+# Plasma 6 guarda las distribuciones; kde-config-screenlocker trae kcm_screenlocker).
+cat > "$BIN/willy-bienvenida" <<'WLYWELCOME'
+#!/bin/sh
+# Willy Linux: bienvenida. Con --primera-vez solo aparece una vez.
+MARCA="$HOME/.config/willylinux/bienvenida"
+[ "${1:-}" = "--primera-vez" ] && [ -f "$MARCA" ] && exit 0
+
+ajuste() {
+	plasma-open-settings "$1" >/dev/null 2>&1 &
+}
+
+qoder() {
+	op=$(yad --title="Qoder en Willy Linux" --center --width=620 --height=340 \
+		--image=dialog-information --image-on-top \
+		--text="<b>Qoder</b> no viene instalada: decide tu.\n\n" \
+		"--list --column=Hacer" \
+		"Instalar Qoder (linea de comandos, oficial)" \
+		"Descargar Qoder para Linux (.deb) e instalarlo" \
+		"Quitar Qoder de este equipo" \
+		"Nada por ahora" 2>/dev/null | head -1)
+	case "$op" in
+	"Instalar Qoder (linea de comandos"*)
+		konsole -e sh -c 'curl -fsSL https://qoder.com/install | bash; \
+			echo; echo "Si ha funcionado, escribe:  qodercli"; read _'
+		;;
+	"Descargar Qoder para Linux"*)
+		yad --title="Qoder .deb" --center --width=560 \
+			--text="Se abre la pagina oficial. Descarga el archivo <b>.deb</b> para amd64\ny despues eligelo aqui para instalarlo."
+		xdg-open https://qoder.com/download >/dev/null 2>&1 &
+		deb=$(yad --title="Instalar el .deb de Qoder" --center --file --browse \
+			--directory="$HOME/Downloads" --file-filter="Paquetes | *.deb" 2>/dev/null | cut -d'|' -f1)
+		[ -f "$deb" ] || return 0
+		# Se guarda el nombre real del paquete (no el del archivo) para poder quitarlo despues.
+		konsole -e sh -c "
+			nombre=\$(dpkg-deb -f '$deb' Package 2>/dev/null)
+			if sudo apt install -y '$deb' && [ -n \"\$nombre\" ]; then
+				printf '%s\n' \"\$nombre\" > \"\$HOME/.config/willylinux/qoder-deb\"
+				echo; echo 'Qoder instalado. Se lanza con:  qoder'
+			fi
+			read _"
+		;;
+	"Quitar Qoder"*)
+		konsole -e sh -c '
+			bin=$(command -v qodercli || true)
+			if [ -n "$bin" ]; then
+				rm -f "$(readlink -f "$bin")" && echo "Qoder de comandos quitado."
+			fi
+			paquete=$(cat "$HOME/.config/willylinux/qoder-deb" 2>/dev/null || true)
+			if [ -n "$paquete" ]; then
+				sudo apt remove --purge -y "$paquete" && echo "Qoder (.deb) quitado."
+			fi
+			echo; echo "Listo."
+			read _'
+		rm -f "$HOME/.config/willylinux/qoder-deb"
+		;;
+	esac
+}
+
+# La alineacion de la barra se cambia por D-Bus (willy-panel), no editando ficheros:
+# asi Plasma guarda el ajuste el mismo y se puede revertir desde aqui.
+panel() {
+	op=$(yad --title="Barra de tareas" --center --width=600 --height=300 \
+		--list --column=Hacer \
+		"Centrar los iconos (estilo Windows 11)" \
+		"Dejarla a la izquierda (tradicional)" \
+		"Dejarla a la derecha" 2>/dev/null | head -1)
+	case "$op" in
+	"Centrar"*) willy-panel centrar ;;
+	"Dejarla a la izquierda"*) willy-panel izquierda ;;
+	"Dejarla a la derecha"*) willy-panel derecha ;;
+	*) return 0 ;;
+	esac
+	if [ $? -eq 0 ]; then
+		yad --title="Barra de tareas" --center --width=460 \
+			--text="El orden se ha enviado a Plasma. Si los iconos no se han movido,\ntu version de Plasma solo lo admite a mano:\n<b>clic derecho en la barra > Configurar barra de tareas > Alineacion</b>."
+	else
+		yad --title="Barra de tareas" --center --width=440 \
+			--text="Plasma no ha respondido: espera a que el escritorio termine de cargar\ny prueba otra vez. Tambien se hace a mano con\n<b>clic derecho en la barra > Configurar barra de tareas > Alineacion</b>."
+	fi
+}
+
+boveda() {
+	op=$(yad --title="Bóveda de Willy Linux" --center --width=620 --height=320 \
+		--list --column=Hacer \
+		"Carpeta acorazada (archivos cifrados)" \
+		"Abrir o cerrar mis bóvedas" \
+		"Gestor de contrasenas KeePassXC" \
+		"Copias de seguridad automaticas (Back In Time)" 2>/dev/null | head -1)
+	case "$op" in
+	"Carpeta acorazada"*)
+		setsid dolphin "$HOME" >/dev/null 2>&1 &
+		yad --title="Carpeta acorazada" --center --width=600 \
+			--text="En Dolphin: clic derecho sobre una carpeta > <b>Add to Plasma Vault</b>.\nElige una contrasena y esa carpeta queda cifrada; solo se ve mientras está abierta."
+		;;
+	"Abrir o cerrar"*)
+		yad --title="Abrir una bóveda" --center --width=600 \
+			--text="Clic derecho en el escritorio > <b>Elementos del escritorio > Bóvedas</b>.\nEl widget lista tus bóvedas con su boton de abrir y cerrar."
+		;;
+	"Gestor de contrasenas"*) setsid keepassxc >/dev/null 2>&1 & ;;
+	"Copias de seguridad"*) setsid backintime-qt >/dev/null 2>&1 & ;;
+	esac
+}
+
+# El logo va en su version de 64 px: yad empaqueta --image a tamano real, y en la
+# prueba del 13-10-2026 se vio que con el fondo de 1664x928 la ventana se salia de
+# la pantalla y la lista de ajustes quedaba fuera. Con 128 px (probado el 17-10 en
+# la VM) las tres ultimas filas de la lista se cortaban, asi que se baja el logo y
+# se sube la ventana hasta 620 px, que sigue dentro de un portatil de 768.
+while true; do
+	sel=$(yad --title="Bienvenida a Willy Linux 2.5.5" --center --width=520 --height=620 \
+		--image=/usr/share/icons/hicolor/64x64/apps/willylinux.png --image-on-top \
+		--text="<b>Willy Linux 2.5.5</b> (KDE Plasma 6)\nEs tu sistema: cambia lo que quieras y se queda guardado.\nContra del usuario live para el bloqueo: <b>willy</b>" \
+		--list --column="" --column="Ajuste" --hide-column=1 \
+		"1" "Idioma y region (pais, hora, moneda)" \
+		"2" "Fondo de pantalla y aspecto" \
+		"3" "Colores e iconos" \
+		"4" "Bloqueo de pantalla" \
+		"5" "Usuarios y contrasena" \
+		"6" "Mezclador de volumen" \
+		"7" "Bóveda: archivos, contrasenas y copias" \
+		"8" "Qoder: instalar o quitar" \
+		"9" "Tienda de aplicaciones" \
+		"10" "Actualizar Willy Linux" \
+		"11" "Instalar en el disco" \
+		"12" "Panel de Willy (energia, teclado, hora)" \
+		"13" "Teclado: distribucion latam, es, us..." \
+		"14" "Barra de tareas: centrar o mover los iconos" \
+		"15" "Mi usuario: contrasena y nombres" \
+		"16" "Guardar mis cambios (USB persistente)" 2>/dev/null | cut -d'|' -f1)
+	[ -n "$sel" ] || break
+	case "$sel" in
+	1) ajuste kcm_regionandlang ;;
+	2) ajuste kcm_wallpaper ;;
+	3) ajuste kcm_colors ;;
+	4) ajuste kcm_screenlocker ;;
+	5) ajuste kcm_users ;;
+	6) pavucontrol-qt >/dev/null 2>&1 & ;;
+	7) boveda ;;
+	8) qoder ;;
+	9) setsid plasma-discover >/dev/null 2>&1 & ;;
+	10) willy-actualizar >/dev/null 2>&1 & ;;
+	11) willy-instalar >/dev/null 2>&1 & ;;
+	12) willy-ajustes >/dev/null 2>&1 & ;;
+	# En Plasma 6 las distribuciones no van en region: son su propio modulo.
+	13) ajuste kcm_keyboard ;;
+	14) panel ;;
+	15) willy-identidad ;;
+	16) willy-persistencia ;;
+	esac
+done
+
+mkdir -p "$HOME/.config/willylinux"
+: > "$MARCA"
+WLYWELCOME
+chmod 755 "$BIN/willy-bienvenida"
+
+# Icono de menu y arranque automatico la primera vez que se entra en el escritorio.
+cat > /usr/share/applications/willy-bienvenida.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Bienvenida a Willy Linux
+Name[es]=Bienvenida a Willy Linux
+Comment=Idioma, teclado, fondo, bóveda y Qoder
+Exec=willy-bienvenida
+Icon=willylinux
+Terminal=false
+Categories=Settings;System;
+StartupNotify=true
+EOF
+
+mkdir -p /etc/xdg/autostart
+cat > /etc/xdg/autostart/willy-bienvenida.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Bienvenida a Willy Linux
+Exec=willy-bienvenida --primera-vez
+Terminal=false
+X-KDE-autostart-after=panel
+NoDisplay=true
+EOF

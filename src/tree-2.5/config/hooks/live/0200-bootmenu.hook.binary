@@ -1,0 +1,60 @@
+#!/bin/sh
+set -e
+
+VERSION="2.5.5"
+
+# Menu de arranque BIOS (isolinux): textos en espanol y color corporativo.
+# Ojo con las anclas: en menu.cfg y utilities.cfg las linees de submenu empiezan
+# con TAB, por eso aqui los patrones van sin ^ (si no, el sed no encuentra nada y
+# el menu sale en ingles sin ningun aviso).
+for f in isolinux/*.cfg; do
+	[ -f "$f" ] || continue
+	sed -i \
+		-e 's/^timeout 0$/timeout 50/' \
+		-e "s/Live system/Willy Linux $VERSION/g" \
+		-e 's/fail-safe mode/modo seguro/g' \
+		-e 's/(default)/(por defecto)/g' \
+		-e "s/^menu title .*/menu title WILLY LINUX $VERSION/" \
+		-e 's/^menu tabmsg .*/menu tabmsg ENTER arranca  TAB edita  F1 ayuda/' \
+		-e 's/menu label ^Utilities$/menu label ^Utilidades/' \
+		-e 's/menu title Utilities$/menu title Utilidades/' \
+		-e 's/menu label ^Back../menu label ^Volver/' \
+		-e 's/menu label ^Hardware Detection Tool.*/menu label ^Deteccion de hardware (HDT)/' \
+		-e 's/76a1d0/3d8c7a/g' \
+		"$f"
+done
+
+# Menu EFI (GRUB): mismos nombres y espera corta.
+for f in boot/grub/*.cfg; do
+	[ -f "$f" ] || continue
+	sed -i -e "s/Live system/Willy Linux $VERSION/g" -e 's/fail-safe mode/modo seguro/g' \
+		-e 's/(default)/(por defecto)/g' -e 's/(autodetect)/(autodetectar)/g' "$f"
+done
+
+# Submenus del GRUB, que live-build escribe en ingles.
+if [ -f boot/grub/grub.cfg ]; then
+	sed -i \
+		-e "s|'Advanced install options ...'|'Opciones avanzadas de arranque'|" \
+		-e "s|'Utilities...'|'Utilidades'|" \
+		-e 's|"UEFI Firmware Settings"|"Ajustes del firmware UEFI"|' \
+		-e 's|"Verify integrity of the boot medium"|"Comprobar la integridad del USB"|' \
+		boot/grub/grub.cfg
+fi
+
+if [ -f boot/grub/config.cfg ]; then
+	# live-build no escribe "set timeout" para GRUB: sin esta linea el menu EFI
+	# se queda en su valor por defecto y no coincide con los 5 s de isolinux.
+	# Los colores NO van aqui: theme.cfg los pone, y como este build lleva
+	# splash.png el que manda es live-theme/theme.txt (lo retocamos abajo).
+	sed -i -e 's|^set default=0$|set default=0\nset timeout=5|' boot/grub/config.cfg
+fi
+
+# Tema grafico del GRUB: sin titulo y con la barra de ayuda en espanol, porque
+# @KEYMAP_SHORT@ y @TIMEOUT_NOTIFICATION_LONG@ salen siempre en ingles.
+if [ -f boot/grub/live-theme/theme.txt ]; then
+	sed -i \
+		-e 's/^title-text:.*/title-text: ""/' \
+		-e 's|text = "@KEYMAP_SHORT@"|text = "Flechas: elegir   Enter: arrancar   e: editar   c: consola"|' \
+		-e 's|text = "@TIMEOUT_NOTIFICATION_LONG@"|text = "Arrancando en %d segundos"|' \
+		boot/grub/live-theme/theme.txt
+fi

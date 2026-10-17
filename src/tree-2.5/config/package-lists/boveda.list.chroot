@@ -1,0 +1,14 @@
+# Sistema boveda: tres piezas que se usan desde el propio escritorio.
+# 1) Bovedas de Plasma: carpetas cifradas con contrasena, se montan en Dolphin.
+plasma-vault
+cryfs
+# 2) Llavero de contrasenas.
+keepassxc
+kwalletmanager
+pinentry-qt
+# 3) Copias de seguridad automaticas y cifradas, con restauracion grafica.
+borgbackup
+backintime-qt
+# Cifrado de disco en la instalacion (opcional, fase 2 del instalador).
+cryptsetup
+cryptsetup-initramfs

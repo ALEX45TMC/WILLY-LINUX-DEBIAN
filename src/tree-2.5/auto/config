@@ -1,0 +1,27 @@
+#!/bin/sh
+set -e
+
+: "${WILLY_ARCH:=amd64}"
+: "${WILLY_DIST:=trixie}"
+: "${WILLY_LOCALE:=es_ES.UTF-8}"
+: "${WILLY_KEYBOARD:=latam}"
+: "${WILLY_TZ:=America/Bogota}"
+
+lb config noauto \
+	--mode debian \
+	--architecture "${WILLY_ARCH}" \
+	--distribution "${WILLY_DIST}" \
+	--archive-areas "main non-free-firmware" \
+	--debootstrap-options "--variant=minbase" \
+	--apt-recommends false \
+	--apt-indices false \
+	--firmware-chroot false \
+	--firmware-binary false \
+	--debian-installer none \
+	--binary-image iso-hybrid \
+	--chroot-squashfs-compression-type gzip \
+	--iso-volume WILLYLINUX255 \
+	--iso-application "Willy Linux 2.5.5" \
+	--iso-publisher "Willy Linux" \
+	--bootappend-live "boot=live components quiet persistence username=live hostname=willylinux locales=${WILLY_LOCALE} keyboard-layouts=${WILLY_KEYBOARD} timezone=${WILLY_TZ}" \
+	"${@}"

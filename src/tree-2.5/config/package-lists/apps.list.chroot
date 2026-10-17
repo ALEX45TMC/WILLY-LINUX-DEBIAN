@@ -1,0 +1,26 @@
+# Ofimatica, navegador, correo y grafica para equipos actuales.
+libreoffice
+libreoffice-base
+libreoffice-l10n-es
+libreoffice-help-es
+firefox-esr
+firefox-esr-l10n-es-es
+thunderbird
+thunderbird-l10n-es-es
+gimp
+inkscape
+
+# Correccion y diccionarios en espanol
+hunspell-es
+hunspell-en-us
+mythes-es
+hyphen-es
+aspell-es
+
+# Renderizado de SVG y capturas por linea de ordenes (willy-captura)
+librsvg2-common
+scrot
+
+# Terminal y ayuda en la consola
+bash-completion
+libnotify-bin

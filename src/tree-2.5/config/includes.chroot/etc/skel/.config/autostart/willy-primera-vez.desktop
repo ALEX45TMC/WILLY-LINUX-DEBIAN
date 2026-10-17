@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Preparar Willy Linux
+Exec=willy-primera-vez
+NoDisplay=true
+X-KDE-autostart-after=panel

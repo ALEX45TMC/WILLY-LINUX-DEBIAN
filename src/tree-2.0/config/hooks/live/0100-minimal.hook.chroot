@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+
+for u in apt-daily.timer apt-daily-upgrade.timer man-db.timer \
+	e2scrub_all.timer fstrim.timer \
+	systemd-networkd-wait-online.service \
+	ModemManager.service bluetooth.service cups.service \
+	avahi-daemon.service ssh.service; do
+	systemctl mask "$u" || true
+done
+
+rm -rf /usr/share/man/* /usr/share/info/* /usr/share/groff/* /usr/share/lintian/*
+find /usr/share/doc -type f ! -name copyright -delete
+find /usr/share/locale -mindepth 1 -maxdepth 1 -type d \
+	! -name 'es*' ! -name 'en*' -exec rm -rf {} +

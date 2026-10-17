@@ -1,0 +1,49 @@
+# Menu de Willy Linux: organizado en categorias cortas para no abarrotar.
+menu "Oficina" applications-office {
+	prog "LibreOffice Inicio" libreoffice-startcenter libreoffice
+	prog "Writer (texto)" libreoffice-writer libreoffice --writer
+	prog "Calc (hojas de calculo)" libreoffice-calc libreoffice --calc
+	prog "Impress (presentaciones)" libreoffice-impress libreoffice --impress
+	prog "Editor de texto" accessories-text-editor mousepad
+}
+menu "Internet" web-browser {
+	prog "Firefox ESR" firefox-esr firefox-esr
+	prog "Navegador ligero" web-browser netsurf-gtk
+	prog "Terminal" utilities-terminal lxterminal
+}
+menu "Documentos e imagenes" applications-graphics {
+	prog "Visor de PDF" application-pdf mupdf
+	prog "Visor de imagenes" image-viewer feh
+	prog "Descompactar" archive-manager xarchiver
+	prog "Calculadora" accessories-calculator galculator
+	prog "Editar de imagen" applications-graphics mtpaint
+	prog "Captura de pantalla" accessories-screenshot willy-captura
+}
+menu "Sonido y video" applications-multimedia {
+	prog "Reproductor de video" applications-multimedia mpv
+	prog "Grabar CD o DVD" media-optical xfburn
+}
+menu "Juegos" applications-games {
+	prog "Mahjong" applications-games /usr/games/xmahjongg
+	prog "Tint (bloques)" applications-games /usr/games/tint
+	prog "LBreakout2" applications-games /usr/games/lbreakout2
+	prog "Ajedrez (XBoard)" applications-games /usr/games/xboard -fcp gnuchess
+}
+sep
+menu "Sistema" preferences-system {
+	prog "Archivos" system-file-manager pcmanfm
+	prog "Ajustes de Willy Linux" preferences-system willy-ajustes
+	prog "Administrador de tareas" utilities-system-monitor lxtask
+	prog "Monitor (mostrar/ocultar)" utilities-system-monitor willy-monitor-conky
+	prog "Panel en la terminal" utilities-system-monitor lxterminal -e willy-monitor
+	prog "Informacion del equipo" help-browser lxterminal -e willy-info
+	prog "Comprobar la red" network-server lxterminal -e willy-red
+	prog "Apariencia (temas)" preferences-desktop-theme lxappearance
+	prog "Resolucion de pantalla" preferences-desktop-display arandr
+	prog "Terminal con dos paneles" utilities-terminal lxterminal -e mc
+	prog "htop" utilities-system-monitor lxterminal -e htop
+	sep
+	prog "Bloquear pantalla" system-lock-screen willy-lock
+	prog "Reiniciar" system-reboot sudo reboot
+	prog "Apagar" system-shutdown sudo poweroff
+}

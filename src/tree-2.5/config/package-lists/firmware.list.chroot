@@ -1,0 +1,13 @@
+# Firmware propietario de las tarjetas mas comunes (wifi, bluetooth, sonido, grafica).
+firmware-linux-free
+firmware-linux
+firmware-linux-nonfree
+firmware-misc-nonfree
+firmware-realtek
+firmware-mediatek
+firmware-iwlwifi
+firmware-atheros
+firmware-brcm80211
+firmware-amd-graphics
+firmware-intel-sound
+firmware-sof-signed

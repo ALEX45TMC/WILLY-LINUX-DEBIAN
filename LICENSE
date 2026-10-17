@@ -1,0 +1,35 @@
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 3, 29 June 2007
+
+Copyright (C) 2026 The Willy Linux project authors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+---
+
+ADDITIONAL NOTICE FOR THE WILLY LINUX BUILD TREE
+
+This repository contains the live-build configuration (hooks, package lists,
+includes.chroot files, willy-* helper tools, the installer and the
+documentation) used to build the Willy Linux live ISO. It is NOT a copy of
+Debian and grants no rights over Debian's own packages.
+
+The Debian packages included in a built ISO remain under their own upstream
+licenses, listed in /usr/share/doc/*/copyright of the installed system.
+
+The artwork (logo and wallpapers) is distributed under CC BY-SA 4.0:
+https://creativecommons.org/licenses/by-sa/4.0/
+
+A full verbatim copy of GPLv3 is available at:
+https://www.gnu.org/licenses/gpl-3.0.txt

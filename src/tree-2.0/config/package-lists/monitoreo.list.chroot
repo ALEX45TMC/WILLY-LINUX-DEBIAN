@@ -1,0 +1,6 @@
+# Seguimiento de rendimiento, bateria y energia
+conky-std
+acpi
+lm-sensors
+cbatticon
+tlp

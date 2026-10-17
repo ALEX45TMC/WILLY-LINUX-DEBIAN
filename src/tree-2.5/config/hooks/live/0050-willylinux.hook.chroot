@@ -1,0 +1,55 @@
+#!/bin/sh
+set -e
+
+dpkg-divert --quiet --local --rename --add /usr/lib/os-release
+cat > /usr/lib/os-release <<'EOF'
+PRETTY_NAME="Willy Linux 2.5.5"
+NAME="Willy Linux"
+VERSION_ID="2.5.5"
+VERSION="2.5.5 (basado en Debian 13 trixie)"
+VERSION_CODENAME=trixie
+ID=willylinux
+ID_LIKE=debian
+# El lobito en "Acerca del sistema" y en la cabecera de Discover.
+LOGO=/usr/share/icons/hicolor/128x128/apps/willylinux.png
+EOF
+ln -sf ../usr/lib/os-release /etc/os-release
+
+printf 'Willy Linux 2.5.5 \\n \\l\n\n' > /etc/issue
+printf 'Willy Linux 2.5.5\n' > /etc/issue.net
+: > /etc/motd
+
+# Bloqueo de pantalla: en Plasma lo hace su propio salvapantallas, que ya pide la
+# contrasena del usuario. Este envoltorio existe para que el boton y el atajo del
+# menu sigan llamandose willy-lock.
+cat > /usr/local/bin/willy-lock <<'EOF'
+#!/bin/sh
+# Willy Linux: bloquea la sesion. Contrasena del usuario live: willy
+exec loginctl lock-session "$@"
+EOF
+chmod 755 /usr/local/bin/willy-lock
+
+# El usuario live no tiene contrasena; sudo sin clave permite fijarsela al entrar
+# en el escritorio (lo hace willy-primera-vez) para poder desbloquear la pantalla.
+printf 'live ALL=(ALL:ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/willy-live
+chmod 440 /etc/sudoers.d/willy-live
+visudo -c -q -f /etc/sudoers.d/willy-live 2>/dev/null || rm -f /etc/sudoers.d/willy-live
+
+# Bajo consumo: swap en RAM (zram) y anti-congelacion (earlyoom) activos al arrancar.
+mkdir -p /etc/systemd/system/multi-user.target.wants
+for unit in zramswap earlyoom; do
+	if [ -f "/lib/systemd/system/$unit.service" ]; then
+		ln -sf "/lib/systemd/system/$unit.service" "/etc/systemd/system/multi-user.target.wants/$unit.service"
+	fi
+done
+
+# Firefox sin cache en disco: en la sesion live el USB es lento y se desgasta.
+for d in /usr/lib/firefox-esr/defaults/pref /usr/lib/firefox-esr/defaults/preferences; do
+	if [ -d "$d" ]; then
+		cat > "$d/99-willylinux.js" <<'EOF'
+// Willy Linux: la sesion live no deja el cache en el USB
+pref("browser.cache.disk.enable", false);
+EOF
+		break
+	fi
+done

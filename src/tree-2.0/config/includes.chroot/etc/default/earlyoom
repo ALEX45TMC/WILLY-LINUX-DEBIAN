@@ -1,0 +1,5 @@
+# Willy Linux: earlyoom evita que el equipo se congele cuando falta memoria.
+# -m/-s 8: actua cuando quedan menos del 8% de RAM o de swap libres.
+# --avoid: nunca cierra el escritorio ni el bloqueo. --prefer: cierra primero
+# el navegador y la ofimatica, que son los que mas memoria ocupan.
+EARLYOOM_ARGS="-m 8 -s 8 -r 3600 --avoid '(^|/)(Xorg|icewm|connmand|i3lock|systemd)$' --prefer '(^|/)(firefox|soffice.bin)$'"

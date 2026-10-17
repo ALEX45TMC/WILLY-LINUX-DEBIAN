@@ -1,0 +1,69 @@
+# Willy Linux 2.5: escritorio KDE Plasma 6.
+# Se lista todo a proposito: la compilacion usa --apt-recommends false, asi que
+# nada de lo que Plasma necesita para arrancar llega "de rebote".
+plasma-desktop
+plasma-workspace
+kwin-x11
+kwin-wayland
+kscreen
+powerdevil
+systemsettings
+kde-cli-tools
+kmenuedit
+kinfocenter
+milou
+kwrited
+ksshaskpass
+libpam-kwallet5
+kwallet6
+polkit-kde-agent-1
+accountsservice
+
+# Inicio de sesion grafico (en la sesion live entra solo con el usuario live)
+sddm
+sddm-theme-breeze
+kde-config-sddm
+
+# Aspecto: tema Breeze, iconos, cursores, sonidos y portales para apps Flatpak
+breeze
+breeze-gtk-theme
+breeze-icon-theme
+breeze-cursor-theme
+plasma-desktoptheme
+plasma-integration
+oxygen-sounds
+ocean-sound-theme
+kde-config-gtk-style
+kde-config-screenlocker
+xdg-desktop-portal
+xdg-desktop-portal-kde
+xdg-desktop-portal-gtk
+
+# Applets del panel: red, volumen, consumo, cortafuegos y discos
+plasma-nm
+plasma-pa
+plasma-systemmonitor
+plasma-widgets-addons
+plasma-firewall
+plasma-disks
+plasma-browser-integration
+
+# Programas de siempre del escritorio
+dolphin
+konsole
+kate
+gwenview
+okular
+ark
+kcalc
+kde-spectacle
+
+# Montaje de USB y discos, papeleras y carpetas del usuario
+udisks2
+kio-extras
+dbus-user-session
+xdg-utils
+xdg-user-dirs
+dolphin-plugins
+kdegraphics-thumbnailers
+ffmpegthumbs

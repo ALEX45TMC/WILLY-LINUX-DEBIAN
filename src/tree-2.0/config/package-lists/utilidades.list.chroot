@@ -1,0 +1,14 @@
+# Utilidades basicas que se esperan de cualquier Linux
+mc
+tree
+bc
+jq
+rsync
+file
+wget
+openssh-client
+lsof
+xclip
+tmux
+libarchive-tools
+imagemagick

@@ -1,0 +1,8 @@
+# Red: NetworkManager es lo que gestiona Plasma en el panel (wifi, cable y modulos 4G).
+network-manager
+network-manager-openvpn
+modemmanager
+wpasupplicant
+iw
+wireless-regdb
+avahi-daemon

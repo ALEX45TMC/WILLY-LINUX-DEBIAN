@@ -1,0 +1,581 @@
+#!/bin/sh
+# Willy Linux 2.5: herramientas propias (ajustes, monitor, informacion, captura).
+set -e
+
+BIN=/usr/local/bin
+
+# --- Resumen del equipo -------------------------------------------------------
+cat > "$BIN/willy-info" <<'EOF'
+#!/bin/sh
+# Resumen breve del equipo y de la sesion.
+c() { printf '  \033[01;36m%s\033[0m %s\n' "$1" "$2"; }
+[ -r /etc/os-release ] && . /etc/os-release
+c "Sistema  :" "$PRETTY_NAME"
+c "Nucleo   :" "$(uname -sr)"
+c "Equipo   :" "$(cat /sys/class/dmi/board_vendor 2>/dev/null) $(cat /sys/class/dmi/board_name 2>/dev/null)"
+c "CPU      :" "$(awk -F': *' '/model name/{print $2; exit}' /proc/cpuinfo)  ($(nproc) hilos)"
+c "RAM      :" "$(awk '/MemTotal/{t=$2} /MemAvailable/{a=$2} END{printf "%.0f MB libres de %.0f MB", a/1024, t/1024}' /proc/meminfo)"
+c "Swap     :" "$(swapon --show=NAME,TYPE,SIZE --noheadings 2>/dev/null | tr '\n' ' ')"
+c "Grafica  :" "$(lspci -mm 2>/dev/null | awk -F'"' '/VGA|3D controller|Display/{print $2; exit}')"
+c "Discos   :" "$(lsblk -dno NAME,SIZE,MODEL --exclude=loop,ram 2>/dev/null | tr '\n' ' ')"
+c "Red      :" "$(ip -brief -4 addr show scope global 2>/dev/null | awk '{printf "%s=%s  ", $1, $3}')"
+c "Pantalla :" "$(xrandr --query 2>/dev/null | awk '/\*/ {printf "%s  ", $1}')"
+c "Sesion   :" "KDE Plasma 6  ·  usuario $(id -un)  ·  contrasena: willy"
+c "Activo   :" "$(uptime -p 2>/dev/null | sed 's/^up //')"
+EOF
+
+# --- Panel de consumo en la terminal -----------------------------------------
+cat > "$BIN/willy-monitor" <<'EOF'
+#!/bin/sh
+# Panel de rendimiento: CPU, RAM, swap, red, discos, bateria y procesos.
+# Uso: willy-monitor [segundos entre refrescos]   (Ctrl+C para salir)
+PASO=${1:-2}
+barra() {
+	_p=$1; _f=$((_p * 24 / 100)); _i=0; _s=''
+	while [ "$_i" -lt 24 ]; do
+		[ "$_i" -lt "$_f" ] && _s="$_s#" || _s="$_s."
+		_i=$((_i + 1))
+	done
+	printf '%s' "$_s"
+}
+cpu_pct() {
+	_r1=$(awk '/^cpu /{print $2+$3+$4+$5+$6+$7+$8, $5}' /proc/stat)
+	sleep 1
+	_r2=$(awk '/^cpu /{print $2+$3+$4+$5+$6+$7+$8, $5}' /proc/stat)
+	set -- $_r1; _t1=$1; _i1=$2
+	set -- $_r2; _t2=$1; _i2=$2
+	_d=$(( _t2 - _t1 )); [ "$_d" -le 0 ] && { echo 0; return; }
+	echo $(( 100 - (_i2 - _i1) * 100 / _d ))
+}
+trap 'printf "\n"; exit 0' INT TERM
+while :; do
+	CPU=$(cpu_pct)
+	set -- $(awk '/MemTotal/{t=$2} /MemAvailable/{a=$2} END{printf "%d %d", (t-a)/1024, t/1024}' /proc/meminfo)
+	MB=$1; MT=$2; MP=$(( MB * 100 / (MT > 0 ? MT : 1) ))
+	set -- $(awk '/SwapTotal/{t=$2} /SwapFree/{f=$2} END{printf "%d %d", (t-f)/1024, t/1024}' /proc/meminfo)
+	SB=$1; ST=$2; SP=0; [ "$ST" -gt 0 ] && SP=$(( SB * 100 / ST ))
+	clear
+	printf '\033[01;36mWILLY LINUX 2.5.5  panel de consumo\033[0m   %s   activo: %s\n\n' "$(date '+%a %d/%m %H:%M')" "$(uptime -p | sed 's/^up //')"
+	printf '  CPU   [%s] %3d%%   carga %s   (%s nucleos)\n' "$(barra "$CPU")" "$CPU" "$(cut -d' ' -f1-3 /proc/loadavg)" "$(nproc)"
+	printf '  RAM   [%s] %3d%%   %s / %s MB\n' "$(barra "$MP")" "$MP" "$MB" "$MT"
+	printf '  SWAP  [%s] %3d%%   %s / %s MB\n\n' "$(barra "$SP")" "$SP" "$SB" "$ST"
+	printf '  \033[01;36mProcesos que mas memoria usan\033[0m\n'
+	ps -eo pmem,rss,pid,user,comm --sort=-rss | head -7 | tail -6 | awk '{printf "    %5s%%  %6.0f MB  %5s  %-10s %s\n", $1, $2/1024, $3, $4, $5}'
+	printf '\n  \033[01;36mRed y discos\033[0m\n'
+	ip -brief addr show scope global 2>/dev/null | awk '{printf "    %-8s %s\n", $1, $3}'
+	awk 'NR>2 && ($2>0||$10>0){printf "    %-8s rx %.1f MB  tx %.1f MB\n", substr($1,0,length($1)-1), $2/1048576, $10/1048576}' /proc/net/dev
+	df -hP / /media 2>/dev/null | tail -n +2 | awk '{printf "    %-22s %s de %s  (%s)\n", $6, $3, $2, $5}'
+	lsblk -rno NAME,SIZE,MOUNTPOINT 2>/dev/null | awk '$3 ~ /^\/media/ {printf "    USB: %-10s %s  %s\n", $1, $2, $3}'
+	printf '\n  \033[01;36mEnergia\033[0m\n'
+	acpi -b 2>/dev/null | sed 's/^/    /' || echo "    sin bateria"
+	acpi -t 2>/dev/null | sed 's/^/    /'
+	sensors 2>/dev/null | grep -Eo '^[^ ]+|\+[0-9.]+°C' | head -6 | tr '\n' ' ' | sed 's/^/    /; s/$/\n/'
+	printf '\n  Actualiza cada %ss · Ctrl+C para salir\n' "$PASO"
+done
+EOF
+
+# --- Captura de pantalla ------------------------------------------------------
+cat > "$BIN/willy-captura" <<'EOF'
+#!/bin/sh
+# Captura la pantalla a ~/Imagenes. Uso: willy-captura [-d segundos]
+RETARDO=0
+[ "$1" = "-d" ] && RETARDO=${2:-5}
+DIR=$(xdg-user-dir PICTURES 2>/dev/null || printf '%s' "$HOME")
+[ -d "$DIR" ] || DIR=$HOME
+ARCHIVO="$DIR/captura-$(date +%F-%H.%M.%S).png"
+[ "$RETARDO" -gt 0 ] && sleep "$RETARDO"
+# Plasma 6 arranca en Wayland y ahi scrot no ve la pantalla: spectacle es el que
+# funciona. scrot se deja como respaldo por si la sesion es X11 (la opcion
+# "Plasma (X11)" del menu de SDDM).
+if command -v spectacle >/dev/null 2>&1; then
+	spectacle -n -b -o "$ARCHIVO" >/dev/null 2>&1 && ok=1
+elif scrot "$ARCHIVO" >/dev/null 2>&1; then
+	ok=1
+fi
+if [ "${ok:-0}" = 1 ]; then
+	notify-send -t 2500 "Captura guardada" "$ARCHIVO" 2>/dev/null || true
+else
+	notify-send -t 2500 "Captura" "No se pudo capturar la pantalla" 2>/dev/null || true
+fi
+EOF
+
+# --- sudo que sabe pedir la clave ---------------------------------------------
+# En la sesion live el usuario live tiene sudo sin clave. Al instalar en disco esa
+# clave se quita a proposito, y ahi `sudo -n` falla: los asistentes se quedaban sin
+# permisos. Este envoltorio pide la contrasena una vez y la deja en el entorno del
+# programa que lo llamo; no se escribe en ningun archivo.
+cat > "$BIN/willy-sudo" <<'EOF'
+#!/bin/sh
+# willy-sudo --preparar -> imprime las lineas que el programa llamante pasa a eval
+# willy-sudo ORDEN      -> ejecuta ORDEN como root
+
+pon_comillas() { printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"; }
+
+preguntar_clave() {
+	i=0
+	while [ "$i" -lt 3 ]; do
+		i=$(( i + 1 ))
+		CLAVE=$(yad --title="Permiso de administrador" --center --width=440 --entry --hide-text \
+			--text="Willy Linux necesita permisos de administrador.\n\nContrasena de $(id -un):" \
+			--button="Seguir:0" --button="Cancelar:1" 2>/dev/null) || return 1
+		[ -n "$CLAVE" ] || continue
+		if printf '%s\n' "$CLAVE" | sudo -S -k -p '' true >/dev/null 2>&1; then
+			WILLY_SUDO_PW=$CLAVE
+			export WILLY_SUDO_PW
+			return 0
+		fi
+		yad --title="Permiso de administrador" --center --width=440 --error \
+			--text="Esa contrasena no es valida." --button="Cerrar:0" >/dev/null 2>&1 || true
+	done
+	return 1
+}
+
+mostrar() {
+	echo "WILLY_SUDO_PW=$(pon_comillas "$WILLY_SUDO_PW")"
+	echo 'export WILLY_SUDO_PW'
+	echo 'SUDO=/usr/local/bin/willy-sudo'
+}
+
+if [ "${1:-}" = "--preparar" ]; then
+	shift
+	if sudo -n true 2>/dev/null; then
+		echo 'SUDO="sudo -n"'
+		exit 0
+	fi
+	if [ -n "${WILLY_SUDO_PW:-}" ]; then
+		if printf '%s\n' "$WILLY_SUDO_PW" | sudo -S -p '' true >/dev/null 2>&1; then
+			mostrar
+			exit 0
+		fi
+		unset WILLY_SUDO_PW
+	fi
+	preguntar_clave || exit 1
+	mostrar
+	exit 0
+fi
+
+if [ -n "${WILLY_SUDO_PW:-}" ]; then
+	printf '%s\n' "$WILLY_SUDO_PW" | sudo -S -p '' "$@"
+	exit $?
+fi
+if [ -t 0 ] || sudo -n true 2>/dev/null; then
+	exec sudo "$@"
+fi
+yad --title="Permiso de administrador" --center --width=440 --error \
+	--text="Falta la contrasena de administrador." --button="Cerrar:0" >/dev/null 2>&1 || true
+exit 1
+EOF
+chmod 755 "$BIN/willy-sudo"
+
+# --- Panel de ajustes --------------------------------------------------------
+cat > "$BIN/willy-ajustes" <<'EOF'
+#!/bin/sh
+# Panel de ajustes de Willy Linux. En el sistema live no hay disco persistente:
+# los cambios afectan a la sesion en curso (y a las siguientes de este arranque).
+SUDO="sudo -n"
+PREP=$(willy-sudo --preparar) || exit 1
+eval "$PREP"
+YO=$(id -un)
+MODO=$(willy-guardado 2>/dev/null || echo volatil)
+case "$MODO" in
+	instalado) Aviso="Estas en el disco instalado: lo que cambies aqui se guarda para siempre." ;;
+	persistente) Aviso="USB con guardado activado: lo que cambies se conserva al apagar." ;;
+	*) Aviso="Sistema live sin guardado: los cambios solo duran esta sesion. Contrasena del usuario live: willy" ;;
+esac
+
+dialogo() {
+	# Las listas necesitan sitio de sobra: con 120 px solo se ven cuatro filas y
+	# el resto queda fuera sin barra de acceso. Los demas dialogos (aviso,
+	# entrada, formulario) se quedan cortitos.
+	case " $* " in *" --list "*) alto=420 ;; *) alto=120 ;; esac
+	yad --title="Ajustes de Willy Linux" --center --width=520 --height="$alto" "$@"
+}
+aviso() { dialogo --info --text="$1" --button="Aceptar:0" --timeout=12 >/dev/null 2>&1 || true; }
+
+teclado() {
+	distrib=$(dialogo --list --title="Teclado" --text="Distribucion del teclado" --column="Codigo" --column="Nombre" \
+		es "Espanol (teclas en blanco)" \
+		latam "Latinoamerica" \
+		pe "Peru" \
+		mx "Mexico" \
+		ar "Argentina" \
+		br "Portugues de Brasil" \
+		us "Estados Unidos" \
+		fr "Frances" \
+		de "Aleman" 2>/dev/null | cut -d'|' -f1)
+	[ -n "$distrib" ] || return 0
+	setxkbmap "$distrib" 2>/dev/null
+	$SUDO localectl set-x11-keyboard "$distrib" 2>/dev/null
+	# En Wayland Kwin no obedece ni a setxkbmap ni a /etc/X11/xorg.conf.d: el teclado
+	# real lo guarda el modulo de Plasma. Se abre para que se active ahi.
+	if [ "${XDG_SESSION_TYPE:-}" = wayland ]; then
+		aviso "Teclado: activa $distrib en el panel de Plasma que se abre (en Wayland setxkbmap no basta)."
+		plasma-open-settings kcm_keyboard >/dev/null 2>&1 || true
+	else
+		aviso "Teclado configurado como $distrib."
+	fi
+}
+
+zona() {
+	z=$(dialogo --list --title="Zona horaria" --text="Elige tu zona (escribe las primeras letras para filtrar)" \
+		--column="Zona" --search-column=1 $(timedatectl list-timezones 2>/dev/null) 2>/dev/null)
+	[ -n "$z" ] || return 0
+	$SUDO timedatectl set-timezone "$z" 2>/dev/null
+	aviso "Zona horaria: $z  ·  hora actual: $(date '+%H:%M %d/%m/%Y')"
+}
+
+reloj() {
+	op=$(dialogo --list --title="Reloj" --text="Hora y fecha" --column="Opcion" \
+		"Sincronizar por internet (NTP)" \
+		"Desactivar la sincronizacion" \
+		"Poner la hora a mano" 2>/dev/null)
+	case "$op" in
+	Sincronizar*) $SUDO timedatectl set-ntp true 2>/dev/null; aviso "Sincronizacion por internet activada." ;;
+	Desactivar*) $SUDO timedatectl set-ntp false 2>/dev/null; aviso "Sincronizacion por internet desactivada." ;;
+	Poner*)
+		val=$(dialogo --form --title="Fecha y hora" --text="Escribe fecha (aaaa-mm-dd) y hora (hh:mm)" \
+			--field="Fecha:" --field="Hora:" "$(date +%Y-%m-%d)" "$(date +%H:%M)" 2>/dev/null)
+		f=$(echo "$val" | cut -d'|' -f1); h=$(echo "$val" | cut -d'|' -f2)
+		[ -n "$f" ] && [ -n "$h" ] || return 0
+		$SUDO date -s "$f $h" 2>/dev/null && aviso "Hora ajustada a $f $h" || aviso "No se pudo ajustar la hora."
+		;;
+	esac
+}
+
+idioma() {
+	id=$(dialogo --list --title="Idioma" --text="Idioma del sistema (los menus ya estan en espanol)" \
+		--column="Idioma" $(locale -a 2>/dev/null | grep -E '^(es|en)') 2>/dev/null)
+	[ -n "$id" ] || return 0
+	$SUDO update-locale LANG="$id" 2>/dev/null
+	aviso "Idioma por defecto: $id (se vera en las siguientes sesiones de texto)."
+}
+
+clave() {
+	p1=$(dialogo --entry --hide-text --title="Contrasena" --text="Nueva contrasena del usuario <b>$YO</b>:" 2>/dev/null)
+	[ -n "$p1" ] || return 0
+	p2=$(dialogo --entry --hide-text --title="Contrasena" --text="Repite la contrasena:" 2>/dev/null)
+	[ "$p1" = "$p2" ] || { aviso "Las contrasenas no coinciden."; return 0; }
+	# Se usa el usuario que esta sesion, no "live" a mano: en el disco instalado el
+	# nombre puede haber cambiado con "Mi usuario".
+	if printf '%s:%s\n' "$YO" "$p1" | $SUDO chpasswd 2>/dev/null; then
+		aviso "Contrasena cambiada. Recuerdala: es la que pide el bloqueo de pantalla."
+	else
+		aviso "No se pudo cambiar la contrasena."
+	fi
+}
+
+nombre() {
+	n=$(dialogo --entry --title="Nombre del equipo" --text="Nombre actual: $(hostname). Escribe el nuevo nombre (sin espacios):" 2>/dev/null)
+	[ -n "$n" ] || return 0
+	$SUDO hostnamectl set-hostname "$n" 2>/dev/null
+	# /etc/hosts tiene una linea 127.0.1.1 con el nombre viejo; si se queda vieja,
+	# sudo y algunos programas tardan segundos en arrancar intentando resolverlo.
+	$SUDO sed -i "s|^127\.0\.1\.1.*|127.0.1.1 $n|" /etc/hosts 2>/dev/null || true
+	aviso "El equipo ahora se llama $n."
+}
+
+fondo() {
+	img=$(yad --title="Fondo de pantalla" --center --width=560 --height=300 \
+		--list --column="" --column="Fondo" --column="Como es" --hide-column=1 \
+		--text="Fondos incluidos en Willy Linux" \
+		"willylinux" "Willy Linux" "Lobo y luna sobre azul" \
+		"willytexto" "Willy con nombre" "Logo y nombre en pizarra" \
+		"willyagua" "Lobo en el agua" "Solo el logo, muy oscuro" \
+		"OTRA" "Otra imagen..." "Elegir un archivo del disco" 2>/dev/null | cut -d'|' -f1)
+	[ -n "$img" ] || return 0
+	if [ "$img" = OTRA ]; then
+		img=$(yad --title="Otra imagen" --center --file --browse \
+			--directory=/usr/share/backgrounds --file-filter="Imagenes | *.png *.jpg *.jpeg" 2>/dev/null | cut -d'|' -f1)
+	else
+		img=/usr/share/backgrounds/willylinux/$img.png
+	fi
+	[ -f "$img" ] || return 0
+	sitio=$(yad --title="Aplicar fondo" --center --width=520 --height=240 \
+		--list --column="" --column="Aplicar en" --hide-column=1 \
+		--text="$img" \
+		"1" "Escritorio y pantalla de bloqueo" \
+		"2" "Solo el escritorio" \
+		"3" "Solo la pantalla de bloqueo" 2>/dev/null | cut -d'|' -f1)
+	case "$sitio" in
+	1|2)
+		mkdir -p "$HOME/.config/willylinux"
+		printf '%s\n' "$img" > "$HOME/.config/willylinux/escritorio"
+		# Herramienta oficial de Plasma 6: escribe la disposicion por D-Bus,
+		# asi que no hay que adivinar el id del contenedor.
+		plasma-apply-wallpaperimage "$img" >/dev/null 2>&1 || true
+		;;
+	esac
+	case "$sitio" in
+	1|3)
+		mkdir -p "$HOME/.config/willylinux"
+		printf '%s\n' "$img" > "$HOME/.config/willylinux/bloqueo"
+		cat > "$HOME/.config/kscreenlockerrc" <<KEEPC
+[Greeter]
+Theme=breeze
+WallpaperPlugin=org.kde.image
+
+[Greeter][Wallpaper][org.kde.image][General]
+Image=$img
+FillMode=2
+KEEPC
+		# El fondo del bloqueo se ve desde el siguiente bloqueo: kscreenlocker
+		# lee su configuracion al montar la pantalla, no en caliente.
+		notify-send -i preferences-desktop-display \
+			"Willy Linux" "Fondo de bloqueo aplicado al proximo bloqueo." 2>/dev/null || true
+		;;
+	esac
+}
+
+energia() {
+	op=$(dialogo --list --title="Energia" --text="Perfil de consumo del equipo" --column="Opcion" \
+		"Ver el perfil actual" "Poner ahorro de energia" "Poner equilibrado" \
+		"Poner maximo rendimiento" "Ver la bateria" 2>/dev/null)
+	case "$op" in
+	"Ver el perfil"*) aviso "Perfil actual: $(powerprofilesctl get 2>/dev/null)" ;;
+	"Poner ahorro"*) $SUDO powerprofilesctl set power-saver 2>/dev/null || true ;;
+	"Poner equilibrado"*) $SUDO powerprofilesctl set balanced 2>/dev/null || true ;;
+	"Poner maximo"*) $SUDO powerprofilesctl set performance 2>/dev/null || true ;;
+	"Ver la bateria"*) aviso "$(acpi -b 2>/dev/null || echo 'Este equipo no tiene bateria.')" ;;
+	esac
+}
+
+# La bóveda no tiene orden: la gestionan el complemento "Bóvedas" de Plasma y el
+# clic derecho de Dolphin (plasma-vault instala esa accion y el modulo de kded).
+boveda() {
+	op=$(dialogo --list --title="Boveda" --width=620 --height=360 --column="Hacer" \
+		"Crear una carpeta acorazada" "Abrir o cerrar mis bóvedas" \
+		"Gestor de contrasenas (KeePassXC)" "Copias de seguridad (Back In Time)" 2>/dev/null)
+	case "$op" in
+	"Crear una carpeta"*)
+		setsid dolphin "$HOME" >/dev/null 2>&1 &
+		aviso "En Dolphin: clic derecho sobre una carpeta > 'Add to Plasma Vault'.\nPide una contrasena y esa carpeta queda cifrada: solo se ve mientras la tienes abierta."
+		;;
+	"Abrir o cerrar"*)
+		aviso "Clic derecho en el escritorio > <b>Elementos del escritorio > Bóvedas</b>: ahi aparecen tus carpetas con su boton de abrir y cerrar.\nAl cerrar, el contenido vuelve a quedar ilegible."
+		;;
+	"Gestor de contrasenas"*) setsid keepassxc >/dev/null 2>&1 & ;;
+	"Copias de seguridad"*) setsid backintime-qt >/dev/null 2>&1 & ;;
+	esac
+}
+
+acerca() {
+	. /etc/os-release
+	aviso "$PRETTY_NAME
+Base Debian 13 trixie · kernel $(uname -r)
+RAM: $(free -h | awk '/Mem/{print $2}') · swap en RAM (zram) y earlyoom activos
+Herramientas: willy-info · willy-monitor · willy-captura · willy-red · willy-lock
+Contrasena del usuario live: willy"
+}
+
+while :; do
+	sel=$(yad --title="Ajustes de Willy Linux" --center --width=640 --height=560 \
+		--list --column="" --column="Ajuste" --column="Que puedes cambiar" --hide-column=1 \
+		--text="Panel de ajustes de Willy Linux
+
+$Aviso" --button="Salir:1" --button="Aplicar:0" \
+		"1" "Teclado" "Distribucion de las teclas" \
+		"2" "Zona horaria" "Pais y ciudad para la hora" \
+		"3" "Reloj" "NTP o poner la hora a mano" \
+		"4" "Idioma" "espanol, ingles y otros" \
+		"5" "Contrasena" "Cambiar la del usuario live" \
+		"6" "Nombre del equipo" "Como aparece en la red" \
+		"7" "Apariencia y pantallas" "Temas, iconos, escalado y resolucion" \
+		"8" "Fondo de pantalla" "Escritorio y pantalla de bloqueo" \
+		"9" "Tienda de aplicaciones" "Instalar o quitar programas (Discover)" \
+		"10" "Energia" "Perfil de consumo y estado de la bateria" \
+		"11" "Administrador de tareas" "Ver y cerrar procesos" \
+		"12" "Boveda" "Carpetas cifradas con contrasena" \
+		"13" "Acerca de" "Version y datos del sistema" \
+		"14" "Mi usuario" "Contrasena y nombres, y si se guardan" \
+		"15" "Guardar en el USB" "Que mis cambios duren al apagar" \
+		"16" "Comprobar la red" "Si falla el internet o el programa" 2>/dev/null | cut -d'|' -f1)
+	[ -n "$sel" ] || exit 0
+	case "$sel" in
+	1) teclado ;;
+	2) zona ;;
+	3) reloj ;;
+	4) idioma ;;
+	5) clave ;;
+	6) nombre ;;
+	7) setsid systemsettings >/dev/null 2>&1 & ;;
+	8) fondo ;;
+	9) setsid plasma-discover >/dev/null 2>&1 & ;;
+	10) energia ;;
+	11) setsid plasma-systemmonitor >/dev/null 2>&1 & ;;
+	12) boveda ;;
+	13) acerca ;;
+	14) willy-identidad ;;
+	15) willy-persistencia ;;
+	16) setsid konsole -e willy-red >/dev/null 2>&1 & ;;
+	esac
+done
+EOF
+
+# --- Totales de red (los usa el widget de consumo del escritorio) -------------
+cat > "$BIN/willy-trafico" <<'EOF'
+#!/bin/sh
+# Suma el trafico acumulado de todas las interfaces.
+awk 'NR>2 {rx += $2; tx += $10} END {printf "rx %.1f MB  tx %.1f MB", rx/1048576, tx/1048576}' /proc/net/dev
+EOF
+
+# --- Diagnostico de red -------------------------------------------------------
+cat > "$BIN/willy-red" <<'EOF'
+#!/bin/sh
+# Willy Linux: responde a "es el internet o es la aplicacion".
+# Mide perdida, retardo, temblor, DNS y velocidad real, y mira si el navegador
+# tiene decodificacion de video por GPU.  Uso: willy-red [rapido]
+RAPIDO=""
+[ "${1:-}" = rapido ] && RAPIDO=x
+N=25			# paquetes de prueba (con -i 0.2 son unos 5 s)
+[ -n "$RAPIDO" ] && N=8
+
+b() { printf '  \033[01;32m%s\033[0m\n' "$*"; }
+n() { printf '  \033[01;33m%s\033[0m\n' "$*"; }
+m() { printf '  \033[01;31m%s\033[0m\n' "$*"; }
+
+echo
+printf '\033[01mDiagnostico de red\033[0m\n\n'
+
+IF=$(ip -o -4 route show default 2>/dev/null | awk '{print $5; exit}')
+GW=$(ip -o -4 route show default 2>/dev/null | awk '{print $3; exit}')
+if [ -z "$IF" ]; then
+	m "Sin conexion: no hay ninguna ruta por defecto (wifi o cable caido)."
+	exit 1
+fi
+printf '  Interfaz : %s  ·  puerta %s\n\n' "$IF" "$GW"
+
+# ping deja en P "<perdida> <avg> <mdev>"; -W 2 para no colgarse con un host muerto.
+P="100 0 0"
+pingar() {
+	sal=$(ping -c "$N" -i 0.2 -W 2 "$1" 2>&1)
+	case "$sal" in *"missing cap"*|*"Operation not permitted"*)
+		m "ping no tiene permisos: arranca de nuevo o pide sudo." ; return ;;
+	esac
+	P=$(printf '%s\n' "$sal" | awk '
+		/packet loss/ {gsub(/%/, "", $6); p = $6}
+		/mdev/ {split($4, a, "/"); printf "%s %s %s", p, a[2], a[4]}')
+	[ -n "$P" ] || P="100 0 0"
+}
+
+# --- el camino local (wifi/cable) y el camino a Internet ----------------------
+pingar "$GW"
+lectura=$(printf '%s' "$P" | awk '{printf "%.0f %s %.2f", $1, $2, $3}')
+set -- $lectura
+if [ "$1" -gt 10 ]; then m "Puerta   : $1% de perdida (el wifi o el cable fallan)"
+elif [ "$3" ] && [ "$(printf '%s' "$3" | awk '{print ($1>60)?1:0}')" = 1 ]; then
+	n "Puerta : ok pero con temblor de $3 ms (wifi saturado o interferencia)"
+else b "Puerta : 0% perdida, $2 ms"; fi
+PERD_LOCAL=$1
+
+pingar 1.1.1.1
+set -- $(printf '%s' "$P" | awk '{printf "%.0f %s %.2f", $1, $2, $3}')
+PERD_EX=$1; RETARDO=$2; TEMBLOR=$3
+if [ "$PERD_EX" -gt 10 ]; then m "Internet : $PERD_EX% de perdida hasta 1.1.1.1"
+elif [ "$PERD_EX" -gt 2 ]; then n "Internet : $PERD_EX% de perdida, $RETARDO ms  (corte intermitente)"
+else b "Internet : $PERD_EX% perdida, $RETARDO ms, temblor $TEMBLOR ms"; fi
+
+# --- DNS: una pagina puede abrirse y el video no si el nombre tarda o falla ---
+for h in deb.debian.org dl.flathub.org www.google.com; do
+	t0=$(date +%s%N)
+	dir=$(getent ahostsv4 "$h" 2>/dev/null | awk '{print $1; exit}')
+	t1=$(date +%s%N)
+	ms=$(printf '%s' "$(( t1 - t0 ))" | awk '{printf "%.0f", $1/1000000}')
+	if [ -z "$dir" ]; then m "DNS      : $h NO RESUELVE"
+	elif [ "$ms" -gt 400 ]; then n "DNS      : $h en ${ms} ms (lento)"
+	else b "DNS      : $h -> $dir en ${ms} ms"; fi
+done
+
+# --- velocidad real: lo que necesita el video, no lo que promete el test ------
+VELOC=""
+for u in https://dl.flathub.org/repo/appstream/x86_64/appstream.xml.gz \
+	 https://speed.cloudflare.com/__down?bytes=25000000; do
+	r=$(curl -sL -o /dev/null --max-time 25 -w '%{http_code} %{speed_download}' "$u" 2>/dev/null)
+	set -- $r
+	[ "$1" = 200 ] || continue
+	VELOC=$(printf '%s' "${2:-0}" | awk '{printf "%.1f", $1/1048576}')
+	break
+done
+if [ -z "$VELOC" ]; then n "Velocidad: no pude descargar nada para medirla"
+elif [ "$(printf '%s' "$VELOC" | awk '{print ($1<1)?1:0}')" = 1 ]; then
+	m "Velocidad: $VELOC MB/s  (un video HD pide ~0.6 MB/s sostenidos)"
+else b "Velocidad: $VELOC MB/s de descarga real por HTTPS"; fi
+
+# --- el otro lado: si la red esta bien, el problema esta en quien reproduce ----
+echo
+printf '\033[01mReproductor\033[0m\n\n'
+if command -v vainfo >/dev/null 2>&1; then
+	drv=$(vainfo --display drm 2>&1 | awk -F': ' '/Driver version/{print $2; exit}')
+	if [ -n "$drv" ]; then
+		b "GPU      : decodifica video por hardware ($drv)"
+		n "           si aun asi va lento, en about:config pon   media.ffmpeg.vaapi.enabled = true"
+	else
+		m "GPU      : sin controlador VA-API: TODO el video se decodifica en el procesador"
+	fi
+else
+	n "GPU      : falta vainfo para comprobar la decodificacion por hardware"
+fi
+case "$(ls /usr/lib/firefox-esr/gmp-clearkey 2>/dev/null)" in "") ;; *)
+	n "DRM      : Firefox solo trae ClearKey. Netflix, Disney+, Prime Video y Max"
+	n "           necesitan Widevine, que no existe en los repositorios de Debian."
+	n "           Para esos sitios instala Chromium desde Discover." ;;
+esac
+
+# --- veredicto -----------------------------------------------------------------
+echo
+MAL=""
+[ "$PERD_LOCAL" -gt 10 ] && MAL="el wifi o el cable"
+[ "$PERD_EX" -gt 5 ] && MAL="$MAL la salida a Internet"
+[ -n "$TEMBLOR" ] && [ "$(printf '%s' "$TEMBLOR" | awk '{print ($1>60)?1:0}')" = 1 ] && \
+	MAL="$MAL el temblor ($TEMBLOR ms)"
+if [ -n "$MAL" ]; then
+	printf '  \033[01;31mVeredicto:\033[0m la red esta inestable (%s).\n' "$MAL"
+	printf '  Prueba cerca del router o con cable antes de tocar nada mas.\n'
+elif [ -n "$VELOC" ] && [ "$(printf '%s' "$VELOC" | awk '{print ($1<1)?1:0}')" = 1 ]; then
+	printf '  \033[01;33mVeredicto:\033[0m el enlace va justo (%s MB/s).\n' "$VELOC"
+else
+	printf '  \033[01;32mVeredicto:\033[0m la red esta bien.\n'
+	printf '  Si un video no arranca, la causa esta en el navegador o en la pagina,\n'
+	printf '  no en el internet. Mira arriba la linea GPU y la linea DRM.\n'
+fi
+echo
+EOF
+
+chmod 755 "$BIN/willy-info" "$BIN/willy-monitor" \
+	"$BIN/willy-captura" "$BIN/willy-ajustes" "$BIN/willy-trafico" \
+	"$BIN/willy-red"
+
+# Acceso desde Dolphin y desde el menu de aplicaciones de Plasma.
+cat > /usr/share/applications/willy-ajustes.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Ajustes de Willy Linux
+Name[es]=Ajustes de Willy Linux
+Comment=Teclado, hora, idioma, contrasena, fondo y energia
+Exec=willy-ajustes
+Icon=preferences-desktop
+Terminal=false
+Categories=Settings;
+EOF
+
+cat > /usr/share/applications/willy-monitor.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Panel de consumo
+Comment=CPU, RAM, red, discos y bateria en la terminal
+Exec=konsole -e willy-monitor
+Icon=utilities-system-monitor
+Terminal=false
+Categories=System;
+EOF
+
+cat > /usr/share/applications/willy-red.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Comprobar la red
+Name[es]=Comprobar la red
+Comment=Saber si el fallo es del internet o del programa
+Exec=konsole -e willy-red
+Icon=network-server
+Terminal=false
+Categories=System;Network;
+EOF
