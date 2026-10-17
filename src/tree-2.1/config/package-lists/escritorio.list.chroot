@@ -1,0 +1,31 @@
+icewm
+pcmanfm
+lxpolkit
+dbus-user-session
+gvfs
+gvfs-backends
+udisks2
+xdg-utils
+xdg-user-dirs
+adwaita-icon-theme
+
+lxterminal
+mousepad
+mupdf
+feh
+galculator
+xarchiver
+unzip
+zip
+7zip
+alsa-utils
+# Vienen como Recommends de alsa-utils y con --apt-recommends false se quedaban
+# fuera: sin ucm2/tplg muchos codigos de portatil no crean ni un perfil de
+# salida, asi que el Mezclador muestra barras que no suben ni bajan.
+alsa-ucm-conf
+alsa-topology-conf
+volumeicon-alsa
+netsurf-gtk
+htop
+i3lock
+xss-lock

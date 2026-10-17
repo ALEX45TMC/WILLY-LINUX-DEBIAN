@@ -218,7 +218,8 @@ docs/
   licencia.md             código abierto, licencias y marcas
 img/                      logo, fondos y capturas reales
 src/tree-2.5/             configuración completa de la edición 2.5 / 2.5.5
-src/tree-2.0/             configuración completa de las ediciones ligeras
+src/tree-2.1/             configuración completa de la 2.1 (IceWM con instalador)
+src/tree-2.0/             configuración completa de la 2.0 (IceWM sin instalador)
 ```
 
 Los árboles `src/` son la fuente real de la imagen: `auto/config` (opciones de `lb config`),

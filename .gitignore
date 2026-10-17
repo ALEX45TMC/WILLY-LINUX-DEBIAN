@@ -18,3 +18,7 @@ binary/
 cache/
 .build/
 *.log
+
+# Copias de seguridad que crean los guiones de mantenimiento al tocar un fichero
+*.bak
+*.bak-*

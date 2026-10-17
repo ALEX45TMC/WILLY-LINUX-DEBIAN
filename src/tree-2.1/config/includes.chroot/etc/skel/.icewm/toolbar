@@ -1,0 +1,11 @@
+# Barra de tareas: solo lo de uso diario; el resto esta en el menu de inicio.
+prog "Terminal" lxterminal lxterminal
+prog "Archivos" folder pcmanfm
+prog "Firefox" firefox-esr firefox-esr
+prog "Office" libreoffice-writer {
+	prog "Writer" libreoffice-writer libreoffice --writer
+	prog "Calc" libreoffice-calc libreoffice --calc
+	prog "Impress" libreoffice-impress libreoffice --impress
+}
+prog "Ajustes" preferences-desktop-apps-symbolic willy-ajustes
+prog "Bloquear pantalla" system-lock-screen-symbolic willy-lock

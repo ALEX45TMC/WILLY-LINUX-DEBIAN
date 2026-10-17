@@ -1,0 +1,13 @@
+key "Ctrl+Alt+t" lxterminal
+key "Ctrl+Alt+f" firefox-esr
+key "Ctrl+Alt+n" netsurf-gtk
+key "Ctrl+Alt+e" pcmanfm
+key "Ctrl+Alt+w" libreoffice --writer
+key "Ctrl+Alt+c" libreoffice --calc
+key "Ctrl+Alt+p" libreoffice --impress
+key "Ctrl+Alt+l" willy-lock
+key "Ctrl+Alt+g" /usr/games/xmahjongg
+key "Ctrl+Alt+a" willy-ajustes
+key "Ctrl+Alt+m" willy-monitor-conky
+key "Print" willy-captura
+key "Shift+Print" willy-captura -d 5

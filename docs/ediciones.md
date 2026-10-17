@@ -64,10 +64,26 @@ Quedó **congelada a propósito con dos defectos** que solo se arreglaron en la 
 2. `mousepad.desktop` mal referenciado en `mimeapps.list`.
 
 El usuario mandó no recompilarla («si no es mucho problema déjalo así, concéntrate en la
-2.1»), así que se conserva como referencia. **Su ISO ya no existe en disco**: la carpeta
-`Escritorio/Willy Linux 2.0` se borró para liberar espacio y solo quedan su `.sha256` en `out/`
-y su árbol de configuración (`src/tree-2.0/` en este repositorio). Si se vuelve a pedir, hay
-que recompilarla.
+2.1»), así que se conservó como referencia. De esa 2.0 **sí quedaba la ISO** en
+`E:\WILLIAM\Willy Linux 2.0\` (1.102.970.880 B); lo que se borró para liberar espacio fue la
+carpeta `Escritorio\Willy Linux 2.0`, de la que solo quedaron el `.sha256` en `out/` y el árbol
+de configuración (`src/tree-2.0/` en este repositorio).
+
+El 17-10 se recompiló igualmente, porque los seis arreglos de la ronda final (VA-API,
+`alsa-ucm-conf`/`topology`, `ping` sin root, `willy-red` y su entrada en el menú, alturas del
+asistente) también le servían. **Aclaración importante sobre el instalador:** la 2.0 nunca tuvo
+`willy-instalar`; esa función es propia de la 2.1 y de la 2.5. Por tanto el defecto de
+`grub-install` descubierto el 14-10 **no aplica a la 2.0**: si alguien la copia a un disco con
+otra herramienta, ese disco tampoco arrancará, pero no es un fallo de la edición, es que la 2.0
+se diseñó como sistema live. Su Release dice expresamente «sin instalador a disco».
+
+- ISO: `willylinux-v2.0-minimalista-amd64.iso`, 1.110.900.736 B, SHA-256
+  `eadfb2157f83f1232e2bb58dc152d11b694fbf8c0540c54fe5fc6b1f0b25de02` (construcción del 17-10 a
+  las 14:37, 896 paquetes).
+- En esa construcción seguía quedando el defecto 2 (`mimeapps.list` referenciaba
+  `mousepad.desktop`, cuando el lanzador real de trixie es `org.xfce.mousepad.desktop`); se
+  corrigió en el árbol y se volvió a compilar el mismo día. La Release `v2.0` lleva la ISO ya
+  corregida, y su `.sha256` es el que figura arriba una vez entregada.
 
 ## 2.1 Minimalista — la ligera que se instala
 

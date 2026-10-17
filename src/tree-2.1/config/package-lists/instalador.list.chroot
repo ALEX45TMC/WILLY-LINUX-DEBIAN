@@ -1,0 +1,19 @@
+# Lo que necesita el instalador al disco (willy-instalar).
+# Los paquetes -bin llevan los modulos de GRUB. Ademas hacen falta:
+#   grub2-common  -> la orden grub-install (sin ella el disco queda sin cargador)
+#   grub-pc       -> grub-bios-setup, que es quien escribe el arranque en modo BIOS
+# Se probo en el chroot ya compilado: con DEBIAN_FRONTEND=noninteractive ninguno de
+# los dos pregunta nada ni interfiere con la compilacion.
+# grub-efi-amd64 a proposito fuera: excluye a grub-pc y solo trae scripts (la parte
+# UEFI la resuelve grub-install con los modulos de grub-efi-amd64-bin y efibootmgr).
+grub-pc-bin
+grub-efi-amd64-bin
+grub-common
+grub2-common
+grub-pc
+os-prober
+efibootmgr
+parted
+gdisk
+e2fsprogs
+xdg-user-dirs

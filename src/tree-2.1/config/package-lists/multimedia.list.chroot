@@ -1,0 +1,20 @@
+# Sonido, video e imagenes: un reproductor que reproduce de todo + fuentes completas
+mpv
+ffmpeg
+mtpaint
+xfburn
+fonts-noto-core
+fonts-noto-color-emoji
+
+# Decodificacion de video por GPU (VA-API). Firefox y mpv solo la usan si hay un
+# controlador; libva2 entra solo como dependencia de gstreamer1.0-vaapi, pero los
+# controladores van en paquetes Recommends y con --apt-recommends false se
+# quedaban fuera: sin ellos TODO el video se decodifica en el procesador y un
+# 1080p60 se atraganta. i965 para Intel viejas, intel-media para Broadwell en
+# adelante, mesa-va para AMD, va-driver-all pone el despachador y vainfo lo ve.
+mesa-va-drivers
+mesa-vdpau-drivers
+i965-va-driver
+intel-media-va-driver
+va-driver-all
+vainfo

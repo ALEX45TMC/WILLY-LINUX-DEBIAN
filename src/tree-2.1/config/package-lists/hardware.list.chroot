@@ -1,0 +1,8 @@
+xserver-xorg-video-all
+ntfs-3g
+exfatprogs
+dosfstools
+mtools
+usbutils
+pciutils
+dmidecode

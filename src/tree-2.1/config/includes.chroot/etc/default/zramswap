@@ -1,0 +1,5 @@
+# Willy Linux: swap comprimido en RAM (ayuda mucho con 2-4 GB de memoria).
+# lz4 es la opcion mas rapida; en equipos debiles importa la velocidad, no la compresion.
+ALGO=lz4
+PERCENT=30
+PRIORITY=100

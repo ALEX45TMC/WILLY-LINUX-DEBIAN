@@ -1,0 +1,33 @@
+#!/bin/sh
+set -e
+
+# Menu de arranque BIOS (isolinux): textos en espanol y color corporativo.
+for f in isolinux/*.cfg; do
+	[ -f "$f" ] || continue
+	sed -i \
+		-e 's/^timeout 0$/timeout 50/' \
+		-e 's/Live system/Willy Linux 2.1/g' \
+		-e 's/fail-safe mode/modo seguro/g' \
+		-e 's/^menu title .*/menu title WILLY LINUX 2.1/' \
+		-e 's/^menu tabmsg .*/menu tabmsg ENTER arranca  TAB edita  F1 ayuda/' \
+		-e 's/76a1d0/3d8c7a/g' \
+		"$f"
+done
+
+# Menu EFI (GRUB): mismos nombres y espera corta.
+for f in boot/grub/*.cfg; do
+	[ -f "$f" ] || continue
+	sed -i -e 's/Live system/Willy Linux 2.1/g' -e 's/fail-safe mode/modo seguro/g' "$f"
+done
+
+if [ -f boot/grub/config.cfg ]; then
+	# Delimitador | porque los colores de GRUB llevan / (ej. light-gray/black).
+	sed -i -e 's|^set default=0$|set default=0\nset timeout=5|' \
+		-e 's|^set menu_color_normal=.*|set menu_color_normal=light-gray/black|' \
+		-e 's|^set menu_color_highlight=.*|set menu_color_highlight=white/black|' \
+		boot/grub/config.cfg
+fi
+
+if [ -f boot/grub/live-theme/theme.txt ]; then
+	sed -i 's/^title-text:.*/title-text: ""/' boot/grub/live-theme/theme.txt
+fi

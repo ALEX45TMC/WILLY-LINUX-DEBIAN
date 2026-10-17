@@ -1,0 +1,69 @@
+#!/bin/sh
+set -e
+
+dpkg-divert --quiet --local --rename --add /usr/lib/os-release
+cat > /usr/lib/os-release <<'EOF'
+PRETTY_NAME="Willy Linux 2.1 Minimalista"
+NAME="Willy Linux"
+VERSION_ID="2.1"
+VERSION="2.1 Minimalista (basado en Debian 13 trixie)"
+VERSION_CODENAME=trixie
+ID=willylinux
+ID_LIKE=debian
+EOF
+ln -sf ../usr/lib/os-release /etc/os-release
+
+printf 'Willy Linux 2.1 Minimalista \\n \\l\n\n' > /etc/issue
+printf 'Willy Linux 2.1 Minimalista\n' > /etc/issue.net
+: > /etc/motd
+
+# Pantalla de bloqueo: envoltorio unico para i3lock (lo usan xss-lock y el menu).
+# El fondo es el logo de Willy Linux oscurecido y recortado al tamano de pantalla,
+# porque i3lock no escala la imagen: si no encaja justo, la repite en mosaico.
+cat > /usr/local/bin/willy-lock <<'EOF'
+#!/bin/sh
+# Willy Linux: bloquea la pantalla. Contrasena del usuario live: willy
+FONDO=/usr/share/backgrounds/willylinux/willylinux.png
+IMG="/tmp/willy-lock-$(id -u).png"
+PANTALLA=$(xrandr --query 2>/dev/null | awk '/\*/ {print $1; exit}')
+if [ -n "$PANTALLA" ] && [ -f "$FONDO" ] && command -v ffmpeg >/dev/null 2>&1; then
+	ANCHO=${PANTALLA%x*}; ALTO=${PANTALLA#*x}
+	if ffmpeg -loglevel error -y -i "$FONDO" \
+		-vf "scale=${ANCHO}:${ALTO}:force_original_aspect_ratio=increase,crop=${ANCHO}:${ALTO},eq=brightness=-0.20:saturation=0.8" \
+		"$IMG" 2>/dev/null; then
+		exec i3lock --nofork --image="$IMG" --ignore-empty-password \
+			--show-failed-attempts --show-keyboard-layout "$@"
+	fi
+fi
+exec i3lock --nofork --color=0a1517 --ignore-empty-password \
+	--show-failed-attempts --show-keyboard-layout "$@"
+EOF
+chmod 755 /usr/local/bin/willy-lock
+
+# El usuario live no tiene contrasena; sudo sin clave permite fijarsela al arrancar
+# (lo hace .xinitrc) para que i3lock se pueda desbloquear.
+printf 'live ALL=(ALL:ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/willy-live
+chmod 440 /etc/sudoers.d/willy-live
+visudo -c -q -f /etc/sudoers.d/willy-live 2>/dev/null || rm -f /etc/sudoers.d/willy-live
+
+# Bajo consumo: swap en RAM (zram) y anti-congelacion (earlyoom) activos al arrancar.
+mkdir -p /etc/systemd/system/multi-user.target.wants
+for unit in zramswap earlyoom; do
+	if [ -f "/lib/systemd/system/$unit.service" ]; then
+		ln -sf "/lib/systemd/system/$unit.service" "/etc/systemd/system/multi-user.target.wants/$unit.service"
+	fi
+done
+
+# Firefox con menos procesos de contenido y sin cache en disco: menor uso de RAM y de USB.
+for d in /usr/lib/firefox-esr/defaults/pref /usr/lib/firefox-esr/defaults/preferences; do
+	if [ -d "$d" ]; then
+		cat > "$d/99-willylinux.js" <<'EOF'
+// Willy Linux: ajuste para equipos poco potentes
+pref("dom.ipc.processCount", 2);
+pref("browser.sessionhistory.max_total_viewers", 0);
+pref("browser.cache.disk.enable", false);
+pref("toolkit.cosmeticAnimations.enabled", false);
+EOF
+		break
+	fi
+done
