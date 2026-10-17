@@ -140,7 +140,8 @@ en vivo como instalado.
 | | ISO | squashfs | Sistema descomprimido |
 |---|---|---|---|
 | 2.5 / 2.5.5 | 1.849.540.608 B (1763 MB) | ~1,7 GB | ~4,1 GB |
-| 2.1 | 1.134.166.016 B (1081 MB) | ~1,0 GB | ~2,5 GB |
+| 2.1 | 1.142.931.456 B (1089 MB) | ~1,0 GB | ~2,6 GB |
+| 2.0 | 1.110.900.736 B (1059 MB) | ~1,0 GB | ~2,4 GB |
 
 El tope de cada edición se comprueba al final del build (`scripts/check-size.sh`); hay que
 actualizarlo si se cambia el tope.

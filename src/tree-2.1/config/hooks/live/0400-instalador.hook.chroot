@@ -52,7 +52,9 @@ MEDIO=$(lsblk -dno PKNAME "$MEDIO_DEV" 2>/dev/null | tr -d ' ')
 DISCS=""
 for d in $(lsblk -dno NAME,TYPE | awk '$2=="disk"{print $1}'); do
 	[ "/dev/$d" = "$MEDIO" ] && continue
-	case "$d" in loop*|ram*) continue ;; esac
+	# zram sale como TYPE=disk en lsblk y es RAM comprimida: instalar ahi no deja
+	# sistema en ninguna parte y borrar la sesion en marcha. fd son disquetes.
+	case "$d" in loop*|ram*|zram*|fd*) continue ;; esac
 	[ "$(lsblk -dno RM "/dev/$d" 2>/dev/null | tr -d ' ')" = "1" ] && continue
 	DISCS="$DISCS /dev/$d"
 done
@@ -88,11 +90,24 @@ ESQ=$(yad --title="Instalar Willy Linux" --center --width=560 --list --hide-colu
 [ -n "$ESQ" ] || exit 1
 
 RAMKI=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)
-GBTOTAL=$(( $(lsblk -bdno SIZE "$DISK") / 1000000000 ))
+DISKB=$(lsblk -bdno SIZE "$DISK")
+GBTOTAL=$(( DISKB / 1000000000 ))
 SWAPSI="0"
 if [ "${RAMKI:-9999}" -lt 4096 ] && [ "$GBTOTAL" -ge 10 ]; then SWAPSI="2"; fi
-FINRAIZ="100%"
-[ "$SWAPSI" != "0" ] && FINRAIZ="-${SWAPSI}GiB"
+# parted NO acepta el tamano negativo "-2GiB" que significa "hasta el final": getopt se
+# lo come como opciones ("opcion invalida -- '2'") y el particionado aborta. Se calcula
+# en bytes absolutos, que es lo unico que parted entiende siempre.
+# El final de la raiz se deja por delante del arranque del swap: parted trata el byte
+# final como incluido, y si coinciden da "the closest location we can manage".
+# Redondear a GiB enteros mantiene el swap alineado a 2048 sectores (avisa si no).
+GIB=$(( 1024 * 1024 * 1024 ))
+if [ "$SWAPSI" = "0" ]; then
+	FINRAIZ="100%"
+	INISWAP=""
+else
+	INISWAP=$(( (DISKB / GIB - SWAPSI) * GIB ))
+	FINRAIZ="$(( INISWAP - 512 ))B"
+fi
 
 RAIZ="" EFI="" SWAP=""
 if [ "$MODO" = uefi ]; then NUMRAIZ=2; else NUMRAIZ=1; fi
@@ -112,7 +127,7 @@ preparar() {
 		$SUDO parted -s "$DISK" set 1 boot on >>"$LOG" 2>&1
 	fi
 	if [ "$SWAPSI" != "0" ]; then
-		$SUDO parted -s "$DISK" mkpart WillySwap linux-swap "-${SWAPSI}GiB" 100% >>"$LOG" 2>&1
+		$SUDO parted -s "$DISK" mkpart WillySwap linux-swap "${INISWAP}B" 100% >>"$LOG" 2>&1 || return 1
 		SWAP="${DISK}${SUF}$(( NUMRAIZ + 1 ))"
 	fi
 	$SUDO partprobe "$DISK" >>"$LOG" 2>&1
@@ -125,12 +140,22 @@ preparar() {
 elegir() {
 	lxterminal --title="cfdisk en $DISK" -e sh -c "sudo -n cfdisk $DISK" || true
 	$SUDO partprobe "$DISK" >/dev/null 2>&1; sleep 2
+	# TYPE=part: lsblk -p tambien saca la fila del disco entero, y esa como raiz
+	# borraria la tabla de particiones recien hecha. Con -r las columnas van separadas
+	# por un espacio y una vacia desplaza a las demas, asi que en cada consulta lo
+	# opcional (FSTYPE/PARTTYPE) va al final y TYPE/SIZE delante.
 	RAIZ=$(yad --title="Instalar Willy Linux" --center --width=520 --list --hide-column=3 \
 		--text="¿Cual particion sera la raiz (/)?  Se formateara como ext4." \
 		--column="Particion" --column="Tamano" --column="" \
-		$(lsblk -rnpo NAME,SIZE,FSTYPE "$DISK" | awk '$3!="swap" && $3!="" {print $1" "$2" x"} $3=="" {print $1" "$2" vacia"}') 2>/dev/null | cut -d'|' -f1)
-	SWAP=$(lsblk -rnpo NAME,FSTYPE "$DISK" | awk '$2=="swap"{print $1; exit}')
-	[ "$MODO" = uefi ] && EFI=$(lsblk -rnpo NAME,PARTFLAGS "$DISK" | awk '$2 ~ /esp/ {print $1; exit}')
+		$(lsblk -rnpo NAME,TYPE,SIZE,FSTYPE "$DISK" | awk '$2=="part" && $4!="swap" {printf "%s %s %s\n", $1, $3, ($4=="" ? "sin-formato" : $4)}') 2>/dev/null | cut -d'|' -f1)
+	# El lsblk de trixie deja PARTFLAGS vacio en GPT, asi que el flag "esp" nunca casa
+	# ahi. El GUID de tipo si sale: c12a7328 es la EFI System y 0657fd6d la linux-swap,
+	# que ademas aun no tiene FSTYPE hasta que se formatea.
+	ESGUID=$(lsblk -rnpo NAME,TYPE,PARTTYPE "$DISK" | awk 'tolower($3) ~ /^c12a7328/ {print $1; exit}')
+	GUIDSWAP=$(lsblk -rnpo NAME,TYPE,PARTTYPE "$DISK" | awk 'tolower($3) ~ /^0657fd6d/ {print $1; exit}')
+	SWAP=$(lsblk -rnpo NAME,TYPE,FSTYPE "$DISK" | awk '$2=="part" && $3=="swap" {print $1; exit}')
+	[ -n "$SWAP" ] || SWAP="$GUIDSWAP"
+	[ "$MODO" = uefi ] && EFI="$ESGUID"
 	[ -n "$RAIZ" ] || return 1
 	if [ "$MODO" = uefi ] && [ -z "$EFI" ]; then
 		E "No hay particion EFI (esp) en el disco. Prueba el esquema recomendado."

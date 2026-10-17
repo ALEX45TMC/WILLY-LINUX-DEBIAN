@@ -5,6 +5,55 @@ Las imágenes anteriores **nunca se borran**: se renombran `.bak-día.hora` con 
 
 ---
 
+## 2026-10-17 (tarde) — 2.0 y 2.1 recompiladas: el instalador deja de ser una promesa
+
+Las dos ediciones ligeras se compilaron otra vez el mismo día, cada una por un motivo distinto.
+
+**ISO 2.0:** `willylinux-v2.0-minimalista-amd64.iso`, 1.110.900.736 B (1059 MB, 26 % del tope),
+SHA-256 `cca27c81fcb556d47c867d7675d3af70b038eaaea45a1860e6aa7d0cd663bcce` (entregada 16:16,
+896 paquetes). Es la misma construcción de las 14:37 (`eadfb215…de02`, conservada como
+`.bak-17.16.14`) más el último defecto que le quedaba: `mimeapps.list` apuntaba a
+`mousepad.desktop`, y el lanzador real de trixie es `org.xfce.mousepad.desktop`, así que
+`xdg-open` no abría ni textos ni escritorios. Dentro de la ISO entregada se comprobó que **los
+siete** lanzadores referenciados existen: `feh`, `firefox-esr`, `mpv`, `mupdf`,
+`org.xfce.mousepad`, `pcmanfm`, `xarchiver`.
+
+**ISO 2.1:** `willylinux-v2.1-amd64.iso`, 1.142.931.456 B (1089 MB, 27 % del tope),
+SHA-256 `10432e437bbfb245e0bc84c970d89c5e5562f4325758631a9364d6001cbc5c77` (entregada 16:52,
+965 paquetes). A la 2.1 se le portaron las **seis** correcciones de particionado que solo
+estaban en la 2.5:
+
+| # | Arreglo | Efecto |
+|---|---|---|
+| 1 | `parted` ya no recibe `-2GiB`, se calculan bytes absolutos con sufijo `B` | la rama automática dejaba de abortar con `opción inválida -- '2'` |
+| 2 | `FINRAIZ = INISWAP − 512` bytes y swap redondeada a GiB | desaparece el `the closest location we can manage` y el aviso de alineación |
+| 3 | EFI y swap detectadas por **GUID** (`PARTTYPE` `c12a7328-…` / `0657fd6d-…`) | la rama manual dejaba de decir «No hay partición EFI (esp)» con `PARTFLAGS` vacío |
+| 4 | El selector de raíz filtra `TYPE=part` | ya no ofrece el disco entero como raíz |
+| 5 | El selector de disco excluye `zram0`, `loop*`, `ram*`, `fd*` | la RAM comprimida deja de aparecer como destino (borrarla mataría la sesión en marcha) |
+| 6 | En `lsblk -r` lo opcional va al final de cada fila | las celdas dejan de desplazarse cuando el sistema no tiene formato |
+
+**Cómo se probó sin arriesgar un disco.** El instalador se extrae tal cual del hook y se ejecuta
+contra `lsblk`, `parted`, `mkfs`, `mount`, `rsync`, `grub-install` y `yad` falsos, con
+`/proc/meminfo` y `/sys/firmware` fingidos en un espacio de nombres aparte. Siete escenarios
+(UEFI con Windows al lado, BIOS con 2 GB, UEFI con 2 GB en NVMe, ISO sin `grub2-common`, BIOS
+sin `grub-pc`, cancelación en el aviso de borrado y `cfdisk` manual) suman **57 comprobaciones,
+todas en verde**, incluidas «ningún tamaño negativo llega a `parted`», «`zram0` no sale como
+destino» y el `fstab` por UUID de los tres esquemas.
+
+**Comprobado dentro de la ISO 2.1 entregada:** `grub-install` y `grub-bios-setup` en
+`/usr/sbin`, 304 módulos `i386-pc` y 286 `x86_64-efi`, `grub2-common` y `grub-pc` 2.12-9+deb13u2,
+`efibootmgr` 18-2, `os-prober` 1.83, las dos guardas previas del instalador, la exclusión de
+`zram0`, dos referencias al GUID EFI y **cero** órdenes `mkpart` con tamaño negativo.
+
+**Puertas nuevas para que esto no vuelva a pasar.** Los guiones de recompilación de la 2.0 y de
+la 2.1 ahora comparan la receta viva contra `src/tree-2.0` y `src/tree-2.1` byte a byte y abortan
+si difieren (antes una corrección podía quedarse solo en un lado), se niegan a arrancar si hay
+otra compilación en marcha, y exigen que el hash de la ISO nueva sea distinto del de la entregada
+para no reentregar la misma imagen después de un `lb build` que dijo `already done`. Las ISO
+anteriores se renombra a `.bak-día.hora`: ninguna se borra.
+
+---
+
 ## 2026-10-17 — cuarta 2.5 (y 2.5.5 gemela) con los arreglos del particionado
 
 **Árbol:** `src/tree-2.5/` de este repositorio (maestro en el espacio de trabajo, sincronizado

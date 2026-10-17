@@ -7,14 +7,14 @@ borra**, las versiones previas quedan como `.bak-día.hora` junto a su `.sha256`
 
 | | 1.0 | 1.1 | 2.0 | 2.1 | 2.5 | 2.5.5 |
 |---|---|---|---|---|---|---|
-| Nombre de la ISO | `willylinux-amd64.iso` | `willylinux-v1.1-amd64.iso` | `willylinux-v2.0-minimalista-amd64.iso` | `willylinux-v2.1-minimalista-amd64.iso` | `willylinux-v2.5-kde-amd64.iso` | `willylinux-v2.5.5-kde-amd64.iso` |
-| Entrega | 2026-10-11 | 2026-10-12 | 2026-10-12 | 2026-10-12 | 2026-10-17 | 2026-10-17 |
-| Tamaño | 703.594.496 B (671 MB) | 993.001.472 B (947 MB) | 1.102.970.880 B (1051 MB) | 1.134.166.016 B (1081 MB) | 1.849.540.608 B (1763 MB) | 1.849.540.608 B (1763 MB) |
+| Nombre de la ISO | `willylinux-amd64.iso` | `willylinux-v1.1-amd64.iso` | `willylinux-v2.0-minimalista-amd64.iso` | `willylinux-v2.1-amd64.iso` | `willylinux-v2.5-kde-amd64.iso` | `willylinux-v2.5.5-kde-amd64.iso` |
+| Entrega | 2026-10-11 | 2026-10-12 | 2026-10-17 (16:16) | 2026-10-17 (16:52) | 2026-10-17 | 2026-10-17 |
+| Tamaño | 703.594.496 B (671 MB) | 993.001.472 B (947 MB) | 1.110.900.736 B (1059 MB) | 1.142.931.456 B (1089 MB) | 1.849.540.608 B (1763 MB) | 1.849.540.608 B (1763 MB) |
 | Tope autoimpuesto | 2 GB | 3 GB | 4 GB | 4 GB | 8 GB | 8 GB |
-| % del tope | 34 % | 30 % | 25 % | 26 % | 21 % | 21 % |
+| % del tope | 34 % | 30 % | 26 % | 27 % | 21 % | 21 % |
 | Escritorio | IceWM | IceWM | IceWM | IceWM | **KDE Plasma 6** | KDE Plasma 6 |
 | RAM objetivo | 2 GB | 2–3 GB | 3–4 GB | 3–4 GB | 6–7 GB | 6–7 GB |
-| Paquetes desempaquetados | 565 | 710 | ~780 | ~820 | ~1592 | ~1592 |
+| Paquetes instalados | 565 | 710 | 896 | 965 | ~1592 | ~1592 |
 | Arranque BIOS + UEFI | sí | sí | sí | sí | sí | sí |
 | Instalador a disco | no | no | no | **sí** | sí | sí |
 | USB persistente | no | no | no | **sí** | sí | sí |
@@ -24,8 +24,8 @@ borra**, las versiones previas quedan como `.bak-día.hora` junto a su `.sha256`
 | Audio PipeWire | no (PulseAudio) | no | no | no | **sí** | sí |
 | Tienda Discover + Flathub | no | no | no | no | **sí** | sí |
 | Sistema bóveda (Vault + KeePassXC + Back In Time) | no | no | no | no | **sí** | sí |
-| Vídeo por GPU (VA-API) | no | no | no | no | **sí** (desde 2026-10-17) | sí |
-| SHA-256 de la entrega | `446a54c0…f8aa3c` | `f01a95f6…fcc6b0fb` | `5ce290b1…994c0510` | `41cfee2d…fa5f41373` | `1f3e2f60…506cc349` | `43b66af8…d9a8a8c8` |
+| Vídeo por GPU (VA-API) | no | no | **sí** (desde 2026-10-17) | **sí** (desde 2026-10-17) | **sí** (desde 2026-10-17) | sí |
+| SHA-256 de la entrega | `446a54c0…f8aa3c` | `f01a95f6…fcc6b0fb` | `cca27c81…d663bcce` | `10432e43…001cbc5c77` | `1f3e2f60…506cc349` | `43b66af8…d9a8a8c8` |
 
 Hashes completos y lineage de cada recompilación: [historial](historial.md).
 
@@ -78,12 +78,14 @@ otra herramienta, ese disco tampoco arrancará, pero no es un fallo de la edici�
 se diseñó como sistema live. Su Release dice expresamente «sin instalador a disco».
 
 - ISO: `willylinux-v2.0-minimalista-amd64.iso`, 1.110.900.736 B, SHA-256
-  `eadfb2157f83f1232e2bb58dc152d11b694fbf8c0540c54fe5fc6b1f0b25de02` (construcción del 17-10 a
-  las 14:37, 896 paquetes).
-- En esa construcción seguía quedando el defecto 2 (`mimeapps.list` referenciaba
-  `mousepad.desktop`, cuando el lanzador real de trixie es `org.xfce.mousepad.desktop`); se
-  corrigió en el árbol y se volvió a compilar el mismo día. La Release `v2.0` lleva la ISO ya
-  corregida, y su `.sha256` es el que figura arriba una vez entregada.
+  `cca27c81fcb556d47c867d7675d3af70b038eaaea45a1860e6aa7d0cd663bcce` (construcción del 17-10 a
+  las 16:16, 896 paquetes).
+- La construcción de las 14:37 (`eadfb215…de02`) aún traía el defecto 2: `mimeapps.list`
+  referenciaba `mousepad.desktop`, cuando el lanzador real de trixie es
+  `org.xfce.mousepad.desktop`. Se corrigió en el árbol, se volvió a compilar el mismo día y esa
+  ISO quedó conservada como `.bak-17.16.14`. La Release `v2.0` lleva la ISO corregida; dentro de
+  ella se comprobó que **los siete lanzadores** referenciados en `mimeapps.list` existen de
+  verdad (`feh`, `firefox-esr`, `mpv`, `mupdf`, `org.xfce.mousepad`, `pcmanfm`, `xarchiver`).
 
 ## 2.1 Minimalista — la ligera que se instala
 
@@ -99,11 +101,20 @@ en un equipo viejo:
 | Actualizar el sistema | `willy-actualizar` / `willy-actualizar-run` |
 
 Además: iconos verificados dentro del squashfs, `mimeapps.list` corregido, título del menú BIOS
-`WILLY LINUX 2.1`, rótulo 2.1 en el monitor y cuatro correcciones del instalador.
+`WILLY LINUX 2.1`, rótulo 2.1 en el monitor y **seis** correcciones del instalador (las mismas
+de la 2.5: tamaños negativos, holgura raíz–swap, EFI y swap por GUID, exclusión de `zram0`,
+filtro `TYPE=part` y columnas de `lsblk -r`). El instalador se comprueba con un ensayo de siete
+escenarios y 57 comprobaciones sobre un mundo simulado (`lsblk`, `parted`, `mkfs`, `mount`,
+`grub-install` y `yad` falsos), sin tocar ningún disco real.
 
-- ISO: `willylinux-v2.1-minimalista-amd64.iso`, 1.134.166.016 B, SHA-256
-  `41cfee2d6ca0ccd0a52db7cba78543598584666b75386efa39990d8fa5f41373`.
-- La primera 2.1 se conserva como `.bak-12.21.06` con su hash (`3e3c8965…a8c4`).
+- ISO: `willylinux-v2.1-amd64.iso`, 1.142.931.456 B, SHA-256
+  `10432e437bbfb245e0bc84c970d89c5e5562f4325758631a9364d6001cbc5c77` (entregada 17-10 a las
+  16:52, 965 paquetes). Dentro de ella se comprobó `grub-install` y `grub-bios-setup` en
+  `/usr/sbin`, 304 módulos `i386-pc`, 286 `x86_64-efi`, `grub2-common` y `grub-pc` 2.12-9,
+  `efibootmgr` 18-2, `os-prober` 1.83, las dos guardas previas del instalador, la exclusión de
+  `zram0`, la detección de EFI por GUID y **cero** tamaños negativos para `parted`.
+- Ninguna 2.1 anterior se borró: se conservan como `.bak-12.21.06` (la primera, hash
+  `3e3c8965…a8c4`), `.bak-17.15.05`, `.bak-17.15.44` y `.bak-17.16.51`.
 
 ## 2.5 — escritorio completo
 
