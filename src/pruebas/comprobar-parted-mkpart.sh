@@ -13,27 +13,35 @@ fallos=0
 mal() { printf 'FALLO %s\n' "$1"; fallos=$(( fallos + 1 )); }
 ok()  { printf 'OK    %s\n' "$1"; }
 
-revisar() { # $1=camino del hook 0400
+revisar() { # $1=camino del hook 0400 o del script instalado
 	local h=$1 rama tot bien sw asig
 	[ -f "$h" ] || { mal "$h no existe"; return; }
 	printf -- '--- %s\n' "$h"
-	# Rama BIOS: desde el mklabel msdos hasta el fi que cierra el if de MODO.
-	rama=$(awk '/mklabel msdos/{d=1} d && /^[ \t]*fi[ \t]*$/{d=0} d {print}' "$h")
-	tot=$(printf '%s\n' "$rama" | grep -c 'mkpart')
-	bien=$(printf '%s\n' "$rama" | grep -c 'mkpart \(primary\|extended\|logical\)')
-	[ "$tot" -gt 0 ] || { mal "la rama msdos no tiene ninguna mkpart (hook cambiado?)"; }
-	if [ "$tot" = "$bien" ]; then
-		ok "las $tot mkpart de la rama msdos van por tipo, sin nombre"
+	# El mismo chequeo sirve para el hook y para el /usr/local/bin/willy-instalar que ya
+	# esta dentro de la ISO. Los dos tienen la rama de arriba; los scripts que no
+	# particionan discos (p. ej. willy-persistencia) se saltan esta parte.
+	if grep -q 'mklabel msdos' "$h"; then
+		# Rama BIOS: desde el mklabel msdos hasta el fi que cierra el if de MODO.
+		rama=$(awk '/mklabel msdos/{d=1} d && /^[ \t]*fi[ \t]*$/{d=0} d {print}' "$h")
+		tot=$(printf '%s\n' "$rama" | grep -c 'mkpart')
+		bien=$(printf '%s\n' "$rama" | grep -c 'mkpart \(primary\|extended\|logical\)')
+		if [ "$tot" = "$bien" ] && [ "$tot" -gt 0 ]; then
+			ok "las $tot mkpart de la rama msdos van por tipo, sin nombre"
+		elif [ "$tot" = 0 ]; then
+			mal "la rama msdos no tiene ninguna mkpart (hook cambiado?)"
+		else
+			mal "rama msdos con $(( tot - bien )) mkpart con nombre: $(printf '%s\n' "$rama" | grep mkpart | grep -v 'mkpart \(primary\|extended\|logical\)')"
+		fi
+		# La swap se comparte entre las dos ramas: solo vale si usa el tipo variable.
+		sw=$(grep -c 'mkpart \$TIPOSW linux-swap' "$h")
+		asig=$(grep -c '^\s*TIPOSW=' "$h")
+		if [ "$sw" = 1 ] && [ "$asig" = 2 ]; then
+			ok "la swap usa \$TIPOSW, asignado en las dos ramas"
+		else
+			mal "swap: lineas 'mkpart \$TIPOSW'=$sw (se espera 1), asignaciones de TIPOSW=$asig (se espera 2)"
+		fi
 	else
-		mal "rama msdos con $(( tot - bien )) mkpart con nombre: $(printf '%s\n' "$rama" | grep mkpart | grep -v 'mkpart \(primary\|extended\|logical\)')"
-	fi
-	# La swap se comparte entre las dos ramas: solo vale si usa el tipo variable.
-	sw=$(grep -c 'mkpart \$TIPOSW linux-swap' "$h")
-	asig=$(grep -c '^\s*TIPOSW=' "$h")
-	if [ "$sw" = 1 ] && [ "$asig" = 2 ]; then
-		ok "la swap usa \$TIPOSW, asignado en las dos ramas"
-	else
-		mal "swap: lineas 'mkpart \$TIPOSW'=$sw (se espera 1), asignaciones de TIPOSW=$asig (se espera 2)"
+		echo "        (sin rama msdos: solo se comprueba la persistencia del USB)"
 	fi
 	# La particion persistente del USB tambien depende de la tabla del medio.
 	if grep -q 'Guardar en el USB' "$h"; then

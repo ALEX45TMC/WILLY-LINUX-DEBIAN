@@ -104,7 +104,10 @@ ensayo real de VirtualBox del 2026-10-17 lo descubrió, y desde entonces hay dos
   ensayo avisa de que ha perdido su razón de ser. Necesita `root` y `losetup` (se corre en WSL).
 - `comprobar-parted-mkpart.sh`: puerta estática sobre el texto del hook — ninguna `mkpart` de la
   rama msdos puede llevar nombre, la swap ha de usar `$TIPOSW` y la persistencia del USB ha de
-  elegir `$NOMBREP` según `blkid PTTYPE`. Va dentro de los guiones de compilación.
+  elegir `$NOMBREP` según `blkid PTTYPE`. Va dentro de los guiones de compilación **y también sobre
+  el artefacto**: `verificar-iso-25-nueva.sh` la corre contra el `/usr/local/bin/willy-instalar` y
+  el `willy-persistencia` que ya están dentro de la ISO montada, que es el sitio donde la 2.1 tenía
+  el defecto y nadie miraba.
 
 ## 6. Puertas antes de compilar
 
