@@ -113,6 +113,14 @@ escenarios y 57 comprobaciones sobre un mundo simulado (`lsblk`, `parted`, `mkfs
   `/usr/sbin`, 304 módulos `i386-pc`, 286 `x86_64-efi`, `grub2-common` y `grub-pc` 2.12-9,
   `efibootmgr` 18-2, `os-prober` 1.83, las dos guardas previas del instalador, la exclusión de
   `zram0`, la detección de EFI por GUID y **cero** tamaños negativos para `parted`.
+- **Limitación conocida de esta ISO, descubierta el 2026-10-17 en el ensayo real de VirtualBox:**
+  su instalador sigue comprobando `/lib/live/mount/medium`, y live-boot monta el medio en
+  `/run/live/medium`, así que **se niega a instalar** («Esto solo funciona desde el USB…») incluso
+  arrancando desde el USB. El arreglo (`willy-medio`, el mismo de la 2.5) está en
+  `src/tree-2.1/config/hooks/live/0400-instalador.hook.chroot` y en la puerta de
+  `recompilar-21.sh`, pero todavía no en la ISO publicada. La comprobación que faltó es la de
+  `verificar-la-iso.md` («0 guardas con la ruta vieja»): se había hecho siempre sobre la 2.5 y no
+  sobre la 2.1. La 2.5 y la 2.5.5 sí instalan.
 - Ninguna 2.1 anterior se borró: se conservan como `.bak-12.21.06` (la primera, hash
   `3e3c8965…a8c4`), `.bak-17.15.05`, `.bak-17.15.44` y `.bak-17.16.51`.
 

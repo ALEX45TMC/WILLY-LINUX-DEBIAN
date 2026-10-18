@@ -4,6 +4,25 @@ set -e
 
 BIN=/usr/local/bin
 
+# live-boot 1:20250815~deb13u1, el de trixie, monta el medio en /run/live/medium y ya no en
+# /lib/live/mount/medium. Con la ruta antigua el instalador y el guardado decian "esto solo
+# funciona desde el USB" incluso arrancando desde el USB, porque no encontraban el montaje.
+cat > "$BIN/willy-medio" <<'WLYMEDIO'
+#!/bin/sh
+# Ruta (o dispositivo) del medio del que arranco esta sesion live, y si lo es.
+for d in /run/live/medium /lib/live/mount/medium /run/live/media /live/medium; do
+	[ -d "$d" ] || continue
+	if [ "${1:-dir}" = dev ]; then
+		findmnt -n -o SOURCE "$d" 2>/dev/null
+	else
+		echo "$d"
+	fi
+	exit 0
+done
+exit 1
+WLYMEDIO
+chmod 755 "$BIN/willy-medio"
+
 # --- Instalador al disco ------------------------------------------------------
 cat > "$BIN/willy-instalar" <<'WLYINSTALL'
 #!/bin/sh
@@ -18,7 +37,7 @@ T() { yad --title="Instalar Willy Linux" --center --width=560 --info --text="$1"
 E() { yad --title="Instalar Willy Linux" --center --width=560 --error --text="$1" --button="Cerrar:0" >/dev/null 2>&1 || true; }
 F() { echo "$(date '+%T') $*" >> "$LOG"; }
 
-if [ ! -d /lib/live/mount/medium ]; then
+if ! willy-medio >/dev/null 2>&1; then
 	E "Esto solo funciona desde el USB de Willy Linux (sesion live), no desde un sistema ya instalado."
 	exit 1
 fi
@@ -46,7 +65,7 @@ fi
 # 1) Descartar el medio live y los USB: solo discos internos.
 # PKNAME da el disco padre sea cual sea el nombre de la particion (sda2, nvme0n1p1,
 # mmcblk0p1); el recorte de digitos finales se queda en "mmcblk0p" y falla.
-MEDIO_DEV=$(findmnt -no SOURCE /lib/live/mount/medium 2>/dev/null)
+MEDIO_DEV=$(willy-medio dev 2>/dev/null)
 MEDIO=$(lsblk -dno PKNAME "$MEDIO_DEV" 2>/dev/null | tr -d ' ')
 [ -n "$MEDIO" ] && MEDIO="/dev/$MEDIO" || MEDIO=$(echo "$MEDIO_DEV" | sed 's/[0-9]*$//')
 DISCS=""
@@ -268,7 +287,7 @@ SUDO="sudo -n"
 T() { yad --title="Guardar en el USB" --center --width=560 --info --text="$1" --button="Aceptar:0" >/dev/null 2>&1 || true; }
 E() { yad --title="Guardar en el USB" --center --width=560 --error --text="$1" --button="Cerrar:0" >/dev/null 2>&1 || true; }
 
-MEDIO_DEV=$(findmnt -no SOURCE /lib/live/mount/medium 2>/dev/null)
+MEDIO_DEV=$(willy-medio dev 2>/dev/null)
 MEDIO=$(lsblk -dno PKNAME "$MEDIO_DEV" 2>/dev/null | tr -d ' ')
 [ -n "$MEDIO" ] && MEDIO="/dev/$MEDIO" || MEDIO=$(echo "$MEDIO_DEV" | sed 's/[0-9]*$//')
 [ -n "$MEDIO_DEV" ] || { E "No localizo el USB desde el que arrancas."; exit 1; }

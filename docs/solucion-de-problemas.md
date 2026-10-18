@@ -157,6 +157,14 @@ la ruta vieja y tomaban el USB por disco instalado. Desde entonces hay un helper
 willy-medio                     # debe devolver /run/live/medium o /lib/live/mount/medium
 ```
 
+**Qué ediciones están afectadas todavía.** El helper se aplicó primero a la 2.5 y a la 2.5.5, así
+que esas dos instalan. La **2.1 publicada el 2026-10-17 (SHA-256 `10432e43…cbc5c77`) no lo
+lleva**: su instalador comprueba la ruta vieja y, arrancando desde el USB o desde el DVD, responde
+«Esto solo funciona desde el USB de Willy Linux (sesión live), no desde un sistema ya
+instalado» y sale sin tocar el disco. Se detectó el 2026-10-17 en el ensayo real de VirtualBox. La
+receta del repositorio ya está corregida; mientras tanto, para instalar una 2.1 hay que compilarla
+con `src/tree-2.1` (o usar la 2.5, que sí instala). La 2.0 no tiene instalador.
+
 ### El instalador aborta sin tocar el disco
 
 Es el *preflight* funcionando: faltan `grub-install` o `grub-bios-setup` y copiar el sistema no
