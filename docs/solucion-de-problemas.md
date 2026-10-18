@@ -163,8 +163,9 @@ lleva**: su instalador comprueba la ruta vieja y, arrancando desde el USB o desd
 «Esto solo funciona desde el USB de Willy Linux (sesión live), no desde un sistema ya
 instalado» y sale sin tocar el disco. Se detectó el 2026-10-17 en el ensayo real de VirtualBox. La
 receta del repositorio ya está corregida; mientras tanto, para instalar una 2.1 hay que compilarla
-con `src/tree-2.1` (o usar la 2.5 **en un equipo UEFI**, que es donde sí llega al final — ver el
-siguiente apartado). La 2.0 no tiene instalador.
+con `src/tree-2.1` (o usar la 2.5 **en un equipo UEFI**, que es donde sí llega al final: el
+2026-10-17 se ensayó completo en una máquina virtual y el disco instalado arrancó con su ESP en
+`/boot/efi` — ver el siguiente apartado). La 2.0 no tiene instalador.
 
 ### «No se pudo particionar» al elegir el esquema recomendado en un equipo BIOS
 

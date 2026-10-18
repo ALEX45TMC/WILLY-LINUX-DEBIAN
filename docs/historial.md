@@ -78,6 +78,33 @@ exige que el comando viejo con nombre siga fallando, para que el ensayo no se qu
 Los 57 checks siguen valiendo: el `fstab` por UUID, los tamaños en bytes y la detección por GUID
 no los da nadie más. Lo que no dan es la sintaxis de las herramientas que se burlan.
 
+### 20:34–20:58 — la 2.5 publicada instala en UEFI y arranca de su disco
+
+Quedaba por demostrar la otra mitad de lo que se acababa de escribir: que la 2.5 **sí** instala
+por UEFI, porque ahí la tabla es GPT y los nombres de partición valen. Ensayo completo en la VM
+`willy-inst-efi` (firmware EFI, 4 GB de RAM, Secure Boot apagado, disco `willy-inst-efi.vdi` de
+32 GB) con la ISO entregada tal cual, sin recompilar:
+
+| Paso | Hora | Prueba |
+|---|---|---|
+| Escritorio live pintado | 20:37:30 | 135 s después de encender; la primera vez (20:22) no había aparecido en 215 s |
+| `willy-instalar` → disco, `BORRAR`, esquema, dos veces la contraseña | 20:38–20:39 | pantallazos `7-25-efi-03` a `-05c`, con el `/dev/sda 32 GB VBOX HARDDISK` y «Borrar el disco entero y particionar solo» |
+| Copia | 20:41–20:48 | el VDI del host pasa de 4 MB a **5.139 MB** y se queda quieto 3 min |
+| Arranque del disco instalado | 20:52:36 | `willyroot: clean, 122511/1802240 files, 1363404/7208704 blocks` — el fsck del sistema instalado, antes de que salga el escritorio |
+| Verificación dentro del sistema instalado | 20:57:59 | `/dev/sda2 27G 4,7G 21G 19% /`, `/dev/sda1 511M … /boot/efi`, `efivarfs` montado, `ls /home` → `live`, `PRETTY_NAME="Willy Linux 2.5"`, `ID=willylinux` |
+
+O sea: GPT con ESP de 511 MB, root de 27 GB, GRUB EFI instalado y el equipo arrancando del disco
+sin el DVD. El defecto de `mkpart` queda entonces **solo** para la ruta BIOS/msdos, que es la que
+hay que recompilar.
+
+**Dos trampas del propio arnés**, corregidas en `src/pruebas/probar-instalacion-vbox.ps1` y
+contadas en [verificar-la-iso.md](verificar-la-iso.md): esperar un número fijo de segundos al
+escritorio (el primer intento envió todas las teclas a una pantalla en negro y siguió adelante) y
+declarar «copia terminada» solo porque el VDI dejaba de crecer (lo cumplía también un disco al que
+nunca se copió nada). Ahora hay un umbral de píxel real —un PNG de pantalla en negro pesa 3-7 KB
+frente a los 150 KB del escritorio pintado— y un suelo de 1 GB antes de dar la copia por buena.
+
+
 ---
 
 ## 2026-10-17 — cuarta 2.5 (y 2.5.5 gemela) con los arreglos del particionado

@@ -109,6 +109,32 @@ ensayo real de VirtualBox del 2026-10-17 lo descubrió, y desde entonces hay dos
   el `willy-persistencia` que ya están dentro de la ISO montada, que es el sitio donde la 2.1 tenía
   el defecto y nadie miraba.
 
+### El ensayo en VirtualBox (`probar-instalacion-vbox.ps1`)
+
+Nada de lo anterior sustituye a instalar de verdad en una máquina virtual con un disco de
+verdad. El guion arranca la VM en `headless`, abre Konsole con `Ctrl+Alt+T`, escribe
+`willy-instalar` y va respondiendo los diálogos `yad` con scancodes crudos
+(`keyboardputscancode`, no `keyboardputstring`: con teclado latam deforma `-`, `/` y `=`). Deja
+pantallazos numerados y el registro en `E:\Willy Linux\prueba-instalacion`.
+
+Dos trampas que hicieron salir un ensayo **en verde siendo falso**, y cómo están cerradas:
+
+- **Esperar un número fijo de segundos.** La 2.5 en UEFI con 4 GB de RAM puede tardar minutos en
+  pintar el escritorio; a 215 s la pantalla seguía en negro, las teclas no fueron a ningún sitio y
+  aun así el guion siguió adelante. Ahora `EsperarPantalla` captura cada 15 s y no empieza hasta
+  que el PNG pesa más de 150 KB (una pantalla en negro pesa 3-7 KB y el escritorio pintado, medio
+  megabyte); si en 15 minutos no aparece, aborta la fase en vez de teclear a ciegas.
+- **Dar la copia por terminada porque el disco dejó de crecer.** El VDI dinámico del host crece
+  mientras `rsync` escribe, así que tres minutos quieto era el criterio de "terminado"… y también
+  lo cumplía un disco al que nunca se copió nada (4 MB quietos para siempre). Ahora hay un suelo
+  de 1 GB: por debajo de eso el ensayo declara «la copia nunca empezó» y **no** pasa a la fase de
+  arrancar del disco instalado, que sin sistema solo produciría un pantallazo de `No bootable
+  medium` fácil de leer como éxito.
+
+El paso siguiente al copiado —arrancar del disco, `df -h`, `ls /home`, `/etc/os-release`— es la
+única prueba de que GRUB quedó instalado; los guiones de lógica solo pueden prometer que el
+instalador *intenta* el paso correcto.
+
 ## 6. Puertas antes de compilar
 
 El guion de compilación aborta si:

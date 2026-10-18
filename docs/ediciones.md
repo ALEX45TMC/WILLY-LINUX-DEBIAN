@@ -130,7 +130,9 @@ escenarios y 57 comprobaciones sobre un mundo simulado (`lsblk`, `parted`, `mkfs
   `comprobar-parted-mkpart.sh` (texto del hook) y `probar-parted-real.sh` (`parted` de verdad sobre
   archivos-image montados en `/dev/loop`, con un escenario que exige que el comando viejo siga
   fallando). El ensayo de lógica no podía verlo: su `parted` es burlado y solo anota la orden.
-  La 2.5 y la 2.5.5 sí instalan en UEFI; en BIOS hay que recompilar.
+  La 2.5 y la 2.5.5 sí instalan en UEFI —probado de punta a punta el 2026-10-17 20:34–20:58 con la
+  ISO entregada: particionado GPT, 5,1 GB copiados, arranque del disco y `/dev/sda2` montado en `/`
+  con `efivarfs` y `/boot/efi` presentes—; en BIOS hay que recompilar.
 - Ninguna 2.1 anterior se borró: se conservan como `.bak-12.21.06` (la primera, hash
   `3e3c8965…a8c4`), `.bak-17.15.05`, `.bak-17.15.44` y `.bak-17.16.51`.
 
