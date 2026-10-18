@@ -163,7 +163,34 @@ lleva**: su instalador comprueba la ruta vieja y, arrancando desde el USB o desd
 «Esto solo funciona desde el USB de Willy Linux (sesión live), no desde un sistema ya
 instalado» y sale sin tocar el disco. Se detectó el 2026-10-17 en el ensayo real de VirtualBox. La
 receta del repositorio ya está corregida; mientras tanto, para instalar una 2.1 hay que compilarla
-con `src/tree-2.1` (o usar la 2.5, que sí instala). La 2.0 no tiene instalador.
+con `src/tree-2.1` (o usar la 2.5 **en un equipo UEFI**, que es donde sí llega al final — ver el
+siguiente apartado). La 2.0 no tiene instalador.
+
+### «No se pudo particionar» al elegir el esquema recomendado en un equipo BIOS
+
+En las ISO publicadas hasta el 2026-10-17 el instalador se queda en el paso del esquema, con el aviso
+`No se pudo particionar. Mira el registro /tmp/willy-instalar.log`. Dentro del registro está el
+motivo real:
+
+```
+parted: invalid token: Willy
+Error: Expecting a partition type.
+```
+
+Es un error de sintaxis de `parted`, no del disco: en una tabla **msdos** (arranque BIOS/legacy) lo
+que va después de `mkpart` es el **tipo** de partición (`primary`/`extended`/`logical`), y los nombres
+de partición solo los admite **GPT**. El instalador pedía `mkpart Willy ext4 …` en las dos ramas, así
+que la ruta UEFI funcionaba y la de BIOS abortaba antes de formatear nada. El disco no se toca: si
+falla el particionado, el instalador sale sin copiar.
+
+**Qué ediciones están afectadas.** La 2.1 y la 2.5/2.5.5 publicadas antes de esta corrección. En un
+equipo **UEFI** la 2.5 instala normal (usa GPT, donde los nombres sí valen). En un equipo **BIOS** no:
+hay que compilar con la receta corregida (`src/tree-2.5` o `src/tree-2.1`), que ya particiona con
+`mkpart primary ext4 …` y deja el nombre solo para la rama GPT. La 2.0 no tiene instalador.
+
+**Comprobación mientras tanto** (sin reinstalar): arranca el USB en modo UEFI y usa el esquema
+recomendado; o particiona a mano con *Particiono antes con cfdisk*, que es la otra rama del instalador
+y no depende de `parted mkpart`.
 
 ### El instalador aborta sin tocar el disco
 

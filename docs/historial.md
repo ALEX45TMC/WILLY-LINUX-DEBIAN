@@ -52,6 +52,32 @@ otra compilación en marcha, y exigen que el hash de la ISO nueva sea distinto d
 para no reentregar la misma imagen después de un `lb build` que dijo `already done`. Las ISO
 anteriores se renombra a `.bak-día.hora`: ninguna se borra.
 
+### 19:00–20:15 — el ensayo real en VirtualBox tumba las 57 en verde
+
+Con Hyper-V apagado y VirtualBox usando AMD-V directamente, se arrancaron las ISO de verdad y se
+llevó el instalador hasta el final en una máquina virtual con disco de 30 GB. Dos defectos que
+ninguna de las 57 comprobaciones podía ver:
+
+1. **La 2.1 no instalaba desde ningún medio.** Su instalador comprobaba `/lib/live/mount/medium`
+   y live-boot de trixie monta en `/run/live/medium`, así que respondía «Esto solo funciona desde
+   el USB…». Portado `willy-medio` a `src/tree-2.1`, añadida la puerta en `recompilar-21.sh` y
+   dos escenarios nuevos al ensayo (ruta vieja y estar fuera de una sesión live).
+2. **`mkpart` con nombre en tabla msdos**, compartido con la 2.5 y la 2.5.5: el registro de
+   `/tmp/willy-instalar.log` decía `parted: invalid token: Willy` / `Error: Expecting a partition
+   type.` y el particionado abortaba. En msdos el argumento que sigue a `mkpart` es el **tipo**
+   (`primary`), y los nombres solo los admite GPT — por eso la ruta UEFI funcionaba y la BIOS no.
+   Corregido en los cinco árboles con el hook idéntico (rama BIOS `mkpart primary ext4 …`, swap
+   con `$TIPOSW` asignado en las dos ramas y persistencia del USB elegida por `blkid PTTYPE`).
+
+**Por qué el ensayo de lógica no lo vio:** su `parted` es burlado y se limita a anotar la orden,
+así que no valida la sintaxis de `parted`. Desde hoy hay dos piezas más (`src/pruebas/`):
+`comprobar-parted-mkpart.sh`, puerta estática sobre el texto del hook que ya va dentro de los
+guiones de compilación, y `probar-parted-real.sh`, que ejecuta el `preparar()` extraído del hook
+contra un `parted` **real** sobre archivos-image montados en `/dev/loop` — con un escenario que
+exige que el comando viejo con nombre siga fallando, para que el ensayo no se quede sin dientes.
+Los 57 checks siguen valiendo: el `fstab` por UUID, los tamaños en bytes y la detección por GUID
+no los da nadie más. Lo que no dan es la sintaxis de las herramientas que se burlan.
+
 ---
 
 ## 2026-10-17 — cuarta 2.5 (y 2.5.5 gemela) con los arreglos del particionado
@@ -202,6 +228,7 @@ Sirven como lección: en todos los casos el build decía `P: Build completed suc
 | Flathub invisible en Discover | `Url=` frente a `URL=` en el archivo del remoto | clave de fichero |
 | Filas empaquetadas en `yad --list` | captura de pantalla del asistente | argumento = una celda |
 | Iconos de catálogo inexistentes | `find` dentro del squashfs de `/usr/share/icons` | tema Adwaita symbolic |
+| `mkpart` con nombre en tabla msdos (la 2.1 y la 2.5 en BIOS) | ensayo de instalación real en VirtualBox: `parted: invalid token: Willy` en `/tmp/willy-instalar.log` | la burla de `parted` no valida sintaxis |
 
 **Regla que salió de todo esto:** antes de dar una ISO por buena, se monta y se mira dentro.
 Ver [verificar-la-iso](verificar-la-iso.md).

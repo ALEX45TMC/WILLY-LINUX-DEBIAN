@@ -125,7 +125,9 @@ Qué hace, en orden:
 4. Avisa si detecta NTFS o BitLocker en otro disco, y si **Secure Boot está activado** (el GRUB
    de la ISO no está firmado: desactívalo o pon «Other OS» antes de instalar).
 5. Esquema: **GPT + partición EFI** en UEFI, **msdos** en BIOS; raíz ext4 y swap si la RAM es
-   menor de 8 GB. También hay una rama manual con `cfdisk` para el que quiera decidir.
+   menor de 8 GB. También hay una rama manual con `cfdisk` para el que quiera decidir. (En las ISO
+   publicadas hasta el 2026-10-17 la rama BIOS fallaba al crear las particiones; está explicado en
+   [solución de problemas](solucion-de-problemas.md#no-se-pudo-particionar-al-elegir-el-esquema-recomendado-en-un-equipo-bios).)
 6. Formatea, `rsync --one-file-system` del sistema live al disco, `fstab` **por UUID**.
 7. Purga `live-boot`, `live-config` y `user-setup`, **después** regenera el initramfs
    (`update-initramfs -u -k all`) para que no quede rastro del arranque live.

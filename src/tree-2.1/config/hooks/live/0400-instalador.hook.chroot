@@ -140,13 +140,19 @@ preparar() {
 		$SUDO parted -s "$DISK" set 1 esp on >>"$LOG" 2>&1
 		EFI="${DISK}${SUF}1"
 		$SUDO parted -s "$DISK" mkpart Willy ext4 513MiB "$FINRAIZ" >>"$LOG" 2>&1 || return 1
+		TIPOSW=WillySwap
 	else
+		# En una tabla msdos parted NO acepta nombre: lo que va despues de mkpart es el
+		# TIPO (primary/extended/logical). Poner "Willy" ahi da "parted: invalid token:
+		# Willy / Error: Expecting a partition type" y el particionado aborta. Se col6
+		# porque el ensayo de logica lleva parted burlado, que solo anota la orden.
 		$SUDO parted -s "$DISK" mklabel msdos >>"$LOG" 2>&1 || return 1
-		$SUDO parted -s "$DISK" mkpart Willy ext4 1MiB "$FINRAIZ" >>"$LOG" 2>&1 || return 1
+		$SUDO parted -s "$DISK" mkpart primary ext4 1MiB "$FINRAIZ" >>"$LOG" 2>&1 || return 1
 		$SUDO parted -s "$DISK" set 1 boot on >>"$LOG" 2>&1
+		TIPOSW=primary
 	fi
 	if [ "$SWAPSI" != "0" ]; then
-		$SUDO parted -s "$DISK" mkpart WillySwap linux-swap "${INISWAP}B" 100% >>"$LOG" 2>&1 || return 1
+		$SUDO parted -s "$DISK" mkpart $TIPOSW linux-swap "${INISWAP}B" 100% >>"$LOG" 2>&1 || return 1
 		SWAP="${DISK}${SUF}$(( NUMRAIZ + 1 ))"
 	fi
 	$SUDO partprobe "$DISK" >>"$LOG" 2>&1
@@ -307,7 +313,11 @@ ALC=$(yad --title="Guardar en el USB" --center --width=560 --list \
 	"Solo mis archivos de /home" "home" 2>/dev/null | cut -d'|' -f2)
 [ -n "$ALC" ] || exit 1
 
-$SUDO parted -s "$MEDIO" mkpart Persistent ext4 "${INI}MiB" "${FIN}MiB" 2>/dev/null || { E "parted no pudo crear la particion."; exit 1; }
+# Solo GPT admite nombre de particion; en una tabla msdos/dos el primer argumento de
+# mkpart es el tipo, y "Persistent" alli da "parted: invalid token".
+TABLA=$($SUDO blkid -o value -s PTTYPE "$MEDIO" 2>/dev/null)
+[ "$TABLA" = gpt ] && NOMBREP=Persistent || NOMBREP=primary
+$SUDO parted -s "$MEDIO" mkpart $NOMBREP ext4 "${INI}MiB" "${FIN}MiB" 2>/dev/null || { E "parted no pudo crear la particion."; exit 1; }
 $SUDO partprobe "$MEDIO" 2>/dev/null; sleep 2
 PAR=$(lsblk -rnpo NAME "$MEDIO" | tail -1)
 [ -b "$PAR" ] || { E "No se ve la particion nueva."; exit 1; }

@@ -120,7 +120,17 @@ escenarios y 57 comprobaciones sobre un mundo simulado (`lsblk`, `parted`, `mkfs
   `src/tree-2.1/config/hooks/live/0400-instalador.hook.chroot` y en la puerta de
   `recompilar-21.sh`, pero todavía no en la ISO publicada. La comprobación que faltó es la de
   `verificar-la-iso.md` («0 guardas con la ruta vieja»): se había hecho siempre sobre la 2.5 y no
-  sobre la 2.1. La 2.5 y la 2.5.5 sí instalan.
+  sobre la 2.1.
+- **Segundo defecto del mismo ensayo (2026-10-17), común a la 2.1 y a la 2.5/2.5.5 publicadas:** en
+  un equipo **BIOS** el instalador aborta en el particionado con `parted: invalid token: Willy`. En
+  una tabla msdos el argumento que sigue a `mkpart` es el **tipo** (`primary`), no un nombre — los
+  nombres solo los admite GPT —, así que la ruta UEFI funcionaba y la de BIOS no. Corregido en
+  `src/tree-2.1` y `src/tree-2.5` (raiz `mkpart primary ext4 …`, swap con `$TIPOSW`, y la
+  partición persistente del USB elegida por `blkid PTTYPE`) y vigilado por dos puertas nuevas:
+  `comprobar-parted-mkpart.sh` (texto del hook) y `probar-parted-real.sh` (`parted` de verdad sobre
+  archivos-image montados en `/dev/loop`, con un escenario que exige que el comando viejo siga
+  fallando). El ensayo de lógica no podía verlo: su `parted` es burlado y solo anota la orden.
+  La 2.5 y la 2.5.5 sí instalan en UEFI; en BIOS hay que recompilar.
 - Ninguna 2.1 anterior se borró: se conservan como `.bak-12.21.06` (la primera, hash
   `3e3c8965…a8c4`), `.bak-17.15.05`, `.bak-17.15.44` y `.bak-17.16.51`.
 

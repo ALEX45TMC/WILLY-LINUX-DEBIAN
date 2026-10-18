@@ -92,6 +92,20 @@ Siete escenarios:
 Los tamaños se comprueban en bytes (`497142464000B` en el escenario B, `246960619520B` en el D),
 porque `parted` rechaza tamaños negativos y trata el último byte como incluido.
 
+**Lo que este ensayo no puede ver.** Su `parted` es burlado: anota la orden y devuelve 0, así que
+no comprueba la **sintaxis** de `parted`. Por eso pasó desapercibido el `mkpart Willy ext4 …` de la
+rama BIOS, que un `parted` real rechaza con `invalid token` (en msdos va el tipo, no el nombre). El
+ensayo real de VirtualBox del 2026-10-17 lo descubrió, y desde entonces hay dos piezas más:
+
+- `probar-parted-real.sh`: crea el `preparar()` tal cual está en el hook, lo corre contra un
+  `parted` **de verdad** sobre archivos-image montados en `/dev/loop` (nunca un disco real) y
+  comprueba tabla, número de particiones y flags en BIOS y en UEFI. Incluye un escenario de
+  *dientes*: el comando viejo con nombre en msdos **tiene** que fallar; si alguna vez pasa, el
+  ensayo avisa de que ha perdido su razón de ser. Necesita `root` y `losetup` (se corre en WSL).
+- `comprobar-parted-mkpart.sh`: puerta estática sobre el texto del hook — ninguna `mkpart` de la
+  rama msdos puede llevar nombre, la swap ha de usar `$TIPOSW` y la persistencia del USB ha de
+  elegir `$NOMBREP` según `blkid PTTYPE`. Va dentro de los guiones de compilación.
+
 ## 6. Puertas antes de compilar
 
 El guion de compilación aborta si:
@@ -102,6 +116,8 @@ El guion de compilación aborta si:
 - **todos** los `*.list.chroot` no son idénticos entre las dos ediciones y el maestro (un paquete
   añadido solo en un sitio se compilaría en una ISO y no en la otra);
 - falta `grub2-common`, el *preflight* o el guardado USB-en-disco en los árboles;
+- alguna `mkpart` de la rama BIOS lleva nombre de partición (`comprobar-parted-mkpart.sh`);
+- la 2.1 conserva la comprobación de ruta vieja `/lib/live/mount/medium` en vez de `willy-medio`;
 - el espacio libre real del disco del host es menor de 40 GB.
 
 ## 7. Entrega
