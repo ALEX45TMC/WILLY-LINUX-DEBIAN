@@ -1,0 +1,60 @@
+# Audio y video modernos. PipeWire sustituye a PulseAudio: control de volumen y
+# de dispositivos por aplicacion desde el panel de Plasma y Bluetooth aptX.
+pipewire
+pipewire-audio
+pipewire-pulse
+wireplumber
+libpulse0
+pavucontrol-qt
+
+# amixer: lo usa el arreglo de primera sesion para desilenciar la tarjeta de
+# fabrica. Con --apt-recommends false nadie mas lo trae, y sin el el audio
+# sigue mudo aunque PipeWire este funcionando.
+alsa-utils
+
+# Las dos vienen como Recommends de alsa-utils, y con --apt-recommends false
+# se quedaban fuera: sin ucm2/tplg muchos codigos de portatil (Realtek con
+# amplificador, Intel SSE/CHT) no crean ni un perfil de salida, asi que el
+# icono de volumen aparece pero no sube ni baja.
+alsa-ucm-conf
+alsa-topology-conf
+
+# El beep de confirmation que suena al mover el volumen o al emparejar Bluetooth.
+# sound-theme-freedesktop y libcanberra0 si entraban, pero el modulo que los
+# conecta con PipeWire es Recommends de plasma-pa y se quedaba fuera: el
+# altavoz del panel se animaba sin emitir ningun sonido.
+libcanberra-pulse
+
+# Codecs: todo lo que trae Debian, incluido lo que patenta licencias aparte
+gstreamer1.0-plugins-good
+gstreamer1.0-plugins-bad
+gstreamer1.0-plugins-ugly
+gstreamer1.0-libav
+gstreamer1.0-pipewire
+gstreamer1.0-vaapi
+ffmpeg
+
+# Decodificacion de video por GPU (VA-API). Firefox y los reproductores solo la
+# usan si hay un controlador; libva2 entra solo como dependencia de
+# gstreamer1.0-vaapi, pero los controladores van en paquetes que son Recommends
+# y con --apt-recommends false se quedaban fuera: sin ellos TODO el video se
+# decodifica en el procesador, y en un portatil de 6 GB un 1080p60 de YouTube
+# se atraganta. i965 para Intel viejas, intel-media para Broadwell en adelante,
+# mesa-va para AMD, va-driver-all pone el despachador y vainfo lo comprueba.
+mesa-va-drivers
+mesa-vdpau-drivers
+i965-va-driver
+intel-media-va-driver
+va-driver-all
+vainfo
+
+# Reproductores y edicion de sonido
+vlc
+mpv
+audacity
+mtpaint
+
+# Fuentes que esperan las paginas y los documentos
+fonts-noto-core
+fonts-noto-color-emoji
+fonts-hack

@@ -5,6 +5,36 @@ Las imágenes anteriores **nunca se borran**: se renombran `.bak-día.hora` con 
 
 ---
 
+## 2026-10-20 — 2.8: el particionado del instalador, separado por tabla de particiones
+
+**ISO:** `willylinux-v2.8-kde-amd64.iso`, 1.849.540.608 B (1763 MB, 21 % del tope de 8 GB),
+SHA-256 `d20a9eb14b2be93421e3200317af1e6c085898083bb5b50e6e931ceeea97c9f7`, quemada a las 20:59.
+Guarda del mismo árbol: `.bak-20.21.26`, idéntica de tamaño, SHA-256
+`8f7c678d383cf8dd0be2f3e042de1e1a3eee7c83b405cb35896616306c635af7`.
+
+**Motivo:** el ensayo de instalación real en VirtualBox con la 2.5.5 dejó ver que `parted`
+rechazaba los nombres de partición en tabla `msdos` (`parted: invalid token: Willy`) y que el
+instalador se quedaba con ese error para sí. La 2.8 separa las dos ramas: nombres solo en GPT,
+`mkpart primary ext4` en BIOS, 1 MiB de separación entre el final de la raíz y el swap, aviso de
+GPT sin `bios_grub` en modo BIOS, error de `parted` visible y corte si la raíz sale sin UUID.
+
+**Paquetes:** 1638 en la imagen (la 2.5 rondaba 1592). `core.list.chroot` suma `dbus-x11`,
+`libkf6config-bin` y `psmisc` — los tres necesarios para `willy-panel`, comprobados dentro del
+squashfs. `instalador.list.chroot` suma `fdisk` para traer `cfdisk`.
+
+**Lo que sigue mal, descubierto montando el ISO ya quemado:** `cfdisk` **no está** en el sistema
+de la 2.8 pese a que `fdisk` entró en la lista a las 20:11, media hora antes del quemado. Y el
+instalador todavía puede decir «instalado» si `grub-install` falla. Ninguna de las dos cosas
+aparecía en el log del build. Detalle en
+[ediciones](ediciones.md#dos-defectos-abiertos-escritos-como-se-vieron).
+
+**Estado:** verificada por dentro (`.disk/info` = `Debian GNU/Linux 2.8 "Trixie" - Snapshot amd64
+LIVE Binary 20261020-20:59`, `os-release` `VERSION_ID="2.8"`, volumen `WILLYLINUX28`), **no
+ensayada en máquina**: ni arranque en USB ni instalación real. Antes de recomendarla para
+instalar hay que pasarla por VirtualBox en UEFI y en BIOS, como se hizo con la 2.5.
+
+---
+
 ## 2026-10-17 (tarde) — 2.0 y 2.1 recompiladas: el instalador deja de ser una promesa
 
 Las dos ediciones ligeras se compilaron otra vez el mismo día, cada una por un motivo distinto.

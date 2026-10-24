@@ -1,0 +1,18 @@
+[Unit]
+Description=Willy Linux: nombre visible del usuario live
+Documentation=file:/usr/share/doc/live-config
+After=live-config.service
+ConditionPathExists=/usr/bin/usermod
+
+[Service]
+Type=oneshot
+# live-config crea al arrancar al usuario "live" con el comentario "Debian Live
+# user", que es lo que Plasma ensena en el menu de aplicaciones. Se cambia a "Willy"
+# solo mientras ese comentario siga siendo el de fabrica: si el usuario pone su
+# nombre desde "Mi usuario", esta unidad ya no lo pisa. Se lee el usuario del
+# autologin de SDDM porque si se renombro, "live" ya no existe.
+ExecStart=/bin/sh -c 'u=$(sed -n "s/^User=//p" /etc/sddm.conf.d/willy.conf 2>/dev/null); [ -n "$u" ] || u=live; id "$u" >/dev/null 2>&1 || exit 0; g=$(getent passwd "$u" | cut -d: -f5); case "$g" in "Debian Live user"|"") usermod -c "Willy" "$u";; esac'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

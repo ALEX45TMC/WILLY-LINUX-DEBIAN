@@ -127,10 +127,17 @@ config/bootloaders/                  splash.svg
 scripts/check-size.sh                control del tope
 ```
 
-Los árboles completos están en [`src/`](../src). Los ensayos del instalador, en
+Los árboles completos están en [`src/`](../src) (`tree-2.0`, `tree-2.1`, `tree-2.5`, `tree-2.8`).
+Los ensayos del instalador, en
 **[`src/pruebas/`](../src/pruebas)**: `probar-logica-instalador.sh` y `probar-logica-21.sh` (mundo
 simulado, burlas de `parted`/`lsblk`/`yad`), `probar-parted-real.sh` (`parted` de verdad sobre
 archivos-image en `/dev/loop`) y `comprobar-parted-mkpart.sh` (puerta estática del texto del hook).
 Ninguno toca un disco real. Los tres ensayos se corren como `root` (el de lógica crea nodos en
 `/dev` y usa `unshare -m`; el de `parted` necesita `losetup`); la puerta estática no necesita nada
 de eso y es la que va dentro de los guiones de compilación.
+
+Del quemado de la 2.8 quedan además dos piezas que **sí montan el ISO**:
+`verificar-2.8.sh` (identidad, instalador instalado, herramientas y paquetes dentro del squashfs)
+y `auditar-iso.sh` (los marcadores de cada arreglo dentro del `willy-instalar` instalado). Su
+salida del 2026-10-20 es la que declaró el `cfdisk` que falta; ver
+[ediciones](ediciones.md#dos-defectos-abiertos-escritos-como-se-vieron).

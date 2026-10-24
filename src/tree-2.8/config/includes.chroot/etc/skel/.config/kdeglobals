@@ -1,0 +1,11 @@
+[General]
+ColorScheme=BreezeDark
+Name=Willy Linux
+
+[Icons]
+Theme=willy-dark
+
+[KDE]
+Style=breeze
+SingleClick=true
+WidgetStyle=Breeze

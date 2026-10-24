@@ -1,0 +1,21 @@
+# Tienda de aplicaciones: Discover gestiona los paquetes del sistema (PackageKit)
+# y las apps de Flathub (Flatpak). El remoto de Flathub se anade en
+# config/includes.chroot/etc/flatpak/remotes.d.
+plasma-discover
+plasma-discover-backend-flatpak
+plasma-discover-backend-fwupd
+flatpak
+flatpak-xdg-utils
+appstream
+packagekit
+packagekit-tools
+# Recomiendo de flatpak que --apt-recommends false dejaba fuera: sin
+# update-desktop-database los .desktop que instalar desde Flathub no refrescan el
+# menu y la app queda sin icono hasta volver a entrar.
+desktop-file-utils
+
+# Actualizacion de firmware del equipo desde la propia tienda
+fwupd
+apt-config-icons
+apt-config-icons-large
+kde-config-updates

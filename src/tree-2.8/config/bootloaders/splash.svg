@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="640" height="480" viewBox="0 0 640 480">
+  <!-- Fondo del menu de arranque: la imagen completa de Willy, recortada solo por
+       los lados para llenar el 4:3. live-build la convierte con rsvg-convert a
+       640x480 (isolinux) y a 800x600 (GRUB EFI), y la ruta del <image> se resuelve
+       dentro del chroot, de ahi que el PNG tenga que estar en includes.chroot.
+       Antes se recortaba el logo con un clipPath sobre el fondo de 1664x928 y se
+       notaba el borde del recuadro; por eso ahora va la imagen entera. -->
+  <image x="-110" y="0" width="860" height="480"
+         xlink:href="usr/share/backgrounds/willylinux/willyarranque.png"/>
+  <text x="626" y="28" font-family="DejaVu Sans" font-size="13"
+        fill="#cfe3dc" text-anchor="end">Debian 13 trixie</text>
+  <text x="626" y="46" font-family="DejaVu Sans" font-size="13"
+        fill="#cfe3dc" text-anchor="end">@ARCHITECTURE@ · v@VERSION@</text>
+</svg>

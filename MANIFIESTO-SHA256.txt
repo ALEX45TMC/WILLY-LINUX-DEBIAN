@@ -1,0 +1,75 @@
+sha256 de los ISOs y squashfs de Willy Linux "de casa" - generado 2026-10-24 15:44 (36 binarios)
+(bytes<TAB>GB<TAB>fecha<TAB>ruta en disco, y debajo su sha256)
+
+1110900736	1.035 GB	2026-10-17	E:\Willy Linux\2.0\iso\willylinux-v2.0-minimalista-amd64.iso
+    sha256: cca27c81fcb556d47c867d7675d3af70b038eaaea45a1860e6aa7d0cd663bcce
+1110900736	1.035 GB	2026-10-17	E:\Willy Linux\2.0\iso\willylinux-v2.0-minimalista-amd64.iso.bak-17.16.14
+    sha256: eadfb2157f83f1232e2bb58dc152d11b694fbf8c0540c54fe5fc6b1f0b25de02
+1142931456	1.064 GB	2026-10-17	E:\Willy Linux\2.1\iso\willylinux-v2.1-amd64.iso
+    sha256: 10432e437bbfb245e0bc84c970d89c5e5562f4325758631a9364d6001cbc5c77
+1141800960	1.063 GB	2026-10-17	E:\Willy Linux\2.1\iso\willylinux-v2.1-amd64.iso.bak-17.15.05
+    sha256: d97285d54734ad1bbab01348b9c695d7d67a7723118220c431a876d267ffd4f9
+1141800960	1.063 GB	2026-10-17	E:\Willy Linux\2.1\iso\willylinux-v2.1-amd64.iso.bak-17.15.44
+    sha256: d97285d54734ad1bbab01348b9c695d7d67a7723118220c431a876d267ffd4f9
+1142931456	1.064 GB	2026-10-17	E:\Willy Linux\2.1\iso\willylinux-v2.1-amd64.iso.bak-17.16.51
+    sha256: 55797b278001b5fd8c794e718497eadb5d1e29cc2ea50ed2018b17ba6110293e
+1849540608	1.723 GB	2026-10-17	E:\Willy Linux\2.5\iso\willylinux-v2.5.5-kde-amd64.iso
+    sha256: 43b66af845d6426e2a290633c76c000043956568904a9e90379eaea1d9a8a8c8
+1840087040	1.714 GB	2026-10-13	E:\Willy Linux\2.5\iso\willylinux-v2.5.5-kde-amd64.iso.bak-14.15.33
+    sha256: cf161eb2fcac317dd2f9eed64d5d9b3274312f0a5dad8a3c9b0cbf1efef8c663
+1841889280	1.715 GB	2026-10-14	E:\Willy Linux\2.5\iso\willylinux-v2.5.5-kde-amd64.iso.bak-14.21.21
+    sha256: 3a8ecb786067d0050869fdb64a733763fc44128a898a8602c66c1e3de9e25935
+1841889280	1.715 GB	2026-10-14	E:\Willy Linux\2.5\iso\willylinux-v2.5.5-kde-amd64.iso.bak-17.13.21
+    sha256: 455a97ea2075e0fe4a7489ebe2690dd62b1801335d0e7074cfec8a16a4532ca9
+1849540608	1.723 GB	2026-10-17	E:\Willy Linux\2.5\iso\willylinux-v2.5-kde-amd64.iso
+    sha256: 1f3e2f6018b2c442ad8d20537468b4acb3525ef19831334bc6a84b3f506cc349
+1840087040	1.714 GB	2026-10-13	E:\Willy Linux\2.5\iso\willylinux-v2.5-kde-amd64.iso.bak-13.18.31
+    sha256: 67f9326160d4b7f93c01fda3b52ff5276a5b9528c27049e85bec10e45f2b2dbd
+1840087040	1.714 GB	2026-10-13	E:\Willy Linux\2.5\iso\willylinux-v2.5-kde-amd64.iso.bak-13.20.59
+    sha256: ebb5f62acee14f9ae0bd45626e0a1e4c45c5b2ab571aaebd4ec7b9fcc0a6eecc
+1840087040	1.714 GB	2026-10-13	E:\Willy Linux\2.5\iso\willylinux-v2.5-kde-amd64.iso.bak-14.12.53
+    sha256: b75c8187df70993b3c75ee8861da7936fc761ba961cdecf5b8069f9ad388a3e9
+1840087040	1.714 GB	2026-10-14	E:\Willy Linux\2.5\iso\willylinux-v2.5-kde-amd64.iso.bak-14.13.56
+    sha256: 01b173704314382d25cfc11f433534c2e608e0c20bfe52175b9e038d1391c2e6
+1840087040	1.714 GB	2026-10-14	E:\Willy Linux\2.5\iso\willylinux-v2.5-kde-amd64.iso.bak-14.14.58
+    sha256: f2ea6bd5adf4d7baed895489a9875e92190c7876d83099ac4abd23dbc054f215
+1841889280	1.715 GB	2026-10-14	E:\Willy Linux\2.5\iso\willylinux-v2.5-kde-amd64.iso.bak-14.20.40
+    sha256: a4d55c8f2945d00223b313b818cd40f6ee36f7e1277d6d39f8c8212c10ba16c9
+1841889280	1.715 GB	2026-10-14	E:\Willy Linux\2.5\iso\willylinux-v2.5-kde-amd64.iso.bak-17.12.20
+    sha256: 17d9cb88c7821a54b699971164517fee8a323d42ab21e82291cac100a50ccc7d
+1849540608	1.723 GB	2026-10-20	E:\Willy Linux\2.8\iso\willylinux-v2.8-kde-amd64.iso
+    sha256: d20a9eb14b2be93421e3200317af1e6c085898083bb5b50e6e931ceeea97c9f7
+1849540608	1.723 GB	2026-10-20	E:\Willy Linux\2.8\iso\willylinux-v2.8-kde-amd64.iso.bak-20.21.26
+    sha256: 8f7c678d383cf8dd0be2f3e042de1e1a3eee7c83b405cb35896616306c635af7
+2457649152	2.289 GB	2026-10-17	E:\Willy Linux\archiso-corregida\willy-linux-2026.10.17-x86_64.iso
+    sha256: 7c464aebe0487aa05f5d9944ad0a168bf25c9bb44f5da31241dbcb3d2e2a6fe5
+5392826368	5.022 GB	2026-10-22	E:\Willy Linux\2.5\vm\willy-inst-efi.vdi
+    sha256: f4c31620fc9c4b6bf48247ccbba02fb64de874ae4e1025594253c526666881ac
+435853312	0.406 GB	2026-10-10	E:\WILLIAM\slax-64bit-debian-12.2.0.iso
+    sha256: 61d9fdcc006938d6fd6f231e22d8af926ae8f48fdf0487b8010e69f3bd17cf70
+701497344	0.653 GB	2026-10-10	E:\WILLIAM\tinydeb-amd64.iso
+    sha256: f5701df09af985466661717dd74204ff76bb666daea81fd9c3fe45aca9909eed
+969731716	0.903 GB	2026-10-12	E:\WILLIAM\Willy Linux 1.1.rar
+    sha256: 18af0bb33df8ced1284ff3757c24c483d6fa29be4fb27a9e15d2884853f13ca4
+1079097483	1.005 GB	2026-10-12	E:\WILLIAM\Willy Linux 2.0 - copia.rar
+    sha256: 6a5466d420d45ac953ba3804248e23ef3d47893f863f822eb07eee23ad31be29
+1079097483	1.005 GB	2026-10-12	E:\WILLIAM\Willy Linux 2.0.rar
+    sha256: 6a5466d420d45ac953ba3804248e23ef3d47893f863f822eb07eee23ad31be29
+1105734979	1.03 GB	2026-10-12	E:\WILLIAM\Willy Linux 2.1 - copia.rar
+    sha256: 0001858bf70d73453834a6eeb77e094a2033b1ee6ca69216100b138931ffd429
+1105734979	1.03 GB	2026-10-12	E:\WILLIAM\Willy Linux 2.1.rar
+    sha256: 0001858bf70d73453834a6eeb77e094a2033b1ee6ca69216100b138931ffd429
+2457649152	2.289 GB	2026-10-17	E:\WILLIAM\willy-linux-2026.10.13-x86_64.iso
+    sha256: 5c2b52a16ecca08c2321f8a26eff7ace19a5787dff9238cb8ec5f841b63ef8ad
+703594496	0.655 GB	2026-10-12	E:\WILLIAM\willylinux-amd64.iso
+    sha256: 446a54c08709d8f23d80f2126cc6acfe716bcf5dc14bf365bbf60c05adf8aa3c
+1841889280	1.715 GB	2026-10-14	E:\WILLIAM\willylinux-v2.5.5-kde-amd64 - copia.iso
+    sha256: 455a97ea2075e0fe4a7489ebe2690dd62b1801335d0e7074cfec8a16a4532ca9
+1841889280	1.715 GB	2026-10-14	E:\WILLIAM\willylinux-v2.5.5-kde-amd64.iso
+    sha256: 455a97ea2075e0fe4a7489ebe2690dd62b1801335d0e7074cfec8a16a4532ca9
+1841889280	1.715 GB	2026-10-14	E:\WILLIAM\willylinux-v2.5-kde-amd64 - copia.iso
+    sha256: 17d9cb88c7821a54b699971164517fee8a323d42ab21e82291cac100a50ccc7d
+1841889280	1.715 GB	2026-10-14	E:\WILLIAM\willylinux-v2.5-kde-amd64.iso
+    sha256: 17d9cb88c7821a54b699971164517fee8a323d42ab21e82291cac100a50ccc7d
+2457649152	2.289 GB	2026-10-17	C:\Users\DORA\Downloads\willy-linux-2026.10.13-x86_64.iso
+    sha256: 5c2b52a16ecca08c2321f8a26eff7ace19a5787dff9238cb8ec5f841b63ef8ad

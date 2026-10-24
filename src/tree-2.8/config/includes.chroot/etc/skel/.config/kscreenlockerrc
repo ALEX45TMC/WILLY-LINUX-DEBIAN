@@ -1,0 +1,7 @@
+[Greeter]
+Theme=breeze
+WallpaperPlugin=org.kde.image
+
+[Greeter][Wallpaper][org.kde.image][General]
+Image=/usr/share/backgrounds/willylinux/willyagua.png
+FillMode=2

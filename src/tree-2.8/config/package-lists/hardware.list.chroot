@@ -1,0 +1,16 @@
+# Controladores y utilidades de hardware. "Compatible con todo": microcode de las
+# CPU, aceleracion 3D por software (llvmpipe) para maquinas virtuales y graficas
+# sin controlador, y lectura de discos de Windows.
+xserver-xorg-video-all
+xserver-xorg-input-wacom
+amd64-microcode
+intel-microcode
+mesa-utils
+libgl1-mesa-dri
+ntfs-3g
+exfatprogs
+dosfstools
+mtools
+usbutils
+pciutils
+dmidecode

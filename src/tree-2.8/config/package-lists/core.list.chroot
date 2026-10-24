@@ -1,0 +1,22 @@
+systemd-sysv
+libpam-systemd
+dbus
+# dbus-send: lo usa willy-panel para hablar con plasmashell. Con --apt-recommends
+# false no llega de rebote y sin el no hay forma de mandar la orden de barra.
+dbus-x11
+# kreadconfig6 / kwriteconfig6: escribir plasmashellrc sin romperlo.
+libkf6config-bin
+# killall: willy-panel reinicia plasmashell por fichero.
+psmisc
+sudo
+apt
+procps
+iproute2
+iputils-ping
+less
+nano
+locales
+keyboard-configuration
+console-setup
+ca-certificates
+curl

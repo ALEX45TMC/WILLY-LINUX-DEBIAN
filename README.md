@@ -32,6 +32,7 @@ desde **USB grabado** (Rufus en modo DD o `dd`) y en **máquina virtual**.
 | **2.1 Minimalista** | 2.0 + instalador, USB persistente, impresión, Bluetooth y actualizar | 4 GB | 3–4 GB | entregada 2026-10-12 |
 | **2.5** | escritorio completo KDE Plasma 6 | 8 GB | 6–7 GB | entregada 2026-10-17 |
 | **2.5.5** | misma imagen que 2.5 con su etiqueta de versión | 8 GB | 6–7 GB | entregada 2026-10-17 |
+| **2.8** | 2.5 con el particionado del instalador corregido y tres paquetes que faltaban | 8 GB | 6–7 GB | quemada 2026-10-20, **sin ensayar en máquina** |
 
 Comparativa completa, con tamaño real, número de paquetes y SHA-256 de cada ISO:
 [tabla de ediciones](docs/ediciones.md) e [historial con todos los cambios](docs/historial.md).

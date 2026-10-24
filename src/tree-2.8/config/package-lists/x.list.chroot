@@ -1,0 +1,7 @@
+xserver-xorg-core
+xserver-xorg-input-libinput
+xserver-xorg-video-vesa
+xserver-xorg-video-fbdev
+xinit
+x11-xserver-utils
+fonts-dejavu-core

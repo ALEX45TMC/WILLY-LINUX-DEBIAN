@@ -1,31 +1,31 @@
 # Ediciones de Willy Linux
 
-Seis ediciones publicadas desde cero. Cada una conserva su imagen anterior: **ninguna ISO se
+Siete ediciones publicadas desde cero. Cada una conserva su imagen anterior: **ninguna ISO se
 borra**, las versiones previas quedan como `.bak-día.hora` junto a su `.sha256`.
 
 ## Tabla comparativa
 
-| | 1.0 | 1.1 | 2.0 | 2.1 | 2.5 | 2.5.5 |
-|---|---|---|---|---|---|---|
-| Nombre de la ISO | `willylinux-amd64.iso` | `willylinux-v1.1-amd64.iso` | `willylinux-v2.0-minimalista-amd64.iso` | `willylinux-v2.1-amd64.iso` | `willylinux-v2.5-kde-amd64.iso` | `willylinux-v2.5.5-kde-amd64.iso` |
-| Entrega | 2026-10-11 | 2026-10-12 | 2026-10-17 (16:16) | 2026-10-17 (16:52) | 2026-10-17 | 2026-10-17 |
-| Tamaño | 703.594.496 B (671 MB) | 993.001.472 B (947 MB) | 1.110.900.736 B (1059 MB) | 1.142.931.456 B (1089 MB) | 1.849.540.608 B (1763 MB) | 1.849.540.608 B (1763 MB) |
-| Tope autoimpuesto | 2 GB | 3 GB | 4 GB | 4 GB | 8 GB | 8 GB |
-| % del tope | 34 % | 30 % | 26 % | 27 % | 21 % | 21 % |
-| Escritorio | IceWM | IceWM | IceWM | IceWM | **KDE Plasma 6** | KDE Plasma 6 |
-| RAM objetivo | 2 GB | 2–3 GB | 3–4 GB | 3–4 GB | 6–7 GB | 6–7 GB |
-| Paquetes instalados | 565 | 710 | 896 | 965 | ~1592 | ~1592 |
-| Arranque BIOS + UEFI | sí | sí | sí | sí | sí | sí |
-| Instalador a disco | no | no | no | **sí** | sí | sí |
-| USB persistente | no | no | no | **sí** | sí | sí |
-| Impresión (CUPS) | no | no | no | **sí** | sí | sí |
-| Bluetooth | no | no | no | **sí** | sí | sí |
-| Botón de actualizar | no | no | no | **sí** | sí | sí |
-| Audio PipeWire | no (PulseAudio) | no | no | no | **sí** | sí |
-| Tienda Discover + Flathub | no | no | no | no | **sí** | sí |
-| Sistema bóveda (Vault + KeePassXC + Back In Time) | no | no | no | no | **sí** | sí |
-| Vídeo por GPU (VA-API) | no | no | **sí** (desde 2026-10-17) | **sí** (desde 2026-10-17) | **sí** (desde 2026-10-17) | sí |
-| SHA-256 de la entrega | `446a54c0…f8aa3c` | `f01a95f6…fcc6b0fb` | `cca27c81…d663bcce` | `10432e43…001cbc5c77` | `1f3e2f60…506cc349` | `43b66af8…d9a8a8c8` |
+| | 1.0 | 1.1 | 2.0 | 2.1 | 2.5 | 2.5.5 | 2.8 |
+|---|---|---|---|---|---|---|---|
+| Nombre de la ISO | `willylinux-amd64.iso` | `willylinux-v1.1-amd64.iso` | `willylinux-v2.0-minimalista-amd64.iso` | `willylinux-v2.1-amd64.iso` | `willylinux-v2.5-kde-amd64.iso` | `willylinux-v2.5.5-kde-amd64.iso` | `willylinux-v2.8-kde-amd64.iso` |
+| Entrega | 2026-10-11 | 2026-10-12 | 2026-10-17 (16:16) | 2026-10-17 (16:52) | 2026-10-17 | 2026-10-17 | 2026-10-20 (20:59) |
+| Tamaño | 703.594.496 B (671 MB) | 993.001.472 B (947 MB) | 1.110.900.736 B (1059 MB) | 1.142.931.456 B (1089 MB) | 1.849.540.608 B (1763 MB) | 1.849.540.608 B (1763 MB) | 1.849.540.608 B (1763 MB) |
+| Tope autoimpuesto | 2 GB | 3 GB | 4 GB | 4 GB | 8 GB | 8 GB | 8 GB |
+| % del tope | 34 % | 30 % | 26 % | 27 % | 21 % | 21 % | 21 % |
+| Escritorio | IceWM | IceWM | IceWM | IceWM | **KDE Plasma 6** | KDE Plasma 6 | KDE Plasma 6 |
+| RAM objetivo | 2 GB | 2–3 GB | 3–4 GB | 3–4 GB | 6–7 GB | 6–7 GB | 6–7 GB |
+| Paquetes instalados | 565 | 710 | 896 | 965 | ~1592 | ~1592 | 1638 |
+| Arranque BIOS + UEFI | sí | sí | sí | sí | sí | sí | sin ensayo propio en VM |
+| Instalador a disco | no | no | no | **sí** | sí | sí | sí (particionado corregido) |
+| USB persistente | no | no | no | **sí** | sí | sí | sí |
+| Impresión (CUPS) | no | no | no | **sí** | sí | sí | sí |
+| Bluetooth | no | no | no | **sí** | sí | sí | sí |
+| Botón de actualizar | no | no | no | **sí** | sí | sí | sí |
+| Audio PipeWire | no (PulseAudio) | no | no | no | **sí** | sí | sí |
+| Tienda Discover + Flathub | no | no | no | no | **sí** | sí | sí |
+| Sistema bóveda (Vault + KeePassXC + Back In Time) | no | no | no | no | **sí** | sí | sí |
+| Vídeo por GPU (VA-API) | no | no | **sí** (desde 2026-10-17) | **sí** (desde 2026-10-17) | **sí** (desde 2026-10-17) | sí | sí |
+| SHA-256 de la entrega | `446a54c0…f8aa3c` | `f01a95f6…fcc6b0fb` | `cca27c81…d663bcce` | `10432e43…001cbc5c77` | `1f3e2f60…506cc349` | `43b66af8…d9a8a8c8` | `d20a9eb1…6c635af7` |
 
 Hashes completos y lineage de cada recompilación: [historial](historial.md).
 
@@ -166,3 +166,73 @@ marca de tiempo), `efi.img` (Volume ID) y los menús `menu.cfg`/`live.cfg`/`grub
 **Conclusión honesta: la 2.5.5 es la 2.5 rebautizada, sin ningún cambio funcional.** Se mantiene
 como edición propia porque así queda registrado el reintento, pero para usar, elige la 2.5: son
 el mismo sistema.
+
+## 2.8 — el instalador deja de mentirle a `parted`
+
+Edición KDE Plasma 6 que no añade escritorio nuevo: su razón de ser es el **instalador a disco**,
+que en la 2.5.5 estropeaba el arranque en algunos equipos. El árbol está en [`src/tree-2.8`](../src/tree-2.8)
+y es idéntico al de la 2.5 salvo en cuatro sitios: `auto/config` (etiqueta `WILLYLINUX28` /
+"Willy Linux 2.8"), los ocho hooks de `config/hooks/live/`, `etc/skel/.bashrc` y tres
+`package-lists`.
+
+- ISO: `willylinux-v2.8-kde-amd64.iso`, 1.849.540.608 B (1763 MB, 21 % del tope de 8 GB),
+  SHA-256 `d20a9eb14b2be93421e3200317af1e6c085898083bb5b50e6e931ceeea97c9f7`, entregada el
+  2026-10-20 a las 20:59. Su guarda `.bak-20.21.26` mide lo mismo y tiene SHA-256
+  `8f7c678d383cf8dd0be2f3e042de1e1a3eee7c83b405cb35896616306c635af7`: son dos quemados seguidos
+  del mismo árbol, no dos ediciones.
+- `.disk/info` dentro del ISO: `Debian GNU/Linux 2.8 "Trixie" - Snapshot amd64 LIVE Binary
+  20261020-20:59`; `os-release` dice `PRETTY_NAME="Willy Linux 2.8"`, `VERSION_ID="2.8"`.
+  squashfs de 1.759.268.864 B.
+
+### Qué cambió en el instalador (comprobado dentro del squashfs, no en el log)
+
+- Los **nombres de partición solo se pasan en GPT**. En la tabla `msdos`, `parted` rechaza el
+  argumento con nombre y el instalador abortaba con `parted: invalid token: Willy`; la rama BIOS
+  ahora usa `mkpart primary ext4` sin nombre.
+- El **final de la raíz deja 1 MiB** antes del swap (`INISWAP-512` → separación de 1 MiB), que es
+  lo que hacía que `parted` se negara en algunos discos.
+- **Avisa de GPT sin `bios_grub`** cuando se arranca en BIOS: sin esa partición, GRUB no tiene
+  dónde instalarse y antes se enteraba uno después.
+- **Enseña el error real de `parted`** en lugar de tragárselo, y **corta si la raíz sale sin
+  UUID** para no escribir un `fstab` roto.
+
+### Tres paquetes que faltaban y ahora están en la lista
+
+`core.list.chroot` gana `dbus-x11` (`dbus-send`, con el que `willy-panel` habla con
+plasmashell), `libkf6config-bin` (`kreadconfig6`/`kwriteconfig6`, para escribir
+`plasmashellrc` sin romperlo) y `psmisc` (`killall`, con el que el panel reinicia
+plasmashell). Los tres **sí aparecen dentro del ISO** verificado.
+
+### Dos defectos abiertos, escritos como se vieron
+
+- **`fdisk` está en `instalador.list.chroot` (línea 21, añadida a las 20:11, antes del quemado
+  de las 20:59) y `cfdisk` NO está dentro del squashfs.** La opción «particionar antes a mano»
+  del instalador sigue sin binario. El verificador del 20-10 ya lo anotó como `FALTA` y sigue
+  sin explicación: o la lista no llegó al árbol de compilación (se copia a `/root/willy-linux-2.8`
+  al lanzar), o `lb` no volvió a ejecutar `binary_packages`. **Hay que resolverlo antes de dar la
+  2.8 por buena para instalar.**
+- **`grub-install` puede fallar y el instalador decir «instalado»**, con el disco sin arrancar.
+  La 2.5 del 14-10 ya comprueba que existan `grub-install` y `grub-bios-setup` *antes* de borrar
+  nada; lo que falta es comprobar que la instalación **terminó bien**.
+- Además, la 2.8 **no se ha ensayado en máquina**: las capturas y el ensayo completo de
+  VirtualBox son de la 2.5. Hasta que no se instale de verdad en UEFI y en BIOS, su estado es
+  «quemada y verificada por dentro», no «probada».
+
+## Dónde viven los binarios
+
+Ninguna ISO va a este repositorio: GitHub rechaza ficheros de más de 100 MB y pesan GB. Se
+conservan en disco, cada una con su `.sha256` al lado, y las entregas se publican como *Releases*.
+
+| bulto | dónde está |
+|---|---|
+| 1.0, 1.1 | `E:\WILLIAM\willylinux-amd64.iso`, `Willy Linux 1.1.rar` |
+| 2.0, 2.1 | `E:\Willy Linux\2.0\iso\`, `E:\Willy Linux\2.1\iso\` y sus `.rar` en `E:\WILLIAM` |
+| 2.5, 2.5.5 | `E:\Willy Linux\2.5\iso\` (ocho guardas `.bak-*`) y copias en `E:\WILLIAM` |
+| 2.8 | `E:\Willy Linux\2.8\iso\` y su guarda `.bak-20.21.26` |
+| ensayo con `archiso` (2026-10-17) | `E:\Willy Linux\archiso-corregida\willy-linux-2026.10.17-x86_64.iso`, 2.457.649.152 B, SHA-256 `7c464aebe0487aa05f5d9944ad0a168bf25c9bb44f5da31241dbcb3d2e2a6fe5` — quedó como experimento, no como edición |
+| disco de la VM de prueba | `E:\Willy Linux\2.5\vm\willy-inst-efi.vdi`, 5.392.826.368 B |
+
+El SHA-256 de las guardas `.bak-*` que no están en este fichero está en
+[`MANIFIESTO-SHA256.txt`](../MANIFIESTO-SHA256.txt), el listado con bytes, fecha, ruta y hash de
+los 36 binarios que hay en disco ahora mismo.
+

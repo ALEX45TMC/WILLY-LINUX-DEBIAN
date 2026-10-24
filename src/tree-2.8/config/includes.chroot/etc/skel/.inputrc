@@ -1,0 +1,16 @@
+# ~/.inputrc de Willy Linux: autocompletado y historial comodos
+$include /etc/inputrc
+
+# Flechas: buscan en el historial solo lo escrito hasta el momento
+"\e[A": history-search-backward
+"\e[B": history-search-forward
+
+# Autocompletar sin pitido y sin distinguir mayusculas
+set show-all-if-ambiguous on
+set show-all-if-unmodified on
+set bell-style none
+set completion-ignore-case on
+set completion-map-case on
+
+# Al entrar en un enlace simbolico a directorio, quedar dentro del destino
+set mark-symlinked-directories on
