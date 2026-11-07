@@ -124,13 +124,17 @@ sudo mount -o loop,ro /mnt/willy/live/filesystem.squashfs /tmp/wsq</code></pre>
 
 <section id="arbol">
   <h2>Qué hay en el árbol</h2>
-  <pre><code>src/tree-2.8/
+  <pre><code>index/descargas/documentacion/ayuda/capturas/licencias.html   la página publicada
+assets/css, assets/js, img/, datos-iso.json                estilo, buscador y capturas
+src/tree-2.8/
   auto/config                     opciones de lb config; volumen WILLYLINUX28
   config/package-lists/*.list.chroot   19 listas, 250 paquetes únicos declarados
   config/hooks/live/*.hook.chroot      identidad, menús, herramientas, instalador, asistente, Plasma
   config/includes.chroot/etc/          hostname, hosts, sysctl, skel
   scripts/                        check-packages.sh, check-size.sh, comprobar-parted-mkpart.sh
-src/pruebas/                      verificar-2.8.sh, probar-instalacion-vbox.ps1, probar-parted-real.sh…
+src/pruebas/                      verificar-2.8.sh, comprobar-seguro-arranque.py,
+                                  leer-dentro-iso.py, probar-instalacion-vbox.ps1,
+                                  probar-parted-real.sh, comprobar-pagina.py
 docs/                             la documentación que estás leyendo resumida
 .github/workflows/build-iso.yml compile la ISO en Actions y la deja como artefacto (no publica)</code></pre>
   <div class="tabla-envoltura">
@@ -179,6 +183,10 @@ lb config noauto &amp;&amp; lb build 2&gt;&amp;1 | tee /tmp/lb-build.log</code><
       <p><code>src/pruebas/verificar-2.8.sh</code> monta la ISO recién quemada y da
       <code>OK</code>/<code>MAL</code> por comprobación, incluido el hash de la cuenta live y la
       sintaxis de los guiones.</p>
+      <p><code>src/pruebas/comprobar-seguro-arranque.py</code> abre el <code>EFI.IMG</code> del mismo
+      modo (sin montar nada) y dice si <code>BOOTX64.EFI</code> lleva tabla de certificados
+      Authenticode. <code>comprobar-pagina.py</code> revisa que las seis páginas HTML y los enlaces
+      internos no se hayan roto.</p>
     </li>
     <li>
       <h3>Entregar</h3>

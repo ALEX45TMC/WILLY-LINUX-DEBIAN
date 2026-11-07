@@ -56,6 +56,26 @@ El complemento en tiempo de ejecución: `willy-primera-vez` ya no se fía del c�
 `chpasswd`, sino que vuelve a leer `/etc/shadow` con `passwd -S` y avisa por stderr si el estado no
 es `P`.
 
+### El arrancador EFI: firmado o no
+
+`src/pruebas/comprobar-seguro-arranque.py` hace la misma comprobación sobre la partición EFI del ISO
+**sin montarla**: localiza `EFI.IMG` en el sistema de ficheros ISO9660, parsea su FAT12 y mira la
+entrada nº 4 del *data directory* del PE (`BOOTX64.EFI`). Si el RVA y el tamaño salen 0, no hay
+tabla de certificados Authenticode y el firmware con Secure Boot lo rechaza. Da también la presencia
+de `shim-signed`, `mokutil`, `grub-efi-amd64-bin` y `efibootmgr` leídos de `filesystem.packages`.
+
+Sobre la 2.8 de Actions (idéntico en la quemada del 2026-10-20):
+
+```
+== EFI.IMG: 622592 bytes, FAT12, 512 bytes/sector, 4 sectores/cluster ==
+  /EFI/BOOT/BOOTX64.EFI  585728 B  SIN FIRMA  [tabla 0 bytes, RVA 0x0]
+  veredicto: con Secure Boot activado este arrancador NO pasa
+```
+
+El parser se valida con un control positivo sobre ficheros firmados de verdad
+(`C:/Windows/Boot/EFI/bootmgfw.efi`: 52 bytes de tabla, `maquina 0x8664`, `magic 0x020B`). Sin ese
+control, un lector roto también diría «SIN FIRMA».
+
 ## 2. El formato de `filesystem.packages`
 
 **Trampa confirmada:** el fichero usa `nombre:arquitectura<TAB>versión`, así que un

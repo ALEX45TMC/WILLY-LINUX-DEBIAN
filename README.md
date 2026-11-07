@@ -185,10 +185,16 @@ Detalle y salidas de cada una: [uso diario](docs/uso-diario.md).
 
 - **Netflix, Disney+, Prime Video y Max no reproducen vídeo.** El `firefox-esr` de Debian no
   incluye Widevine; no es un fallo de la ISO ni del enlace. Solución: Chromium desde Discover.
-- **Secure Boot en el disco instalado.** La ISO no lleva `shim-signed`, así que un disco
-  instalado con Secure Boot activado no arranca. El instalador lo detecta y avisa: desactiva
-  Secure Boot o deja el modo *Other OS*. Añadir shim son ~40 MB y un enrolado MOK nuevo; se
-  decidió no incluirlo.
+- **Secure Boot (USB UEFI y disco instalado).** La ISO no lleva `shim-signed`. Comprobado sobre el
+  artefacto con `src/pruebas/comprobar-seguro-arranque.py`: dentro de `EFI.IMG` (FAT12, 622.592 B)
+  el arrancador `/EFI/BOOT/BOOTX64.EFI` pesa 585.728 B y su tabla de certificados Authenticode está
+  a 0 bytes (RVA 0x0) — el mismo análisis sobre `bootmgfw.efi` de Windows sí da 52 bytes firmados,
+  así que la medición vale. Consecuencia: con Secure Boot activado la entrada UEFI del USB puede
+  rechazar el arranque y un disco instalado **no arranca**; en BIOS es indiferente. `grub-efi-amd64-bin`
+  y `efibootmgr` sí están; `shim-signed` y `mokutil`, no. El instalador lo detecta por
+  `/sys/firmware/efi/efivars/SecureBoot-*` y avisa antes de empezar: desactiva Secure Boot o deja el
+  modo *Other OS*. Añadir shim son ~40 MB y un enrolado MOK nuevo; se decidió no incluirlo. La ruta
+  manual está en `ayuda.html#secure-boot`.
 - **VLC se ve gris en la 2.5.** En la imagen solo hay estilos de Qt6; `kde-style-breeze-qt5`
   son 629 KB más librerías KF5 y se descartó a propósito por ser solo cosmético.
 - **Solo 64 bits (`amd64`).** Para equipos de 32 bits hay que arrancar otra distribución.

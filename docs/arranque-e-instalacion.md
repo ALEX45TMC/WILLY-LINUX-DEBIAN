@@ -89,6 +89,31 @@ locales=es_ES.UTF-8 keyboard-layouts=latam timezone=America/Bogota
   `keyboard-layouts=us`, `timezone=Europe/Madrid`, quita `quiet` para ver los mensajes de
   arranque, o añade `failsafe` / `nomodeset`.
 
+### Secure Boot
+
+La ISO **no lleva `shim-signed`** y su arrancador no está firmado por Microsoft. Comprobado dentro
+del artefacto con `src/pruebas/comprobar-seguro-arranque.py`: en `EFI.IMG` está
+`/EFI/BOOT/BOOTX64.EFI` (585.728 B) **sin tabla de certificados Authenticode**, y en la lista de
+paquetes figuran `grub-efi-amd64-bin` y `efibootmgr` pero no `shim-signed` ni `mokutil`. El mismo
+programa, aplicado a `bootmgfw.efi` de Windows, sí encuentra la firma.
+
+Qué significa al usarla:
+
+| caso | con Secure Boot activado |
+|---|---|
+| USB arrancando en UEFI | lo esperado es que el firmware lo rechace (`Security Violation`) o que la entrada UEFI ni aparezca |
+| disco instalado arrancando en UEFI | **no arranca**: `grubx64.efi` tampoco está firmado |
+| cualquier caso en BIOS / Legacy | no aplica: Secure Boot no existe en BIOS |
+
+Por eso, antes de instalar, **desactiva Secure Boot o deja «Other OS»** en el firmware (*Boot*,
+*Security* o *Authentication*). El instalador lo detecta leyendo la variable EFI y avisa antes de
+empezar. **Si el equipo tiene Windows con BitLocker**, suspende la protección antes: cambiar
+Secure Boot mueve la medida PCR7 y Windows puede pedir la clave de recuperación.
+
+Las alternativas a apagarlo —enrolar el hash del arrancador en el firmware, o instalar
+`shim-signed` y `mokutil` en el disco y enrolar la clave MOK— están explicadas en
+[solución de problemas](solucion-de-problemas.md#secure-boot-qué-rechaza-de-esta-iso-y-las-tres-salidas).
+
 ## 5. La sesión live
 
 | Dato | Valor |

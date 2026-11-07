@@ -11,13 +11,93 @@ máquinas virtuales donde se probó Willy Linux.
 
 1. Entra al firmware (`F12`, `F8`, `Esc`, `F2` o `Del` al encender) y elige el USB en el menú de
    arranque temporal.
-2. **Desactiva Secure Boot** o pon «Other OS». La ISO arranca sin firma en la mayoría de
-   firmware, pero algunos lo bloquean.
+2. **Desactiva Secure Boot** o pon «Other OS». El `BOOTX64.EFI` de la ISO no está firmado por
+   Microsoft, así que un firmware con Secure Boot impuesto lo rechaza; abajo está todo.
 3. Prueba el otro modo: si grabaste pensando en UEFI, prueba Legacy/CSM, y al revés.
 4. Cambia de puerto: algunos portátiles ignoran USB 3.0 en el arranque.
 5. Vuelve a grabar en **modo DD** con Rufus, o con `dd`. Copiar la ISO con el explorador no
    deja un disco arrancable.
 6. Con el USB ya arrancado, usa el menú **Comprobar la integridad del USB**.
+
+### Secure Boot: qué rechaza de esta ISO y las tres salidas
+
+Secure Boot es una comprobación del firmware UEFI: antes de ejecutar un arrancador mira si lleva
+una firma digital (Authenticode) reconocida por las claves de la máquina. Si no la lleva, **no lo
+ejecuta** y aparece el menú de la BIOS otra vez o un
+`Verification failed: (0x1A) Security Violation`. No es un mensaje de Willy Linux: es el firmware,
+antes de que arranque nada.
+
+**Qué hay dentro de la ISO**, comprobado sobre el artefacto con
+`src/pruebas/comprobar-seguro-arranque.py` (no sobre el log de la compilación):
+
+```
+== paquetes dentro del ISO ==
+  shim-signed            -- NO esta
+  grub-efi-amd64-bin     esta
+  mokutil                -- NO esta
+
+== EFI.IMG: 622592 bytes, FAT12, 512 bytes/sector, 4 sectores/cluster ==
+  /EFI/BOOT/BOOTX64.EFI    585728 B  SIN FIRMA  [tabla 0 bytes, RVA 0x0]
+
+  veredicto: con Secure Boot activado este arrancador NO pasa
+```
+
+El mismo programa, aplicado a `bootmgfw.efi` y `memtest.efi` de Windows, sí encuentra la tabla de
+certificados (52 bytes): la diferencia entre firmado y sin firmar está medida con el mismo código.
+
+| caso | qué ejecuta el firmware | con Secure Boot activado |
+|---|---|---|
+| USB en UEFI | `/EFI/BOOT/BOOTX64.EFI` de `EFI.IMG` (585.728 B, sin firma) | lo esperado es que no arranque |
+| disco instalado en UEFI | `grubx64.efi` que `grub-install` saca de `grub-efi-amd64-bin` (tampoco firmado por Microsoft) | **no arranca**; el instalador avisa antes de empezar |
+| cualquier caso en BIOS | `isolinux` y el sector de arranque | da igual: en BIOS no existe Secure Boot |
+
+El caso del USB está **deducido del artefacto, no medido en un equipo real**: en VirtualBox el
+firmware EFI de las pruebas venía con Secure Boot apagado. El del disco instalado sí es lo que se ve
+en pantalla.
+
+**Saber si lo tienes activado, sin `mokutil`** (la imagen no lo trae, está comprobado arriba), leyendo
+la variable EFI igual que hace el instalador:
+
+```sh
+for v in /sys/firmware/efi/efivars/SecureBoot-*; do
+    printf '%s  ' "$(basename "$v")"
+    od -An -tu1 -j4 -N1 "$v" 2>/dev/null
+done          # 1 = activado, 0 = apagado
+```
+
+Si sale `1` pero la máquina está en *Setup Mode*, la comprobación no se está aplicando; con las
+claves instaladas (*User Mode*) sí.
+
+**Las tres salidas.**
+
+1. **Apagarlo o poner «Other OS»** — lo recomendado. En el firmware (`F2`, `Del`, `F10`, `Esc`) suele
+   estar en *Boot*, *Security* o *Authentication*; muchos portátiles tienen un conmutador
+   «Other OS» / «Installs other operating systems» que hace lo mismo. Es una decisión de una vez.
+   **Si el equipo tiene Windows con BitLocker**, cambiar Secure Boot mueve la medida PCR7 y Windows
+   puede pedir la *clave de recuperación*: suspende la protección antes de tocar nada o ten la clave
+   a mano.
+2. **Firmar el arrancador tú mismo** — ruta de laboratorio: clave propia, firmware en *Setup Mode*,
+   enrolar el certificado y firmar `BOOTX64.EFI` y `grubx64.efi` con `sbsign`. Vale para un parque
+   cerrado de equipos propios; una ISO pública no puede llevar la clave privada dentro.
+3. **`shim-signed` en el disco instalado** — lo que hacen las distribuciones firmadas: un segundo
+   arrancador pequeño firmado por Microsoft que arranca GRUB y pide enrolar la clave de la
+   distribución. Se puede hacer después de instalar, con red:
+
+   ```sh
+   sudo apt update
+   sudo apt install shim-signed mokutil     # deja la clave en /etc/uefi/certs/*.crt
+   sudo grub-install --force-extra-removable
+   sudo mokutil --import /etc/uefi/certs/*.crt   # pide una contraseña de una sola vez
+   sudo reboot                                     # y sale la pantalla azul de enrolar MOK
+   ```
+
+   No se incluye en la imagen a propósito: unos **40 MB más** en cada ISO, un segundo arranque con
+   pantalla azul y una clave de terceros metida en la máquina. Los equipos donde se usa esta
+   distribución van en BIOS o con Secure Boot apagado.
+
+**El instalador ya avisa**: en UEFI lee la variable y, si está a `1`, saca el aviso antes de borrar
+nada («Willy Linux usa su propio cargador sin firmar, así que con Secure Boot puesto no arrancará
+desde el disco») y deja cancelar ahí.
 
 ### Arranca y queda la pantalla en negro
 

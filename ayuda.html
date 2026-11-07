@@ -65,12 +65,119 @@
     <div class="cuerpo">
       <ol class="pasos">
         <li><h3>Menú de arranque temporal</h3><p>Entra al firmware (<kbd>F12</kbd>, <kbd>F8</kbd>, <kbd>Esc</kbd>, <kbd>F2</kbd> o <kbd>Del</kbd> al encender) y elige el USB.</p></li>
-        <li><h3>Secure Boot</h3><p>Desactívalo o pon «Other OS». La ISO arranca sin firma en la mayoría de firmware, pero algunos lo bloquean.</p></li>
+        <li><h3>Secure Boot</h3><p>El arrancador <code>BOOTX64.EFI</code> de la ISO no está firmado por Microsoft, así que un firmware con Secure Boot impuesto lo rechaza: desactívalo o pon «Other OS». Está todo en <a href="#secure-boot">Secure Boot, qué rechaza y las tres salidas</a>.</p></li>
         <li><h3>Cambia de modo</h3><p>Si grabaste pensando en UEFI, prueba Legacy/CSM, y al revés.</p></li>
         <li><h3>Puerto</h3><p>Algunos portátiles ignoran USB 3.0 durante el arranque. Prueba un USB 2.0.</p></li>
         <li><h3>Vuelve a grabar en modo DD</h3><p>Con Rufus en modo <em>DD-image</em>, o con <code>dd</code>. Copiar la ISO con el explorador de archivos no deja un disco arrancable.</p></li>
       </ol>
       <p>Con el USB ya arrancado, usa el menú <strong>Comprobar la integridad del USB</strong>.</p>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="secure-boot">
+    <summary>Secure Boot: qué hace, qué rechaza de esta ISO y las tres salidas <span class="cinta atencion">sin shim</span></summary>
+    <div class="cuerpo">
+      <p><strong>Qué es.</strong> Secure Boot es una comprobación del firmware UEFI: antes de
+      ejecutar un arrancador mira si tiene una firma digital (Authenticode) reconocida por las
+      claves que trae la máquina —la de Microsoft, sobre todo—. Si no la tiene, el firmware
+      <em>no lo ejecuta</em> y la pantalla se queda en el menú de la BIOS o en
+      <code>Verification failed: (0x1A) Security Violation</code>. No es un mensaje de Willy Linux:
+      es el firmware hablando antes de que arranque nada.</p>
+
+      <p><strong>Qué hay dentro de nuestra ISO.</strong> Comprobado sobre el artefacto, no sobre el
+      log de la compilación (<code>src/pruebas/comprobar-seguro-arranque.py</code>):</p>
+      <pre><code>$ python src/pruebas/comprobar-seguro-arranque.py willylinux-v2.8-kde-amd64.iso
+== paquetes dentro del ISO ==
+  shim-signed            -- NO esta
+  grub-efi-amd64-bin     esta
+  mokutil                -- NO esta
+
+== EFI.IMG: 622592 bytes, FAT12, 512 bytes/sector, 4 sectores/cluster ==
+  ficheros dentro de la FAT: /EFI/BOOT/BOOTX64.EFI
+  /EFI/BOOT/BOOTX64.EFI    585728 B  SIN FIRMA  [tabla 0 bytes, RVA 0x0]
+
+  veredicto: con Secure Boot activado este arrancador NO pasa</code></pre>
+      <p>El comprobador se validó contra ficheros EFI de Windows
+      (<code>bootmgfw.efi</code> y <code>memtest.efi</code>), que sí salen como firmados con una
+      tabla de certificados de 52 bytes: o sea que la comparación entre un <code>.efi</code> firmado
+      y el nuestro está hecha con el mismo programa.</p>
+
+      <p><strong>Qué rechaza, en concreto.</strong> El mismo arrancador sin firma sirve para las dos
+      cosas, así que con Secure Boot impuesto se rechazan <em>las dos</em>:</p>
+      <div class="tabla-envoltura">
+        <table>
+          <thead><tr><th>Caso</th><th>Qué ejecuta el firmware</th><th>Con Secure Boot activado</th></tr></thead>
+          <tbody>
+            <tr><td>USB en UEFI</td><td><code>/EFI/BOOT/BOOTX64.EFI</code> dentro de <code>EFI.IMG</code> (585.728 B, sin firma)</td><td>lo esperado es que no arranque</td></tr>
+            <tr><td>Disco instalado en UEFI</td><td><code>grubx64.efi</code> que <code>grub-install</code> saca de <code>grub-efi-amd64-bin</code> —el paquete de Debian tampoco viene firmado por Microsoft—</td><td><strong>no arranca</strong>; el instalador avisa antes de empezar</td></tr>
+            <tr><td>Cualquier caso en BIOS</td><td><code>isolinux</code> y el sector de arranque</td><td>da igual: Secure Boot no existe en BIOS</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="reg">El caso del USB está <strong>deducido del artefacto, no medido en un equipo
+      real</strong>: en VirtualBox el firmware EFI de las pruebas venía con Secure Boot apagado y no
+      se ha probado en una máquina con él puesto. El del disco instalado sí es lo que se ve en
+      pantalla: el disco queda sin arrancar y hay que tocar el firmware.</p>
+
+      <p><strong>Cómo saber si lo tienes activado, desde Willy Linux.</strong> La imagen no trae
+      <code>mokutil</code> (está comprobado arriba), así que se lee la variable EFI directamente,
+      que es exactamente lo que hace el instalador:</p>
+      <pre><code>for v in /sys/firmware/efi/efivars/SecureBoot-*; do
+    printf '%s  ' "$(basename "$v")"
+    od -An -tu1 -j4 -N1 "$v" 2&gt;/dev/null
+done
+SecureBoot-…  1        # 1 = activado, 0 = apagado</code></pre>
+      <p>Si sale <code>1</code> y además la máquina está en <em>Setup Mode</em>, la comprobación no
+      se está aplicando; con las claves instaladas (<em>User Mode</em>) sí.</p>
+
+      <h3>Las tres salidas</h3>
+      <ol class="pasos">
+        <li>
+          <h3>Apagarlo o poner «Other OS» (la recomendada)</h3>
+          <p>En el firmware (<kbd>F2</kbd>, <kbd>Del</kbd>, <kbd>F10</kbd> o <kbd>Esc</kbd> al
+          encender) suele estar en <em>Boot</em>, <em>Security</em> o <em>Authentication</em>.
+          Muchos portátiles tienen el conmutador «Other OS» / «Installs other operating systems»,
+          que hace lo mismo sin desactivar el resto. Es una decisión de una vez: el disco instalado
+          arranca igual a partir de ahí.</p>
+          <p><strong>Si el equipo tiene Windows con BitLocker,</strong> cambiar la configuración de
+          Secure Boot mueve la medida PCR7 y Windows puede pedir la <strong>clave de recuperación</strong>
+          al arrancar. Suspende BitLocker (<em>Suspend-Protection</em> o la opción del panel de
+          Windows) antes de tocar nada, o ten la clave a mano.</p>
+        </li>
+        <li>
+          <h3>Firmar el arrancador tú mismo con una clave propia</h3>
+          <p>Ruta de laboratorio: se genera una clave MOK/db propia, se arranca el firmware en
+          <em>Setup Mode</em>, se enrola el certificado y se firma <code>BOOTX64.EFI</code> y
+          <code>grubx64.efi</code> con <code>sbsign</code>. Da para un parque cerrado de equipos
+          propios, no para una imagen que reparte gente: cada máquina tendría que enrolar tu clave, y
+          la ISO pública no puede llevar una clave privada dentro.</p>
+        </li>
+        <li>
+          <h3>Añadir <code>shim-signed</code> en el disco instalado</h3>
+          <p>Es lo que hacen las distribuciones firmadas: un segundo arrancador pequeño firmado por
+          Microsoft (<code>shim</code>) que arranca GRUB y, la primera vez, pide en pantalla que
+          enrolen la clave de la distribución con <code>mokutil</code>. En Willy Linux se puede hacer
+          <strong>después de instalar</strong>, con red:</p>
+          <pre><code>sudo apt update
+sudo apt install shim-signed mokutil     # deja la clave en /etc/uefi/certs/*.crt
+sudo grub-install --force-extra-removable
+sudo mokutil --import /etc/uefi/certs/*.crt   # pide una contraseña de una sola vez
+sudo reboot                                      # y ahí sale la pantalla azul de enrolar MOK</code></pre>
+          <p>No se incluye en la imagen a propósito: son unos <strong>40 MB</strong> más en cada ISO,
+          obliga a un segundo arranque con pantalla azul y mete en la máquina una clave de terceros.
+          Los equipos donde se usa esta distribución van en BIOS o con Secure Boot apagado, y ahí
+          sobra.</p>
+        </li>
+      </ol>
+
+      <div class="aviso">
+        <p><strong>El instalador ya avisa.</strong> En UEFI lee la variable <code>SecureBoot</code> y,
+        si está a 1, saca un aviso antes de borrar nada: «Willy Linux usa su propio cargador sin
+        firmar, así que con Secure Boot puesto no arrancará desde el disco». Puedes cancelar ahí,
+        apagar Secure Boot y volver a empezar, o instalar igual y tocar el firmware después.</p>
+      </div>
+      <p class="reg">El arranque por <strong>BIOS/Legacy</strong> no tiene este problema: si tu
+      firmware lo ofrece, graba el USB y arranca por esa entrada.</p>
     </div>
   </details>
 
@@ -310,7 +417,7 @@ Error: Expecting a partition type.</code></pre>
     <summary>Instalé bien pero el disco no arranca</summary>
     <div class="cuerpo">
       <ol class="pasos">
-        <li><h3>Secure Boot</h3><p>El GRUB de la ISO no está firmado y la imagen no incluye <code>shim-signed</code>; el instalador avisa antes de empezar. Desactívalo o pon «Other OS».</p></li>
+        <li><h3>Secure Boot</h3><p>El GRUB que instala Willy Linux no está firmado y la imagen no incluye <code>shim-signed</code>; el instalador avisa antes de empezar. Desactívalo, pon «Other OS» o firma el arrancador tú mismo: está explicado en <a href="#secure-boot">Secure Boot</a>.</p></li>
         <li><h3>Entrada de firmware</h3><p>Puede que el firmware siga apuntando a la otra entrada:</p>
         <pre><code>efibootmgr -v</code></pre>
         <p>sube <code>Willy Linux</code> (o <code>ubuntu</code>) en el orden de arranque.</p></li>

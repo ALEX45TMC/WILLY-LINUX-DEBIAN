@@ -5,6 +5,27 @@ Las imágenes anteriores **nunca se borran**: se renombran `.bak-día.hora` con 
 
 ---
 
+## 2026-11-07 (noche) — Secure Boot documentado desde el artefacto
+
+**Qué se hizo:** medir, dentro de la ISO publicada, si el arrancador EFI trae firma, y escribir el
+resultado en la web y en los docs. Nuevo comprobador `src/pruebas/comprobar-seguro-arranque.py`
+(lee `EFI.IMG` sin montarlo: ISO9660 → FAT12 → cabecera PE → data directory nº 4) más
+`src/pruebas/leer-dentro-iso.py` como base.
+
+| medición | valor |
+|---|---|
+| `EFI.IMG` | 622.592 B, FAT12, 512 B/sector, 4 sectores/cluster |
+| `/EFI/BOOT/BOOTX64.EFI` | 585.728 B, **tabla de certificados 0 bytes, RVA 0x0** |
+| control positivo (`bootmgfw.efi`, `memtest.efi`) | firmados, 52 B de tabla, `magic 0x020B` |
+| paquetes | `grub-efi-amd64-bin`, `grub2-common`, `efibootmgr` **sí**; `shim-signed`, `mokutil` **no** |
+| mismo resultado en la quemada del 20-10 | idéntico |
+
+**Consecuencias escritas:** acorde nuevo `ayuda.html#secure-boot` (qué es, qué rechaza, cómo
+detectarlo sin `mokutil` y las tres salidas, con el aviso de PCR7/BitLocker); sección equivalente en
+`docs/solucion-de-problemas.md`; subsection en `docs/arranque-e-instalacion.md`; y se quita de
+`ayuda.html` y de `docs/solucion-de-problemas.md` la frase que afirmaba que la ISO arranca sin firma
+en la mayoría del firmware — eso no lo sostiene ninguna medición.
+
 ## 2026-11-07 (tarde) — se ensaya el quemado de Actions y uno de los arreglos no cuela
 
 **Qué se hizo:** arrancar en VirtualBox la ISO que compiló `build-iso.yml` el mismo 07-11 —la que

@@ -150,9 +150,11 @@ sync</code></pre>
   <p>
     Entra al firmware con <kbd>F12</kbd>, <kbd>F8</kbd>, <kbd>Esc</kbd>, <kbd>F2</kbd> o
     <kbd>Del</kbd> y elige el USB en el menú de arranque temporal. Desactiva
-    <strong>Secure Boot</strong> o pon «Other OS». Si tu equipo muestra las dos entradas del USB,
+    <strong><a href="ayuda.html#secure-boot">Secure Boot</a></strong> o pon «Other OS». Si tu equipo
+    muestra las dos entradas del USB,
     usa la <strong>UEFI</strong>: arranca más rápido y el instalador puede registrar GRUB en el
-    firmware.
+    firmware. Sin apagar Secure Boot la entrada UEFI puede no aparecer o reventar con
+    <code>Security Violation</code>: el <code>BOOTX64.EFI</code> de la ISO no va firmado.
   </p>
   <div class="tabla-envoltura">
     <table>

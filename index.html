@@ -181,7 +181,7 @@
         <tr><td>USB para live</td><td>8 GB</td><td>16 GB</td><td>la ISO ocupa 1819 MB</td></tr>
         <tr><td>USB con cambios guardados</td><td>16 GB</td><td>32 GB</td><td>el modo «todo» escribe también las actualizaciones</td></tr>
         <tr><td>Disco para instalar</td><td>20 GB</td><td>40 GB</td><td>el ensayo del 07-11 copió 5,07 GB al disco</td></tr>
-        <tr><td>Firmware</td><td>BIOS o UEFI</td><td>UEFI</td><td>un mismo ISO híbrido arranca en los dos; Secure Boot hay que apagarlo</td></tr>
+        <tr><td>Firmware</td><td>BIOS o UEFI</td><td>UEFI</td><td>un mismo ISO híbrido arranca en los dos; con <a href="ayuda.html#secure-boot">Secure Boot</a> activado hay que apagarlo</td></tr>
       </tbody>
     </table>
   </div>
@@ -191,6 +191,25 @@
     está firmado. En un equipo con Secure Boot activado el disco instalado no arranca: desactívalo
     o pon «Other OS» antes de instalar. El instalador avisa antes de empezar.</p>
   </div>
+  <p>
+    Eso no es una suposición: se leyó dentro de la ISO. En <code>EFI.IMG</code> está
+    <code>/EFI/BOOT/BOOTX64.EFI</code> (585.728 B) <strong>sin tabla de certificados
+    Authenticode</strong> —la misma comprobación sobre <code>bootmgfw.efi</code> de Windows sí se la
+    encuentra—, y en la lista de paquetes figuran <code>grub-efi-amd64-bin</code> y
+    <code>efibootmgr</code> pero <strong>no</strong> <code>shim-signed</code> ni
+    <code>mokutil</code>. El comprobador es
+    <code>src/pruebas/comprobar-seguro-arranque.py</code> y corre sobre cualquier ISO.
+  </p>
+  <p>
+    Tres salidas, en orden de sensatez: <strong>apagar Secure Boot o poner «Other OS»</strong> (una
+    vez, y ojo con BitLocker si el equipo tiene Windows), <strong>firmar el arrancador con una clave
+    propia y enrolarla en el firmware</strong> (Setup Mode + <code>sbsign</code>, solo para parque
+    propio), o <strong>instalar <code>shim-signed</code> en el disco</strong> después de
+    instalar. Qué hace cada una, por qué la ISO no lleva shim los 40 MB de su peso, y cómo saber si tu
+    equipo lo tiene activado sin <code>mokutil</code>: <a href="ayuda.html#secure-boot">Secure Boot,
+    qué rechaza de esta ISO y las tres salidas</a>. En <strong>BIOS/Legacy</strong> nada de esto
+    existe —Secure Boot no llega a la BIOS—, y por eso el fallo solo se ve en equipos UEFI.
+  </p>
 </section>
 
 <section id="estado">
@@ -273,8 +292,10 @@
       <h3>Verificar el resultado</h3>
       <p><code>src/pruebas/verificar-2.8.sh</code> monta la ISO, lee el squashfs y comprueba los
       binarios, el <code>/etc/shadow</code> de la cuenta live y la sintaxis de los 22 guiones
-      propios. Ese es el paso que da por buena una imagen, no el <code>P: Build completed
-      successfully</code>.</p>
+      propios. <code>src/pruebas/comprobar-seguro-arranque.py</code> añade la comprobación de
+      <a href="ayuda.html#secure-boot">Secure Boot</a>: lee el <code>EFI.IMG</code> y confirma que
+      <code>BOOTX64.EFI</code> sale <strong>sin</strong> tabla de certificados. Ese es el paso que da
+      por buena una imagen, no el <code>P: Build completed successfully</code>.</p>
     </li>
   </ol>
 </section>
