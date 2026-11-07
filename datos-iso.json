@@ -28,7 +28,7 @@
     "usb_live": "8 GB",
     "usb_persistente": "32 GB",
     "disco": "25 GB (recomendado 40 GB)",
-    "arranque": "BIOS o UEFI (ambos ensayados en VirtualBox)"
+    "arranque": "BIOS o UEFI (este quemado ensayado en BIOS; el UEFI se ensayó con el quemado del 20-10)"
   },
   "anterior": {
     "version": "2.5.5",
@@ -40,7 +40,7 @@
     "bytes": 1849540608,
     "sha256": "d20a9eb14b2be93421e3200317af1e6c085898083bb5b50e6e931ceeea97c9f7",
     "paquetes": 1639,
-    "estado": "ensayada en maquina; tres defectos corregidos en la de Actions"
+    "estado": "ensayada en maquina; en la de Actions quedan probados la contraseña live y los paquetes, el centrado de la barra sigue abierto y el autologin solo esta verificado en codigo"
   },
   "enlaces": {
     "repo": "https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN",
