@@ -289,5 +289,5 @@ crea después de instalar esa ISO en VirtualBox y ver que arranca.
 
 El SHA-256 de las guardas `.bak-*` que no están en este fichero está en
 [`MANIFIESTO-SHA256.txt`](../MANIFIESTO-SHA256.txt), el listado con bytes, fecha, ruta y hash de
-los 36 binarios que hay en disco ahora mismo.
+los 37 binarios que hay en disco ahora mismo.
 

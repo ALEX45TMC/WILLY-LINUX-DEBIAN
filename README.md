@@ -225,6 +225,9 @@ Get-FileHash -Algorithm SHA256 .\willylinux-v2.5-kde-amd64.iso
 
 ```
 README.md                 esta presentación
+index.html  descargas.html  capturas.html  ayuda.html  documentacion.html  licencias.html
+assets/                   css y js de la página (GitHub Pages desde la raíz del repo)
+datos-iso.json            tamaño, SHA-256, nº de paquetes y enlaces: la única fuente de los datos
 docs/
   ediciones.md            comparativa de las 6 ediciones
   historial.md            cambios y mejoras de cada ISO, con hashes
@@ -236,6 +239,8 @@ docs/
   compilar.md             cómo se construye la imagen (live-build en WSL2)
   licencia.md             código abierto, licencias y marcas
 img/                      logo, fondos y capturas reales
+MANIFIESTO-SHA256.txt     bytes, fecha, ruta y sha256 de los 37 binarios que hay en disco
+src/tree-2.8/             configuración completa de la 2.8 (la que se compila hoy)
 src/tree-2.5/             configuración completa de la edición 2.5 / 2.5.5
 src/tree-2.1/             configuración completa de la 2.1 (IceWM con instalador)
 src/tree-2.0/             configuración completa de la 2.0 (IceWM sin instalador)

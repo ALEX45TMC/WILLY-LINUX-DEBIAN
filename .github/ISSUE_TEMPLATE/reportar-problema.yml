@@ -1,0 +1,98 @@
+name: Reportar un problema
+description: Aviso de fallo en una ISO de Willy Linux (live, instalación o sistema instalado)
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Rellena sobre todo el **SHA-256 de la ISO** y la salida de `willy-info`: sin esos dos datos
+        no se puede saber si el fallo es de la imagen que publicamos o de una compilación propia.
+  - type: textarea
+    id: resumen
+    attributes:
+      label: Qué ha pasado
+      description: Síntoma en una frase, y cómo se Reproduce.
+      placeholder: Al instalar desde el USB en BIOS el disco no arranca; el menú de GRUB aparece vacío.
+    validations:
+      required: true
+  - type: dropdown
+    id: momento
+    attributes:
+      label: En qué momento pasa
+      options:
+        - Arranque del USB (live)
+        - Uso dentro de la live
+        - Instalación al disco (willy-instalar)
+        - Primer arranque desde el disco
+        - Uso del sistema instalado
+        - Compilar la ISO (live-build o GitHub Actions)
+    validations:
+      required: true
+  - type: dropdown
+    id: firmware
+    attributes:
+      label: Arranque
+      options:
+        - BIOS
+        - UEFI
+        - UEFI con Secure Boot activado
+        - Máquina virtual (VirtualBox / QEMU / Hyper-V)
+        - No lo sé
+    validations:
+      required: true
+  - type: input
+    id: iso
+    attributes:
+      label: SHA-256 de la ISO que usaste
+      description: El de la imagen que grabaste o instalaste, completo (64 caracteres).
+      placeholder: 825ec3bba88b4610244f1de889951c13e343b53f014d0bbb223a6d55874041bb
+    validations:
+      required: true
+  - type: textarea
+    id: willyinfo
+    attributes:
+      label: Salida de willy-info
+      description: Pégala entera. Va en bloque de código, tal cual.
+      render: text
+      placeholder: |
+        $ willy-info
+        Willy Linux 2.8 (KDE Plasma 6) · base Debian 13 trixie
+        ...
+    validations:
+      required: true
+  - type: textarea
+    id: guardado
+    attributes:
+      label: Salida de willy-guardado
+      description: Dice si estás en medio volátil, persistente o instalado; cambia lo que hay que mirar.
+      render: text
+      placeholder: $ willy-guardado
+    validations:
+      required: false
+  - type: textarea
+    id: log
+    attributes:
+      label: Log de instalación (solo si el fallo es al instalar)
+      description: Contenido de /var/log/willy-instalar.log. Si no existe, dilo.
+      render: text
+    validations:
+      required: false
+  - type: textarea
+    id: hardware
+    attributes:
+      label: Equipo
+      description: Marca/modelo, CPU, RAM, gráfica, disco y si el USB va en puerto 2.0 o 3.0.
+      placeholder: Portátil Lenovo IdeaPad 3 · Ryzen 5 3500U · 8 GB · Vega 8 · SSD 256 GB · USB 3.0
+    validations:
+      required: false
+  - type: checkboxes
+    id: comprobadas
+    attributes:
+      label: Comprobaciones previas
+      options:
+        - label: He verificado el SHA-256 de la ISO descargada
+          required: true
+        - label: He grabado el USB en modo DD (no en modo ISO)
+          required: true
+        - label: He mirado antes en la ayuda por síntoma
+          required: false

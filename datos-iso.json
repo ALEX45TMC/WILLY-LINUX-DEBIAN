@@ -40,7 +40,7 @@
     "bytes": 1849540608,
     "sha256": "d20a9eb14b2be93421e3200317af1e6c085898083bb5b50e6e931ceeea97c9f7",
     "paquetes": 1639,
-    "estado": "ensayada en maquina; en la de Actions quedan probados la contraseña live y los paquetes, el centrado de la barra sigue abierto y el autologin solo esta verificado en codigo"
+    "estado": "ensayada en máquina; en la de Actions quedan probados la contraseña live y los paquetes; el centrado de la barra sigue abierto y el autologin solo está verificado en código"
   },
   "enlaces": {
     "repo": "https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN",

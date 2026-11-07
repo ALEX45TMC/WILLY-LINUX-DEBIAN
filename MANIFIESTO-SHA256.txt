@@ -1,4 +1,4 @@
-sha256 de los ISOs y squashfs de Willy Linux "de casa" - generado 2026-10-24 15:44 (36 binarios)
+sha256 de los ISOs y squashfs de Willy Linux "de casa" - generado 2026-10-24 15:44, añadido el quemado de Actions el 2026-11-07 (37 binarios)
 (bytes<TAB>GB<TAB>fecha<TAB>ruta en disco, y debajo su sha256)
 
 1110900736	1.035 GB	2026-10-17	E:\Willy Linux\2.0\iso\willylinux-v2.0-minimalista-amd64.iso
@@ -41,6 +41,8 @@ sha256 de los ISOs y squashfs de Willy Linux "de casa" - generado 2026-10-24 15:
     sha256: d20a9eb14b2be93421e3200317af1e6c085898083bb5b50e6e931ceeea97c9f7
 1849540608	1.723 GB	2026-10-20	E:\Willy Linux\2.8\iso\willylinux-v2.8-kde-amd64.iso.bak-20.21.26
     sha256: 8f7c678d383cf8dd0be2f3e042de1e1a3eee7c83b405cb35896616306c635af7
+1906999296	1.776 GB	2026-11-07	E:\Willy Linux\2.8\iso\acciones-20261107\willylinux-v2.8-kde-amd64.iso
+    sha256: 825ec3bba88b4610244f1de889951c13e343b53f014d0bbb223a6d55874041bb
 2457649152	2.289 GB	2026-10-17	E:\Willy Linux\archiso-corregida\willy-linux-2026.10.17-x86_64.iso
     sha256: 7c464aebe0487aa05f5d9944ad0a168bf25c9bb44f5da31241dbcb3d2e2a6fe5
 5392826368	5.022 GB	2026-10-22	E:\Willy Linux\2.5\vm\willy-inst-efi.vdi
