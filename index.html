@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Willy Linux 2.8 — distribución live e instalable sobre Debian, en español</title>
+<meta name="description" content="Willy Linux 2.8: KDE Plasma 6 sobre Debian 13 trixie, en español, con teclado latinoamericano y zona America/Bogota ya en la línea de arranque. Live USB que instala al disco. ISO de 1819 MB con SHA-256.">
+<meta name="color-scheme" content="dark light">
+<meta property="og:title" content="Willy Linux 2.8 — Debian con Plasma 6, en español y listo para instalar">
+<meta property="og:description" content="Distribución live e instalable basada en Debian 13. Arranca en BIOS y UEFI, particiona, copia y deja GRUB registrado. Idioma, teclado latam y hora de Bogotá desde el arranque.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="img/logo-512.png">
+<link rel="icon" href="img/logo-128.png">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-datos="datos-iso.json">
+
+<header class="cabecera">
+  <div class="interior">
+    <a class="marca" href="index.html">
+      <img src="img/logo-128.png" alt="Logo de Willy Linux (lobito)">
+      <span>Willy&nbsp;Linux</span>
+    </a>
+    <nav class="navegacion" aria-label="Secciones">
+      <a href="index.html" aria-current="page">Portada</a>
+      <a href="descargas.html">Descargas</a>
+      <a href="capturas.html">Capturas</a>
+      <a href="documentacion.html">Documentación</a>
+      <a href="ayuda.html">Ayuda</a>
+      <a href="licencias.html">Licencias</a>
+      <a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN" rel="noopener">GitHub</a>
+    </nav>
+    <button id="tema" type="button">Tema: auto</button>
+  </div>
+</header>
+
+<section class="portada">
+  <div class="interior">
+    <div class="fila">
+      <div>
+        <span class="eyebrow">Edición 2.8 · KDE Plasma 6</span>
+        <h1>Un Debian que entra por el idioma<br>y por el teclado</h1>
+        <p class="lema">
+          Español <code>es_ES.UTF-8</code>, teclado <strong>latinoamericano</strong> y zona
+          <strong>America/Bogota</strong> ya escritos en la línea de arranque. La <code>Ñ</code> y
+          la <code>/</code> salen en su sitio sin configurar nada, y del USB live se pasa al disco
+          con un instalador propio que particiona, copia y deja GRUB registrado en el firmware.
+        </p>
+        <div class="botones">
+          <a class="boton" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/releases/tag/v2.8" rel="noopener">Descargar la ISO 2.8</a>
+          <a class="boton secundario" href="descargas.html">Cómo verificarla y grabarla</a>
+          <a class="boton secundario" href="ayuda.html">Solución de problemas</a>
+        </div>
+        <dl class="datos-portada">
+          <div><dt>Base</dt><dd>Debian 13 (trixie)</dd></div>
+          <div><dt>Escritorio</dt><dd>Plasma 6</dd></div>
+          <div><dt>Tamaño</dt><dd data-dato="iso.mb">1819 MB</dd></div>
+          <div><dt>Paquetes en la imagen</dt><dd data-dato="iso.paquetes">1712</dd></div>
+        </dl>
+      </div>
+
+      <aside class="sello">
+        <div class="fila-sello">
+          <img src="img/logo-128.png" alt="">
+          <div>
+            <div class="nombre">Willy Linux 2.8</div>
+            <div class="sub" data-dato="iso.compilada">compilada 2026-11-07</div>
+          </div>
+        </div>
+        <dl>
+          <dt>Archivo</dt><dd data-dato="iso.archivo">willylinux-v2.8-kde-amd64.iso</dd>
+          <dt>Tamaño</dt><dd data-dato="iso.bytes" data-bytes>1819 MB</dd>
+          <dt>Arquitectura</dt><dd data-dato="arquitectura">amd64</dd>
+          <dt>Volumen</dt><dd data-dato="iso.volumen">WILLYLINUX28</dd>
+        </dl>
+        <div class="hash">
+          SHA-256 <span data-dato="iso.sha256">825ec3bb…874041bb</span>
+        </div>
+        <div class="botones" style="margin-top:14px">
+          <button class="boton secundario" data-copiar-hash disabled type="button">copiar hash</button>
+          <a class="boton secundario" data-dato="enlaces.releases" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/releases">Releases</a>
+        </div>
+        <p class="sub" style="margin:12px 0 0;font-size:.82rem">
+          Compilada con <code>live-build</code> en GitHub Actions a partir del árbol
+          <code>src/tree-2.8</code> de este repositorio.
+        </p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<main class="interior">
+
+<section id="que-es">
+  <h2>Qué es Willy Linux</h2>
+  <p>
+    Es una <strong>distribución propia construida sobre Debian</strong> con
+    <code>live-build</code>: no es un remaster ni una capa de scripts sobre un ISO ajeno. Cada
+    paquete que entra en la imagen está <strong>declarado a mano</strong> en 19 listas de
+    <code>package-lists</code>, porque la compilación se hace con
+    <code>--apt-recommends false</code>. Eso da un control exacto del tamaño y obliga a conocer
+    cada dependencia: es la decisión que más explica este proyecto, y también la que produce la
+    familia de defectos que está documentada en
+    <a href="documentacion.html#recomendaciones">verificar la ISO</a>.
+  </p>
+  <p>
+    El objetivo declarado es el <strong>disco</strong>, no el USB: la sesión live sirve para
+    probar el equipo y para instalar. El instalador <code>willy-instalar</code> particiona
+    (GPT&nbsp;+&nbsp;ESP en UEFI, <code>msdos</code> en BIOS), crea swap si hay poca RAM, copia el
+    sistema, purga los paquetes live, regenera el initramfs y deja GRUB instalado y registrado en
+    el firmware. Detecta Windows y lo añade al menú, y <strong>nunca formatea la partición EFI de
+    Windows</strong>.
+  </p>
+
+  <div class="grid">
+    <div class="tarjeta">
+      <span class="num">1</span>
+      <h3>Asistente en español, de una pantalla</h3>
+      <p>Dieciséis opciones numeradas para cambiar idioma, fondo, colores, bloqueo, usuario y
+      contraseña, volumen, bóveda, tienda, actualizaciones, instalación en disco, teclado, barra de
+      tareas y guardado en el USB.</p>
+    </div>
+    <div class="tarjeta">
+      <span class="num">2</span>
+      <h3>Instalador propio</h3>
+      <p>Preflight antes de borrar nada: comprueba <code>grub-install</code>,
+      <code>grub-bios-setup</code> y que el medio sea realmente un USB live. Si falta algo, aborta
+      sin tocar el disco.</p>
+    </div>
+    <div class="tarjeta">
+      <span class="num">3</span>
+      <h3>Persistencia decidida por ti</h3>
+      <p>En el USB live eliges que nada se guarde, que se guarde solo <code>/home</code>, o que se
+      guarde todo. Sobrevive a apagar el equipo.</p>
+    </div>
+    <div class="tarjeta">
+      <span class="num">4</span>
+      <h3>Bóveda integrada</h3>
+      <p>Carpetas acorazadas de Plasma (cifrado con contraseña, montadas desde Dolphin), KeePassXC
+      para contraseñas y Back In Time con Borg para copias de seguridad.</p>
+    </div>
+    <div class="tarjeta">
+      <span class="num">5</span>
+      <h3>Tienda que sí lista Flathub</h3>
+      <p>Discover con PackageKit y Flatpak. El remoto estaba roto por escribir <code>URL=</code>
+      en vez de <code>Url=</code>; corregido, y con <code>update-desktop-database</code> para que
+      lo instalado refresque el menú.</p>
+    </div>
+    <div class="tarjeta">
+      <span class="num">6</span>
+      <h3>Audio y vídeo de fábrica</h3>
+      <p>PipeWire + WirePlumber, perfiles ALSA <code>ucm2</code> y <code>tplg</code> para
+      portátiles reales, códecs GStreamer/libav, VA-API declarado y el pitido de volumen con
+      <code>libcanberra-pulse</code>.</p>
+    </div>
+    <div class="tarjeta">
+      <span class="num">7</span>
+      <h3>Barra estilo 11 — con la trampa a la vista</h3>
+      <p>Se publica centrada «como en 11», pero <strong>en la live del quemado del 2026-11-07 los
+      iconos salen a la izquierda</strong>: <code>willy-panel</code> no encuentra ni la API de
+      <code>plasmashell</code> ni el <code>plasmashellrc</code> de la cuenta live, que todavía no
+      existe. Se arregla en dos clics dentro de Plasma; está dicho en la ayuda en vez de callado.</p>
+    </div>
+    <div class="tarjeta">
+      <span class="num">8</span>
+      <h3>Todo verificado en el artefacto</h3>
+      <p>El log del build no es prueba. Se monta la ISO, se lee el squashfs y se cruza lo declarado
+      con lo construido. Así salieron <code>cfdisk</code> ausente y la cuenta live sin contraseña.</p>
+    </div>
+  </div>
+</section>
+
+<section id="requisitos">
+  <h2>Qué necesita el equipo</h2>
+  <div class="tabla-envoltura">
+    <table>
+      <thead><tr><th>Recurso</th><th>Mínimo</th><th>Recomendado</th><th>Notas</th></tr></thead>
+      <tbody>
+        <tr><td>Arquitectura</td><td>x86_64</td><td>x86_64</td><td>solo <code>amd64</code>; no hay ARM ni 32 bits</td></tr>
+        <tr><td>RAM</td><td>4 GB</td><td>6–7 GB</td><td>con menos de 8 GB el instalador crea swap; con 3–4 GB usa la 2.1 (IceWM)</td></tr>
+        <tr><td>USB para live</td><td>8 GB</td><td>16 GB</td><td>la ISO ocupa 1819 MB</td></tr>
+        <tr><td>USB con cambios guardados</td><td>16 GB</td><td>32 GB</td><td>el modo «todo» escribe también las actualizaciones</td></tr>
+        <tr><td>Disco para instalar</td><td>20 GB</td><td>40 GB</td><td>el ensayo del 07-11 copió 5,07 GB al disco</td></tr>
+        <tr><td>Firmware</td><td>BIOS o UEFI</td><td>UEFI</td><td>un mismo ISO híbrido arranca en los dos; Secure Boot hay que apagarlo</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="aviso">
+    <p><strong>Secure Boot.</strong> La imagen no incluye <code>shim-signed</code> y su GRUB no
+    está firmado. En un equipo con Secure Boot activado el disco instalado no arranca: desactívalo
+    o pon «Other OS» antes de instalar. El instalador avisa antes de empezar.</p>
+  </div>
+</section>
+
+<section id="estado">
+  <h2>Estado de la 2.8, dicho tal cual</h2>
+  <p>
+    Se publican <strong>dos quemados distintos</strong> con el mismo número de edición, y la
+    diferencia importa:
+  </p>
+  <div class="tabla-envoltura">
+    <table>
+      <thead><tr><th>Quemado</th><th>Dónde está</th><th>Tamaño</th><th>Qué trae</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>2026-10-20</strong></td>
+          <td>en disco local del autor</td>
+          <td>1.849.540.608 B</td>
+          <td>particionado corregido + <code>fdisk</code>, <code>dbus-x11</code>,
+              <code>libkf6config-bin</code>, <code>psmisc</code></td>
+          <td><span class="reg">ensayada en máquina: salen 3 defectos</span></td>
+        </tr>
+        <tr>
+          <td><strong>2026-11-07</strong> <span class="cinta viva">esta es la release</span></td>
+          <td>GitHub Actions, árbol <code>src/tree-2.8</code></td>
+          <td>1.906.999.296 B</td>
+          <td>contraseña live dentro de la imagen y SDDM sin autologin; 18 paquetes más de
+              uso diario y <code>ufw</code></td>
+          <td><span class="reg">ensayada en máquina el 2026-11-07: arranque, bienvenida y
+              desbloqueo con <code>willy</code> comprobados; la barra sigue saliéndose a la
+              izquierda y el paso «instalar al disco» no se llegó a terminar</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Del quemado nuevo, <strong>lo verificado en máquina</strong> es la live: arranca, la
+    bienvenida se abre sola, <code>willy-lock</code> bloquea y <code>willy</code> entra.
+    Lo de <code>SDDM sin autologin</code> está comprobado solo leyendo el código y el
+    <code>/etc/sddm.conf.d</code> del squashfs, no desde un disco instalado. Y lo del panel
+    <strong>no funciona</strong> tal como se declaró en octubre: <code>willy-panel</code> no
+    encuentra la API de <code>plasmashell</code> ni el fichero de configuración de la cuenta
+    live. Está puesto en <a href="ayuda.html#panel-izquierda">la ayuda</a>, no callado.
+  </p>
+  <p>
+    Lo que se comprobó del quemado nuevo, <strong>dentro de la ISO</strong> y no en el log:
+    <code>filesystem.packages</code> trae <strong>1712 paquetes</strong> (1639 en el de octubre) y
+    están <code>fdisk</code>, <code>ufw</code>, <code>hplip</code>, <code>sane-utils</code>,
+    <code>skanpage</code>, <code>smbclient</code>, <code>unar</code>, <code>7zip</code>,
+    <code>kimageformat-plugins</code>, <code>adwaita-icon-theme</code>, las fuentes métricas y
+    <code>mobile-broadband-provider-info</code>. El kernel sube a <code>6.12.115+deb13</code> y
+    Firefox ESR a <code>153.6.0</code>.
+  </p>
+  <p>
+    La lista completa de lo que cada edición arregla está en
+    <a href="documentacion.html#historial">historial de versiones</a> y en
+    <a href="documentacion.html#ediciones">tabla de ediciones</a>.
+  </p>
+</section>
+
+<section id="compilar">
+  <h2>Compilarla uno mismo</h2>
+  <p>
+    La ISO se construye con <code>live-build</code> sobre <code>debian:trixie</code>. Hay dos
+    caminos y producen la misma imagen:
+  </p>
+  <ol class="pasos">
+    <li>
+      <h3>Sin tocar tu equipo: GitHub Actions</h3>
+      <p>El workflow <a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/actions/workflows/build-iso.yml" rel="noopener"><code>build-iso.yml</code></a>
+      corre en un contenedor Debian con <code>--privileged</code> (el <code>debootstrap</code> de
+      Ubuntu no conoce trixie), ejecuta la puerta de paquetes y deja la ISO como artefacto.
+      <strong>El trabajo no publica nada</strong>: la release se hace a mano, con criterio.</p>
+    </li>
+    <li>
+      <h3>En casa, con WSL2 o una Debian</h3>
+      <p>Desde <code>src/tree-2.8</code>: <code>lb config noauto &amp;&amp; lb build</code>. Necesita
+      40 GB libres y root dentro del chroot. Está detallado en
+      <a href="documentacion.html#compilar">cómo compilar</a>.</p>
+    </li>
+    <li>
+      <h3>Verificar el resultado</h3>
+      <p><code>src/pruebas/verificar-2.8.sh</code> monta la ISO, lee el squashfs y comprueba los
+      binarios, el <code>/etc/shadow</code> de la cuenta live y la sintaxis de los 22 guiones
+      propios. Ese es el paso que da por buena una imagen, no el <code>P: Build completed
+      successfully</code>.</p>
+    </li>
+  </ol>
+</section>
+
+<section id="comunidad">
+  <h2>Proyecto, código y contactos</h2>
+  <div class="enlaces">
+    <a class="enlace-tarjeta" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN" rel="noopener">
+      <strong>Repositorio</strong><span>recetas, hooks, guiones de prueba y documentación</span>
+    </a>
+    <a class="enlace-tarjeta" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/issues" rel="noopener">
+      <strong>Incidencias</strong><span>defectos confirmados en el artefacto</span>
+    </a>
+    <a class="enlace-tarjeta" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/discussions" rel="noopener">
+      <strong>Debates</strong><span>dudas de uso y peticiones</span>
+    </a>
+    <a class="enlace-tarjeta" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/releases" rel="noopener">
+      <strong>Releases</strong><span>ISO y <code>.sha256</code> por edición</span>
+    </a>
+    <a class="enlace-tarjeta" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/actions" rel="noopener">
+      <strong>Compilaciones</strong><span>logs completos de cada build</span>
+    </a>
+    <a class="enlace-tarjeta" href="ayuda.html#reportar">
+      <strong>Cómo reportar</strong><span>qué salida hay que adjuntar</span>
+    </a>
+  </div>
+  <p class="reg" style="margin-top:18px">
+    Mantenido por <a href="https://github.com/ALEX45TMC" rel="noopener">@ALEX45TMC</a>. Willy Linux
+    no está afiliado a Debian ni a KDE; usa sus nombres solo para describir en qué se basa.
+  </p>
+</section>
+
+</main>
+
+<footer class="pie">
+  <div class="interior">
+    <nav aria-label="Pie">
+      <a href="descargas.html">Descargas</a>
+      <a href="capturas.html">Capturas</a>
+      <a href="documentacion.html">Documentación</a>
+      <a href="ayuda.html">Ayuda</a>
+      <a href="licencias.html">Licencias</a>
+      <a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN" rel="noopener">GitHub</a>
+    </nav>
+    <p>
+      Willy Linux 2.8 — basada en Debian 13 (trixie) y KDE Plasma 6. Código bajo la licencia del
+      repositorio; las marcas de Debian y KDE pertenecen a sus titulares.
+      Última actualización de esta página: <span data-dato="actualizada">2026-11-07</span>.
+    </p>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>

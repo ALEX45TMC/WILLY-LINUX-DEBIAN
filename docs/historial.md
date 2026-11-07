@@ -5,6 +5,28 @@ Las imágenes anteriores **nunca se borran**: se renombran `.bak-día.hora` con 
 
 ---
 
+## 2026-11-07 (tarde) — se ensaya el quemado de Actions y uno de los arreglos no cuela
+
+**Qué se hizo:** arrancar en VirtualBox la ISO que compiló `build-iso.yml` el mismo 07-11 —la que
+se publica como `v2.8`— y comprobarla en pantalla, no en el log. La VM `willy28-acciones` (BIOS,
+4 GB, 2 CPU).
+
+| prueba en la live | resultado |
+|---|---|
+| arranque hasta el escritorio | ✅ pintado a los 80 s (el primer intento quedó en negro: la VM estaba en `Debian (32-bit)` con `longmode=off`, y el kernel avisaba `only detected an i686 CPU`) |
+| identidad | ✅ `willy-info`: Willy Linux 2.8, kernel `6.12.115+deb13.1-amd64` |
+| los 19 guiones `willy-*` | ✅ presentes |
+| bienvenida con las 16 opciones | ✅ en español |
+| `willy-lock` → entrar con `willy` | ✅ **el arreglo de la contraseña live funciona** |
+| barra centrada | ❌ sale a la izquierda; `willy-panel` no encuentra ni la API de scripts ni `/home/live/.config/plasmashellrc` |
+| instalar al disco desde este quemado | ⚠️ no terminado: el envío de teclas desde el host a la VM no es fiable |
+| dentro de la ISO (squashfs) | ✅ 1712 paquetes (1639 en octubre) con `fdisk`, `ufw`, `hplip`, `sane-utils`, `skanpage`, `smbclient`, `unar`, `7zip`, `kimageformat-plugins`, `adwaita-icon-theme` y las fuentes métricas |
+
+**Consecuencias escritas:** el centrado automático de la barra queda como **defecto abierto de la
+2.8** con arreglo a mano documentado; el cambio de autologin de SDDM se declara verificado solo en
+código y en el squashfs, no desde un disco instalado; y la release se publica con esas tres frases
+en vez de con «los 3 arreglos».
+
 ## 2026-11-07 — la 2.8 se instala de verdad y salen siete defectos
 
 **Qué se hizo:** instalación completa de la `willylinux-v2.8-kde-amd64.iso` del 20-10 en

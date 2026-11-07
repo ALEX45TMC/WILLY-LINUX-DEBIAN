@@ -32,7 +32,7 @@ desde **USB grabado** (Rufus en modo DD o `dd`) y en **máquina virtual**.
 | **2.1 Minimalista** | 2.0 + instalador, USB persistente, impresión, Bluetooth y actualizar | 4 GB | 3–4 GB | entregada 2026-10-12 |
 | **2.5** | escritorio completo KDE Plasma 6 | 8 GB | 6–7 GB | entregada 2026-10-17 |
 | **2.5.5** | misma imagen que 2.5 con su etiqueta de versión | 8 GB | 6–7 GB | entregada 2026-10-17 |
-| **2.8** | 2.5 con el particionado corregido, tres paquetes que faltaban y los arreglos del ensayo en máquina | 8 GB | 6–7 GB | **instalada y arrancada en BIOS y UEFI (2026-11-07)** |
+| **2.8** | 2.5 con el particionado corregido, más paquetes de uso diario y los arreglos del ensayo en máquina | 8 GB | 6–7 GB | **liberada (ISO de Actions del 2026-11-07). Live probada en máquina: arranque, bienvenida y desbloqueo con `willy` correctos; la barra sigue saliendo a la izquierda y el paso «instalar al disco» con este quemado no se terminó** |
 
 Comparativa completa, con tamaño real, número de paquetes y SHA-256 de cada ISO:
 [tabla de ediciones](docs/ediciones.md) e [historial con todos los cambios](docs/historial.md).
@@ -90,6 +90,14 @@ comprueba esas herramientas **antes de borrar nada** y aborta si faltan.
 | ![Arranque](img/captura-arranque.png) | ![Audio](img/captura-audio.png) |
 | Instalador: elección de disco en UEFI | Asistente completo, 16 opciones |
 | ![Instalador](img/captura-instalador.png) | ![Asistente](img/captura-asistente-completo.png) |
+| Live de la 2.8 (quemado del 07-11, en máquina) | La live se desbloquea con `willy` |
+| ![Live 2.8](img/captura-live-escritorio.png) | ![Bloqueo](img/captura-bloqueo.png) |
+| `willy-info` en la live | Instalador de la 2.8 pidiendo disco |
+| ![willy-info](img/captura-terminal-info.png) | ![Instalador 2.8](img/captura-instalador-disco.png) |
+
+Galería con qué se probó en máquina y qué no:
+[capturas](https://alex45tmc.github.io/WILLY-LINUX-DEBIAN/capturas.html) y
+[ayuda por síntoma](https://alex45tmc.github.io/WILLY-LINUX-DEBIAN/ayuda.html).
 
 Fondos de pantalla e icono incluidos en la imagen:
 [logo](img/logo-512.png) · [fondo lobito](img/fondo-lobito.png) ·
@@ -186,6 +194,11 @@ Detalle y salidas de cada una: [uso diario](docs/uso-diario.md).
 - **Solo 64 bits (`amd64`).** Para equipos de 32 bits hay que arrancar otra distribución.
 - **Vídeo 1080p60 en máquina virtual con 2 CPU** se decodifica por software y se atraganta: es
   esperado, no un defecto. En hardware real con GPU, los controladores VA-API ya están dentro.
+- **Barra de tareas sin centrar en la live de la 2.8.** `willy-panel` busca la API de scripts de
+  `plasmashell` y, si no contesta, escribe en `plasmashellrc`; en una sesión live recién creada no
+  hay ni una ni otra, así que los iconos salen a la izquierda. Se arregla con dos clics (clic
+  derecho en la barra → *Configurar la barra de tareas* → Alineación: Centrada) y queda abierto como
+  defecto de la 2.8.
 - **El volumen puede aparecer mudo en tarjetas muy raras** sin perfil `ucm2`; el asistente deja
   abrir el mezclador y `alsa-utils` está incluido para desilenciar a mano.
 

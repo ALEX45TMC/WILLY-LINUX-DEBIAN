@@ -214,11 +214,21 @@ FONDO=$(cat "$HOME/.config/willylinux/escritorio" 2>/dev/null)
 # Herramienta oficial de Plasma 6: recorre todos los escritorios y escribe la
 # disposicion por D-Bus, asi que no hace falta conocer el id del contenedor.
 plasma-apply-wallpaperimage "$FONDO" >/dev/null 2>&1 || true
-# La 2.8 nace con la barra centrada, como en Windows 11. Al arrancar la sesion
-# plasmashell aun esta montando el arbol de widgets, asi que una sola tentativa
-# suele ver "barras=0" y la barra se queda a la izquierda (pasaba en la 2.8
-# entregada). Se reintenta hasta 5 veces y, si Plasma nunca contesta, se escribe
-# la alineacion en plasmashellrc sin reiniciar nada: se vera al volver a entrar.
+# La 2.8 quiere nacer con la barra centrada, como en Windows 11. Al arrancar la
+# sesion plasmashell aun esta montando el arbol de widgets, asi que una sola
+# tentativa suele ver "barras=0" y la barra se queda a la izquierda (pasaba en la
+# 2.8 entregada). Se reintenta hasta 5 veces y, si Plasma nunca contesta, se
+# escribe la alineacion en plasmashellrc sin reiniciar nada.
+#
+# DEFECTO ABIERTO, comprobado en maquina con el quemado de Actions del 2026-11-07:
+# en la cuenta live ninguna de las dos rutas aplica. La API de scripts no
+# contesta y /home/live/.config/plasmashellrc todavia no existe (lo crea
+# plasmashell al escribir su primera disposicion), asi que el script sale sin
+# tocar nada y los iconos quedan a la izquierda. En el disco instalado si existe
+# el fichero, pero ahi el autologin ya no pasa por esta primera sesion.
+# Queda documentado en README ("Limitaciones conocidas") y en ayuda.html; la
+# solucion real pide aplicar un layout de Plasma con alineacion centrada o
+# esperar al senal de que el arbol termino de montar, y no esta verificada.
 CENTRADO=""
 I=0
 while [ "$I" -lt 5 ]; do

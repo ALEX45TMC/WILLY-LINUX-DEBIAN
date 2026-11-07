@@ -231,6 +231,10 @@ Se instaló de verdad en las dos firmware, con disco de 20 GB vacío y sin USB p
 - **Cortafuegos**: `ufw` activado desde el primer arranque, que es lo que necesitaba el widget
   *Cortafuegos* del panel.
 - **Barra centrada**: reintentos en la primera sesión y respaldo en `plasmashellrc` sin reiniciar.
+  **Este arreglo no coló** —el quemado del 2026-11-07 se volvió a ensayar en máquina y la barra
+  sigue a la izquierda: en la live no contesta la API de scripts y el fichero todavía no existe, así
+  que ninguna de las dos rutas tiene dónde aplicarse. Queda abierto; el arreglo a mano está en
+  [solución de problemas](solucion-de-problemas.md).
 - **Paquetes de uso diario**: audio bluetooth (`libspa-0.2-bluetooth`), carpetas `smb://`,
   APN de 4G, impresoras HP, escáner, `.7z`/`.rar`, HEIF, iconos Adwaita y fuentes métricas.
 - **Textos honestos**: bienvenida, *Acerca de* y *Mis ajustes* se adaptan al medio real
@@ -247,6 +251,19 @@ Se instaló de verdad en las dos firmware, con disco de 20 GB vacío y sin USB p
 
 **Nunca se declaró la 2.8 como «probada» hasta este ensayo; ahora está probada en BIOS y en UEFI,
 con los defectos de arriba escritos como se vieron.**
+
+### Qué confirmó (y qué no) el ensayo del quemado del 2026-11-07
+
+El ISO que salió de GitHub Actions se arrancó en vivo en VirtualBox —detalle en
+[arranque e instalación](arranque-e-instalacion.md)— y de los tres arreglos:
+
+- la **contraseña de la live** quedó probada: `willy-lock` bloquea y `willy` vuelve al escritorio.
+- el **autologin de SDDM** está verificado solo en el código y en el squashfs, porque el paso
+  «instalar al disco» con este quemado no se terminó.
+- la **barra centrada** quedó probada en contra: sigue a la izquierda.
+
+Se deja constancia porque el log del build no prueba nada de esto: lo que hay dentro de la imagen
+(dentro del squashfs) se comprobó montándola, y lo que se ve en pantalla solo se ve arrancándola.
 
 ## Dónde viven los binarios
 
@@ -265,8 +282,8 @@ crea después de instalar esa ISO en VirtualBox y ver que arranca.
 | 1.0, 1.1 | `E:\WILLIAM\willylinux-amd64.iso`, `Willy Linux 1.1.rar` |
 | 2.0, 2.1 | `E:\Willy Linux\2.0\iso\`, `E:\Willy Linux\2.1\iso\` y sus `.rar` en `E:\WILLIAM` |
 | 2.5, 2.5.5 | `E:\Willy Linux\2.5\iso\` (ocho guardas `.bak-*`) y copias en `E:\WILLIAM` |
-| 2.8 (20-10) | `E:\Willy Linux\2.8\iso\` y su guarda `.bak-20.21.26`; asset de la release `v2.8` |
-| 2.8 (Actions) | artefacto de la workflow `Construir ISO`; al bajarla se guarda en `E:\Willy Linux\2.8\iso\` |
+| 2.8 (20-10) | `E:\Willy Linux\2.8\iso\` y su guarda `.bak-20.21.26`; 1.849.540.608 B, quedará como la ISO del ensayo de noviembre |
+| 2.8 (Actions, 07-11) | `E:\Willy Linux\2.8\iso\acciones-20261107\willylinux-v2.8-kde-amd64.iso`, 1.906.999.296 B, SHA-256 `825ec3bba88b4610244f1de889951c13e343b53f014d0bbb223a6d55874041bb` — **es el asset de la release `v2.8`** |
 | ensayo con `archiso` (2026-10-17) | `E:\Willy Linux\archiso-corregida\willy-linux-2026.10.17-x86_64.iso`, 2.457.649.152 B, SHA-256 `7c464aebe0487aa05f5d9944ad0a168bf25c9bb44f5da31241dbcb3d2e2a6fe5` — quedó como experimento, no como edición |
 | disco de la VM de prueba | `E:\Willy Linux\2.5\vm\willy-inst-efi.vdi`, 5.392.826.368 B |
 

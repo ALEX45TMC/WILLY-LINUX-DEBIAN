@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ayuda y solución de problemas de Willy Linux — síntoma, causa y qué hacer</title>
+<meta name="description" content="Solución de problemas de Willy Linux: el USB no arranca, pantalla en negro, sin audio, vídeos a tirones, el instalador aborta, el disco no arranca, persistencia, la contraseña de la live y cómo reportar un fallo en GitHub.">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="img/logo-128.png">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-datos="datos-iso.json">
+
+<header class="cabecera">
+  <div class="interior">
+    <a class="marca" href="index.html">
+      <img src="img/logo-128.png" alt="Logo de Willy Linux (lobito)">
+      <span>Willy&nbsp;Linux</span>
+    </a>
+    <nav class="navegacion" aria-label="Secciones">
+      <a href="index.html">Portada</a>
+      <a href="descargas.html">Descargas</a>
+      <a href="capturas.html">Capturas</a>
+      <a href="documentacion.html">Documentación</a>
+      <a href="ayuda.html" aria-current="page">Ayuda</a>
+      <a href="licencias.html">Licencias</a>
+      <a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN" rel="noopener">GitHub</a>
+    </nav>
+    <button id="tema" type="button">Tema: auto</button>
+  </div>
+</header>
+
+<main class="interior">
+
+<section id="arriba">
+  <h1>Ayuda</h1>
+  <p>
+    Cada apartado de esta página es un fallo que <strong>pasó de verdad</strong> en algún equipo o en
+    alguna máquina virtual de pruebas, con su causa y su arreglo. No hay relleno: si algo no tiene
+    arreglo en esta imagen, se dice.
+  </p>
+  <div class="buscador">
+    <input id="buscar-ayuda" type="search" placeholder="escribe un síntoma: audio, negro, particionar, contraseña…" aria-label="Buscar en la ayuda">
+    <span class="recuento" id="buscador-recuento"></span>
+  </div>
+  <nav class="indice" aria-label="Secciones de la ayuda">
+    <a href="#arranque">Arranque</a>
+    <a href="#teclado">Teclado e idioma</a>
+    <a href="#audio">Audio</a>
+    <a href="#video-red">Vídeo, navegador y red</a>
+    <a href="#instalacion">Instalación en el disco</a>
+    <a href="#persistencia">Persistencia</a>
+    <a href="#rendimiento">Rendimiento</a>
+    <a href="#sesion">Sesión y contraseñas</a>
+    <a href="#compilar">Compilar y probar</a>
+    <a href="#reportar">Reportar y contactar</a>
+  </nav>
+</section>
+
+<section id="arranque">
+  <h2>Arranque</h2>
+
+  <details class="detalles" data-buscable id="no-arranca-usb">
+    <summary>El equipo no arranca desde el USB</summary>
+    <div class="cuerpo">
+      <ol class="pasos">
+        <li><h3>Menú de arranque temporal</h3><p>Entra al firmware (<kbd>F12</kbd>, <kbd>F8</kbd>, <kbd>Esc</kbd>, <kbd>F2</kbd> o <kbd>Del</kbd> al encender) y elige el USB.</p></li>
+        <li><h3>Secure Boot</h3><p>Desactívalo o pon «Other OS». La ISO arranca sin firma en la mayoría de firmware, pero algunos lo bloquean.</p></li>
+        <li><h3>Cambia de modo</h3><p>Si grabaste pensando en UEFI, prueba Legacy/CSM, y al revés.</p></li>
+        <li><h3>Puerto</h3><p>Algunos portátiles ignoran USB 3.0 durante el arranque. Prueba un USB 2.0.</p></li>
+        <li><h3>Vuelve a grabar en modo DD</h3><p>Con Rufus en modo <em>DD-image</em>, o con <code>dd</code>. Copiar la ISO con el explorador de archivos no deja un disco arrancable.</p></li>
+      </ol>
+      <p>Con el USB ya arrancado, usa el menú <strong>Comprobar la integridad del USB</strong>.</p>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="pantalla-negra">
+    <summary>Arranca y queda la pantalla en negro</summary>
+    <div class="cuerpo">
+      <p>Aceleración gráfica incompatible. En el menú pulsa <kbd>TAB</kbd> (BIOS) o <kbd>e</kbd> (UEFI)
+      y añade <code>nomodeset</code>, o elige la entrada <strong>modo seguro</strong>.</p>
+      <p>Si así entra, el problema es el controlador de la GPU: arranca con <code>nomodeset</code> y
+      busca el controlador propietario de tu tarjeta.</p>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="tarda-el-escritorio">
+    <summary>Tarda mucho en aparecer el escritorio</summary>
+    <div class="cuerpo">
+      <p>Con 3–4 GB de RAM y disco mecánico, Plasma tarda; es normal que pasen uno o dos minutos.
+      <code>willy-monitor</code> muestra qué está ocupando.</p>
+      <p class="reg">En máquina virtual, los arranques UEFI de la 2.5/2.8 con 4 GB de RAM y DVD virtual
+      han tardado casi 7 minutos en pintar el escritorio. La pantalla en negro durante un rato no es un cuelgue.</p>
+      <p>Si el equipo tiene 3 GB o menos, usa la edición 2.1, que es IceWM.</p>
+    </div>
+  </details>
+</section>
+
+<section id="teclado">
+  <h2>Teclado e idioma</h2>
+
+  <details class="detalles" data-buscable id="nn-no-sale">
+    <summary>Las teclas Ñ, ¿, {, }, | no salen donde deben</summary>
+    <div class="cuerpo">
+      <p>El teclado no está en latinoamericano. Opción <strong>13 · Teclado</strong> del asistente, o
+      <em>Teclado</em> en el panel de ajustes. Desde el terminal:</p>
+      <pre><code>setxkbmap -query</code></pre>
+      <div class="aviso">
+        <p>Bajo Wayland, <code>setxkbmap</code> avisa <code>Running setxkbmap against an Xwayland
+        server</code> y puede responder <code>layout: us</code> aunque las aplicaciones nativas estén
+        en latam. <strong>No te fíes de esa salida</strong>: prueba escribiendo.</p>
+      </div>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="teclado-virtualbox">
+    <summary>El teclado se comporta raro dentro de VirtualBox</summary>
+    <div class="cuerpo">
+      <p>Es el layout de VirtualBox, no el del sistema: Dispositivos → Teclado → Distribución →
+      <em>Latin American</em>. Además, con teclado latam activado VirtualBox deforma
+      <code>-</code>, <code>/</code> y <code>=</code> al enviar cadenas; por eso las pruebas
+      automatizadas del proyecto envían scancodes crudos con <code>keyboardputscancode</code>
+      en vez de <code>keyboardputstring</code>.</p>
+    </div>
+  </details>
+</section>
+
+<section id="audio">
+  <h2>Audio</h2>
+
+  <details class="detalles" data-buscable id="no-se-escucha">
+    <summary>No se escucha nada</summary>
+    <div class="cuerpo">
+      <pre><code>wpctl status                     # ¿PipeWire vive y ve la tarjeta?
+wpctl get-volume @DEFAULT_AUDIO_SINK@
+amixer contents | head           # ¿algún control está en [mute]?</code></pre>
+      <ul>
+        <li>Si <code>wpctl status</code> no lista ningún <em>Sink</em>: PipeWire no arrancó.
+        <code>systemctl --user status pipewire</code>.</li>
+        <li>Si hay <em>device</em> pero el volumen está en <code>0.00</code> o <code>[MUTE]</code>:
+        sube desde <em>Mezclador de volumen</em> (opción 6 del asistente) o con
+        <code>amixer set Master unmute</code>.</li>
+        <li>En muchos portátiles (Realtek con amplificador, Intel SSE/CHT) hace falta perfil ALSA:
+        <code>alsa-ucm-conf</code> y <code>alsa-topology-conf</code> están incluidos desde la 2.5 del
+        2026-10-17. Si tu tarjeta no tiene perfil <code>ucm2</code>, el icono aparece pero la barra
+        no manda nada: usa <code>amixer</code> o <code>pavucontrol</code> <strong>y repórtalo</strong>.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="pitido-volumen">
+    <summary>El icono del volumen se mueve pero no suena el pitido de confirmación</summary>
+    <div class="cuerpo">
+      <p>Faltaba <code>libcanberra-pulse</code>: es <em>Recommends</em> de <code>plasma-pa</code> y la
+      imagen se construye con <code>--apt-recommends false</code>. Está incluido desde el 2026-10-17.</p>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="bluetooth-altavoz">
+    <summary>El Bluetooth se empareja pero el audio sigue saliendo por el altavoz interno</summary>
+    <div class="cuerpo">
+      <p>En <em>Mezclador de volumen</em>, pestaña <strong>Salida</strong>, selecciona los auriculares.
+      PipeWire cambia el dispositivo por defecto, pero si el perfil del auricular está en
+      <em>off</em> no aparecerá en la lista.</p>
+    </div>
+  </details>
+</section>
+
+<section id="video-red">
+  <h2>Vídeo, navegador y red</h2>
+
+  <details class="detalles" data-buscable id="videos-a-tirones">
+    <summary>Los vídeos van a tirones o no arrancan</summary>
+    <div class="cuerpo">
+      <p>Ejecuta <strong><code>willy-red</code></strong> (asistente → opción 16 del panel de ajustes,
+      «Comprobar la red»). Mide interfaz y puerta, pérdida, retardo y temblor contra la puerta y contra
+      <code>1.1.1.1</code>, tiempo de DNS de tres dominios y <strong>velocidad HTTPS real</strong>, y
+      cierra con un veredicto:</p>
+      <ul>
+        <li><em>red inestable</em> → el problema es el enlace;</li>
+        <li><em>enlace justo</em> → prueba por cable o acerca el router;</li>
+        <li><em>la red está bien, la causa está en el navegador o en la página</em> → mira lo otro.</li>
+      </ul>
+      <p class="reg">En las pruebas de referencia: 0 % de pérdida, 59 ms de retardo con 0,24 ms de
+      temblor y 59 MB/s de descarga real. Con esos números un vídeo HD —que pide ~0,6 MB/s— no puede
+      fallar por red.</p>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="netflix-no-reproduce">
+    <summary>Netflix, Disney+, Prime Video o Max no reproducen</summary>
+    <div class="cuerpo">
+      <div class="malo">
+        <p><strong>No tiene arreglo en esta ISO.</strong> El <code>firefox-esr</code> de Debian no
+        incluye Widevine (solo <code>gmp-clearkey</code>) y en los repositorios de Debian no existe ese
+        paquete. Solución: instala <strong>Chromium</strong> desde Discover y usa ese navegador para
+        esos servicios.</p>
+      </div>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="decodifica-cpu">
+    <summary>El vídeo se decodifica en el procesador y el portátil se calienta</summary>
+    <div class="cuerpo">
+      <pre><code>vainfo --display drm | head
+ls /usr/lib/x86_64-linux-gnu/dri | grep drv_video</code></pre>
+      <p>Si aparecen <code>i965_drv_video.so</code>, <code>i915_drv_video.so</code> o
+      <code>radeonsi_drv_video.so</code>, tu GPU está soportada: activa en <code>about:config</code> de
+      Firefox <code>media.ffmpeg.vaapi.enabled = true</code>.</p>
+      <p class="reg"><strong>No se fuerza en la imagen</strong> porque en equipos sin GPU adecuada da
+      pantalla verde. Si <code>vainfo</code> no encuentra driver, el vídeo se decodifica por CPU y es
+      lo que hay.</p>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="ping-capability">
+    <summary><code>ping</code> dice <code>missing cap_net_raw+p capability or setuid?</code></summary>
+    <div class="cuerpo">
+      <p>Squashfs pierde la capability de <code>/bin/ping</code>. En las ISO desde el 2026-10-17 está el
+      sysctl <code>net.ipv4.ping_group_range = 0 2147483647</code> y funciona sin root. En ISO anteriores:</p>
+      <pre><code>sudo ping -c 4 1.1.1.1
+getent ahostsv4 debian.org    # mide DNS sin necesidad de root</code></pre>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="flathub-descover">
+    <summary>Flathub no aparece en Discover</summary>
+    <div class="cuerpo">
+      <p>Causa real, ya corregida: el archivo del remoto ponía <code>URL=</code> y Discover espera
+      <code>Url=</code>. Compruébalo por terminal:</p>
+      <pre><code>flatpak remotes                 # debe salir: flathub  system
+flatpak search gimp</code></pre>
+      <p>Si <code>flathub</code> no está:</p>
+      <pre><code>flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo</code></pre>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="app-no-aparece-menu">
+    <summary>Instalo una app de Flathub y no aparece en el menú, o sale sin icono</summary>
+    <div class="cuerpo">
+      <p>Faltaba <code>desktop-file-utils</code>: sin <code>update-desktop-database</code> el menú no se
+      refresca. Incluido desde el 2026-10-17. En una ISO anterior, sal y vuelve a entrar, o:</p>
+      <pre><code>update-desktop-database ~/.local/share/applications</code></pre>
+    </div>
+  </details>
+</section>
+
+<section id="instalacion">
+  <h2>Instalación en el disco</h2>
+
+  <details class="detalles" data-buscable id="no-localiza-usb">
+    <summary>El instalador dice que no localiza el USB</summary>
+    <div class="cuerpo">
+      <p>live-boot 1:20250815 monta el medio en <code>/run/live/medium</code>; versiones anteriores
+      usaban <code>/lib/live/mount/medium</code>. En las ISO anteriores al 2026-10-14 las
+      comprobaciones estaban escritas con la ruta vieja y tomaban el USB por disco instalado. Desde
+      entonces hay un helper único, <code>willy-medio</code>, que prueba las cuatro rutas posibles:</p>
+      <pre><code>willy-medio        # debe devolver /run/live/medium o /lib/live/mount/medium</code></pre>
+      <div class="tabla-envoltura">
+        <table>
+          <thead><tr><th>Edición</th><th>Instala desde el USB</th><th>Motivo</th></tr></thead>
+          <tbody>
+            <tr><td>2.8</td><td><span class="siy">sí</span></td><td>receta con <code>willy-medio</code> y particionado BIOS corregido</td></tr>
+            <tr><td>2.5 / 2.5.5</td><td><span class="siy">sí</span> (UEFI); en BIOS falla el esquema recomendado</td><td>el helper está, el <code>parted mkpart</code> de la rama BIOS no</td></tr>
+            <tr><td>2.1</td><td><span class="no">no</span></td><td>comprueba la ruta vieja; sale sin tocar el disco</td></tr>
+            <tr><td>2.0</td><td>—</td><td>no incluye instalador</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="reg">Lo de la 2.1 se detectó el 2026-10-17 en el ensayo real de VirtualBox. La receta del
+      repositorio ya está corregida; para instalar una 2.1 hay que compilarla con <code>src/tree-2.1</code>.</p>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="no-se-pudo-particionar">
+    <summary>«No se pudo particionar» al elegir el esquema recomendado en un equipo BIOS</summary>
+    <div class="cuerpo">
+      <p>En las ISO publicadas hasta el 2026-10-17 el instalador se queda en el paso del esquema, con el
+      aviso <code>No se pudo particionar. Mira el registro /tmp/willy-instalar.log</code>. Dentro del
+      registro está el motivo real:</p>
+      <pre><code>parted: invalid token: Willy
+Error: Expecting a partition type.</code></pre>
+      <p>Es un error de sintaxis de <code>parted</code>, no del disco: en una tabla <strong>msdos</strong>
+      (arranque BIOS/legacy) lo que va después de <code>mkpart</code> es el <strong>tipo</strong> de
+      partición (<code>primary</code>/<code>extended</code>/<code>logical</code>); los nombres de
+      partición solo los admite <strong>GPT</strong>. El instalador pedía <code>mkpart Willy ext4 …</code>
+      en las dos ramas, así que la ruta UEFI funcionaba y la de BIOS abortaba antes de formatear nada.</p>
+      <div class="bueno">
+        <p>El disco no se toca: si falla el particionado, el instalador sale sin copiar. Como
+        comprobación sin reinstalar, arranca el USB en modo UEFI y usa el esquema recomendado; o
+        particiona a mano con <em>Particiono antes con cfdisk</em>, la otra rama del instalador, que no
+        depende de <code>parted mkpart</code>.</p>
+      </div>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="preflight-aborta">
+    <summary>El instalador aborta sin tocar el disco</summary>
+    <div class="cuerpo">
+      <p>Es el <em>preflight</em> funcionando: faltan <code>grub-install</code> o
+      <code>grub-bios-setup</code> y copiar el sistema no lo dejaría arrancable.</p>
+      <div class="aviso">
+        <p><strong>Cualquier ISO anterior al 2026-10-14 tiene ese defecto</strong> y no sirve para
+        instalar. Usa una ISO de esa fecha o posterior.</p>
+      </div>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="disco-no-arranca">
+    <summary>Instalé bien pero el disco no arranca</summary>
+    <div class="cuerpo">
+      <ol class="pasos">
+        <li><h3>Secure Boot</h3><p>El GRUB de la ISO no está firmado y la imagen no incluye <code>shim-signed</code>; el instalador avisa antes de empezar. Desactívalo o pon «Other OS».</p></li>
+        <li><h3>Entrada de firmware</h3><p>Puede que el firmware siga apuntando a la otra entrada:</p>
+        <pre><code>efibootmgr -v</code></pre>
+        <p>sube <code>Willy Linux</code> (o <code>ubuntu</code>) en el orden de arranque.</p></li>
+      </ol>
+      <p class="reg">En VirtualBox hay una tercera causa, propia del hipervisor: el EFI de VirtualBox
+      <strong>ignora <code>--boot1 dvd</code></strong> y obedece a las entradas NVRAM, así que una VM con
+      disco instalado arranca el disco en vez del DVD. En máquina real eso no pasa.</p>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="windows-no-aparece">
+    <summary>Windows no aparece en el menú GRUB</summary>
+    <div class="cuerpo">
+      <p>El instalador escribe <code>GRUB_DISABLE_OS_PROBER=false</code> en <code>/etc/default/grub</code>,
+      así que debería estar. Si falta:</p>
+      <pre><code>sudo update-grub</code></pre>
+      <p>y revisa que la partición de Windows no esté con BitLocker suspendido.</p>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="sudo-colgado">
+    <summary>El <code>sudo</code> del sistema instalado se queda colgado</summary>
+    <div class="cuerpo">
+      <p>En ISO anteriores, <code>/etc/hostname</code> decía <code>localhost.localdomain</code> y
+      <code>/etc/hosts</code> estaba vacío (0 bytes): <code>sudo</code> intentaba resolver el nombre del
+      equipo y esperaba. Está corregido; si te pasa en una instalación vieja:</p>
+      <pre><code>echo willylinux &gt; /etc/hostname
+printf '127.0.0.1\tlocalhost\n127.0.1.1\twillylinux\n' &gt; /etc/hosts</code></pre>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="sigue-arrancando-usb">
+    <summary>Instalé desde un USB con cambios guardados y el equipo sigue arrancando el USB</summary>
+    <div class="cuerpo">
+      <p>Quita el USB antes de encender, o baja el USB en el orden de arranque del firmware.</p>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="guardar-en-usb-instalado">
+    <summary>«No localizo el USB» al pulsar <em>Guardar en el USB</em> estando ya instalado</summary>
+    <div class="cuerpo">
+      <p>Es correcto: en un disco instalado no hay USB que guardar, y el aviso lo dice en vez de fallar.
+      Los cambios ya se guardan solos.</p>
+    </div>
+  </details>
+</section>
+
+<section id="persistencia">
+  <h2>Persistencia</h2>
+
+  <details class="detalles" data-buscable id="cambios-desaparecen">
+    <summary>Guardé los cambios y al reiniciar desaparecieron</summary>
+    <div class="cuerpo">
+      <ol>
+        <li>¿Ejecutaste <em>Guardar mis cambios</em> y elegiste un modo (<code>/home</code> o <code>/</code>)?
+        Sin eso la sesión es volátil por diseño.</li>
+        <li>¿El arranque lleva <code>persistence</code> en la línea de comandos? Todas las ISO lo llevan;
+        si lo editaste a mano, compruébalo.</li>
+        <li><code>willy-guardado</code> te dice en qué modo estás. Si dice <code>volatil</code>, la
+        partición <code>persistence</code> no se montó.</li>
+        <li>Algunos firmware necesitan que el USB se vuelva a conectar tras crear la partición.</li>
+      </ol>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="usb-lleno">
+    <summary>El USB se quedó sin espacio</summary>
+    <div class="cuerpo">
+      <p>El modo «todo» (<code>/</code>) guarda también las actualizaciones del sistema. Cambia a
+      «solo <code>/home</code>» o limpia la partición desde <em>Guardar mis cambios</em>.</p>
+    </div>
+  </details>
+</section>
+
+<section id="rendimiento">
+  <h2>Rendimiento</h2>
+
+  <details class="detalles" data-buscable id="va-lento">
+    <summary>Va lento</summary>
+    <div class="cuerpo">
+      <ul>
+        <li><code>willy-monitor</code> y <code>willy-info</code> dicen RAM, CPU y disco.</li>
+        <li>Con 6 GB de RAM o menos, <code>zram-tools</code> comprime memoria en vez de usar disco y
+        <code>earlyoom</code> evita el cuelgue total.</li>
+        <li>Si el equipo tiene 3–4 GB, usa la 2.1 (IceWM) en lugar de la 2.8 (Plasma).</li>
+        <li>En máquina virtual con 2 CPU y sin GPU, el escritorio se decodifica por software
+        (<code>llvmpipe</code>): es lento y <strong>es esperado</strong>.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="vlc-gris">
+    <summary>VLC se ve gris, sin el tema del sistema</summary>
+    <div class="cuerpo">
+      <p>Cierto y aceptado: en la imagen solo hay estilos de Qt6 (<code>breeze6.so</code>), y VLC es Qt5.
+      Añadir <code>kde-style-breeze-qt5</code> son 629 KB más librerías KF5; se descartó por ser solo estético.</p>
+    </div>
+  </details>
+</section>
+
+<section id="sesion">
+  <h2>Sesión y contraseñas</h2>
+
+  <details class="detalles" data-buscable id="bloqueo">
+    <summary>La pantalla de bloqueo pide una contraseña que no me sé</summary>
+    <div class="cuerpo">
+      <p>En un <strong>disco instalado</strong>, es la que escribiste durante la instalación: la contraseña
+      <code>willy</code> <strong>no</strong> se copia al disco.</p>
+      <p>En el <strong>USB live</strong> hay que distinguir qué ISO tienes:</p>
+      <ul>
+        <li>Con la receta corregida el 2026-11-07 (la ISO publicada de la 2.8), la contraseña
+        <code>willy</code> se escribe <strong>en la propia imagen</strong> (hook
+        <code>0050-willylinux.hook.chroot</code>). Probado en máquina el mismo 2026-11-07: se bloqueó
+        la live con <code>willy-lock</code> y <strong>entró con <code>willy</code></strong>.</li>
+        <li>En las ISO quemadas antes de esa corrección —entre ellas <strong>la 2.8 del 2026-10-20</strong>—
+        la cuenta live se creaba sin hash en <code>/etc/shadow</code>. El desbloqueo de Plasma
+        <strong>no admite una cuenta sin contraseña</strong>, y ni <code>willy</code> ni <code>live</code>
+        abrían la sesión («El desbloqueo ha fallado»). Se comprobó el 2026-11-07 en VirtualBox, con la
+        pantalla bloqueada por inactividad.</li>
+      </ul>
+      <p>Arreglo a mano en una ISO anterior a la corrección, desde una terminal que todavía esté abierta:</p>
+      <pre><code>echo willy:willy | sudo chpasswd     # la cuenta live se llama live</code></pre>
+      <div class="aviso">
+        <p><strong>Hazlo nada más arrancar el USB</strong>, antes de que la pantalla se bloquee sola. Si ya
+        estás fuera de la sesión y no hay ninguna terminal abierta, no hay atajo dentro de la propia live:
+        la pantalla de bloqueo es justamente lo que no deja entrar. Reinicia el USB, abre un terminal en
+        cuanto aparezca el escritorio y ejecuta ese comando; o, si necesitas la imagen para algo serio,
+        vuelve a grabarla con la receta actual.</p>
+      </div>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="entra-sin-contrasena">
+    <summary>El disco instalado arranca y entra al escritorio sin pedir contraseña</summary>
+    <div class="cuerpo">
+      <p>No es que la instalación no haya guardado la clave: la guarda. Es <strong>SDDM</strong>, que lee
+      <code>/etc/sddm.conf</code> <strong>y además</strong> <code>/etc/sddm.conf.d/*.conf</code>, y el
+      instalador dejaba <code>Autologin</code> en uno de los dos. Comprobarlo:</p>
+      <pre><code>grep -rn -A2 '\[Autologin\]' /etc/sddm.conf /etc/sddm.conf.d/ 2&gt;/dev/null</code></pre>
+      <p>Si sale <code>User=live</code> o <code>Session=</code>, el equipo entra solo. Tapete a mano:</p>
+      <pre><code>sudo sed -i 's|^User=.*|User=|' /etc/sddm.conf /etc/sddm.conf.d/willy.conf</code></pre>
+      <div class="aviso">
+        <p><strong>El detalle que hace esto fácil de pasar por alto:</strong> dejar comentada la línea
+        <code>User=</code> en el archivo que va después <strong>no anula</strong> la del archivo anterior.
+        SDDM mezcla los dos y la opción sigue activa. Solo un <code>User=</code> vacío la desactiva. Por
+        eso el instalador falló aunque el cambio parecía correcto.</p>
+      </div>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="panel-izquierda">
+    <summary>El panel sale pegado a la izquierda en vez de centrado <span class="cinta atencion">abierto en la 2.8</span></summary>
+    <div class="cuerpo">
+      <p>Sigue pasando en la ISO del 2026-11-07, probado en VirtualBox. Esto es lo que devuelve el
+      guion en la live:</p>
+      <pre><code>$ willy-panel centrar
+willy-panel: Plasma no respondio por la API de scripts, pruebo con el fichero.
+willy-panel: no encontre ni la API ni /home/live/.config/plasmashellrc; no he tocado nada.</code></pre>
+      <p>Las dos rutas fallan a la vez: <code>plasmashell</code> no contesta por la API de scripts
+      porque todavía está montando el árbol de widgets, y el respaldo por fichero no encuentra
+      <code>~/.config/plasmashellrc</code>, que en una live recién creada <strong>no existe
+      todavía</strong>.</p>
+      <div class="bueno">
+        <p><strong>Lo que sí funciona es el propio Plasma</strong>, sin guiones: clic derecho en la
+        barra → <em>Configurar la barra de tareas</em> → <strong>Alineación: Centrado</strong>. Se
+        mantiene al reiniciar, porque esa clave la escribe Plasma donde la lee.</p>
+      </div>
+      <p class="reg">
+        <code>willy-panel</code> sigue sirviendo para lo contrario —devolver la barra a la
+        izquierda— en un disco instalado, donde el fichero de configuración sí existe desde la
+        segunda sesión. El arreglo automático queda abierto como defecto de la 2.8.
+      </p>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="sin-contrasena-al-arrancar">
+    <summary>Quiero que el equipo no pida contraseña al arrancar</summary>
+    <div class="cuerpo">
+      <p>No se ofrece como opción: el instalador quita el autologin de SDDM a propósito. Si es un equipo
+      tuyo sin datos, puedes reactivarlo, pero pierdes el bloqueo de pantalla y la bóveda deja de tener
+      sentido.</p>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="boveda-olvidada">
+    <summary>Olvidé la contraseña de una bóveda</summary>
+    <div class="cuerpo">
+      <p>No hay recuperación posible: cryfs no guarda copia de la clave. Mantén una copia de seguridad
+      fuera de la bóveda.</p>
+    </div>
+  </details>
+</section>
+
+<section id="compilar">
+  <h2>Compilar y probar</h2>
+
+  <details class="detalles" data-buscable id="gurumeditation">
+    <summary>VirtualBox se cierra con <code>gurumeditation</code> al arrancar la VM</summary>
+    <div class="cuerpo">
+      <p>Hyper-V/WSL2 tiene reservado AMD-V. Apaga la plataforma de hipervisor y reinicia para usar
+      VirtualBox; vuelve a encenderla para compilar en WSL2. <strong>No pueden coexistir.</strong></p>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="wsl-timout">
+    <summary><code>wsl.exe</code> responde <code>WSAETIMEDOUT</code> o un comando sale con exit 127 sin explicación</summary>
+    <div class="cuerpo">
+      <p>Con un build pesado en marcha, el puente a WSL da timeouts transitorios. Reintenta. Y
+      <strong>nunca</strong> pases comandos con <code>$</code> o comillas anidadas por
+      <code>wsl.exe -- bash -c '...'</code>: el escapado de MSYS los corrompe, el comando devuelve 0 y
+      parece que funcionó. Escribe un <code>.sh</code> y ejecútalo por ruta.</p>
+    </div>
+  </details>
+
+  <details class="detalles" data-buscable id="copia-9p">
+    <summary>La copia de la ISO a otro disco falla a mitad (<code>Cannot allocate memory</code>)</summary>
+    <div class="cuerpo">
+      <p>Es el canal 9p de WSL. Reanuda con <code>rsync --append --partial</code> en vez de volver a
+      empezar; el guion de entrega hace exactamente eso, con reintentos, y genera el
+      <code>.sha256</code> al terminar.</p>
+    </div>
+  </details>
+</section>
+
+<section id="reportar">
+  <h2>Reportar y contactar</h2>
+  <p>
+    Antes de escribir, ejecuta esto y pega la salida tal cual. Con las recompilaciones del mismo día,
+    el <strong>SHA-256 de la ISO</strong> es la única forma de saber qué imagen probaste.
+  </p>
+  <pre><code>willy-info                    # edición, versión, hardware, modo live o instalado
+willy-guardado                # volatil / persistente / instalado
+wpctl status                  # si es audio
+vainfo --display drm          # si es vídeo
+cat /tmp/willy-instalar.log   # si es instalación</code></pre>
+
+  <div class="tabla-envoltura">
+    <table>
+      <thead><tr><th>Qué</th><th>Dónde</th></tr></thead>
+      <tbody>
+        <tr><td>Reportar un fallo</td><td><a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/issues/new" rel="noopener">Issues del repositorio</a></td></tr>
+        <tr><td>Ver el código, los hooks y la documentación</td><td><a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN" rel="noopener"><code>ALEX45TMC/WILLY-LINUX-DEBIAN</code></a></td></tr>
+        <tr><td>Bajar la ISO y el <code>.sha256</code></td><td><a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/releases" rel="noopener">Releases</a></td></tr>
+        <tr><td>Compilaciones y artefactos</td><td><a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/actions" rel="noopener">Actions · <code>build-iso.yml</code></a></td></tr>
+        <tr><td>Construcción en curso</td><td><a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/projects" rel="noopener">Projects</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bueno">
+    <p>Los fallos que se reportan con el SHA-256, la salida de <code>willy-info</code> y el log del
+    instalador han sido siempre los que se han podido reproducir y arreglar. Los de «no funciona» a
+    secas quedan abiertos hasta que alguien da la edición.</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="pie">
+  <div class="interior">
+    <nav aria-label="Pie">
+      <a href="index.html">Portada</a>
+      <a href="descargas.html">Descargas</a>
+      <a href="capturas.html">Capturas</a>
+      <a href="documentacion.html">Documentación</a>
+      <a href="licencias.html">Licencias</a>
+    </nav>
+    <p>Texto original en <code>docs/solucion-de-problemas.md</code> dentro del repositorio, en español.</p>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>

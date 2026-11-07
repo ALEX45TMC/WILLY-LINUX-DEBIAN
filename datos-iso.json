@@ -1,0 +1,53 @@
+{
+  "projecte": "Willy Linux",
+  "nombre_largo": "Willy Linux 2.8 (KDE Plasma 6)",
+  "version": "2.8",
+  "base_de": "Debian 13 trixie",
+  "escritorio": "KDE Plasma 6",
+  "arquitectura": "amd64 (x86_64)",
+  "idioma": "es_ES.UTF-8",
+  "teclado": "latam",
+  "zona": "America/Bogota",
+  "actualizada": "2026-11-07",
+  "iso": {
+    "archivo": "willylinux-v2.8-kde-amd64.iso",
+    "bytes": 1906999296,
+    "mb": 1819,
+    "sha256": "825ec3bba88b4610244f1de889951c13e343b53f014d0bbb223a6d55874041bb",
+    "volumen": "WILLYLINUX28",
+    "paquetes": 1712,
+    "compilada": "2026-11-07",
+    "donde": "GitHub Actions (run 42400766974), live-build sobre debian:trixie",
+    "descarga": "https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/releases/download/v2.8/willylinux-v2.8-kde-amd64.iso",
+    "hash_file": "https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/releases/download/v2.8/willylinux-v2.8-kde-amd64.iso.sha256",
+    "release": "https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/releases/tag/v2.8"
+  },
+  "requisitos": {
+    "ram_minima": "4 GB",
+    "ram_recomendada": "6-7 GB",
+    "usb_live": "8 GB",
+    "usb_persistente": "32 GB",
+    "disco": "25 GB (recomendado 40 GB)",
+    "arranque": "BIOS o UEFI (ambos ensayados en VirtualBox)"
+  },
+  "anterior": {
+    "version": "2.5.5",
+    "archivo": "willylinux-v2.5-kde-amd64.iso",
+    "entregada": "2026-10-17"
+  },
+  "edicion_20_10": {
+    "archivo": "willylinux-v2.8-kde-amd64.iso (quemada 2026-10-20, en disco local)",
+    "bytes": 1849540608,
+    "sha256": "d20a9eb14b2be93421e3200317af1e6c085898083bb5b50e6e931ceeea97c9f7",
+    "paquetes": 1639,
+    "estado": "ensayada en maquina; tres defectos corregidos en la de Actions"
+  },
+  "enlaces": {
+    "repo": "https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN",
+    "releases": "https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/releases",
+    "issues": "https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/issues",
+    "discusiones": "https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/discussions",
+    "acciones": "https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/actions",
+    "workflow": "https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/actions/workflows/build-iso.yml"
+  }
+}

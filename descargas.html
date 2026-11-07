@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Descargar Willy Linux 2.8 — ISO, SHA-256 y cómo grabar el USB</title>
+<meta name="description" content="Descarga la ISO de Willy Linux 2.8 (1819 MB, amd64) desde la release de GitHub, verifica su SHA-256 y grábala en un USB en modo DD con Rufus o con dd.">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="img/logo-128.png">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-datos="datos-iso.json">
+
+<header class="cabecera">
+  <div class="interior">
+    <a class="marca" href="index.html">
+      <img src="img/logo-128.png" alt="Logo de Willy Linux (lobito)">
+      <span>Willy&nbsp;Linux</span>
+    </a>
+    <nav class="navegacion" aria-label="Secciones">
+      <a href="index.html">Portada</a>
+      <a href="descargas.html" aria-current="page">Descargas</a>
+      <a href="capturas.html">Capturas</a>
+      <a href="documentacion.html">Documentación</a>
+      <a href="ayuda.html">Ayuda</a>
+      <a href="licencias.html">Licencias</a>
+      <a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN" rel="noopener">GitHub</a>
+    </nav>
+    <button id="tema" type="button">Tema: auto</button>
+  </div>
+</header>
+
+<main class="interior">
+
+<section id="actual">
+  <span class="eyebrow">Descarga directa</span>
+  <h1>Willy Linux 2.8 <span class="reg" style="font-size:.5em">KDE Plasma 6 · amd64</span></h1>
+
+  <div class="tabla-envoltura">
+    <table>
+      <thead><tr><th>Archivo</th><th>Tamaño</th><th>SHA-256</th><th>Qué es</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><a data-dato="iso.release" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/releases/tag/v2.8" rel="noopener"><code>willylinux-v2.8-kde-amd64.iso</code></a></td>
+          <td><span data-dato="iso.bytes" data-bytes>1819 MB</span></td>
+          <td><code data-dato="iso.sha256">825ec3bb…</code></td>
+          <td>la edición actual, quemada en GitHub Actions el 2026-11-07</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/releases/download/v2.8/willylinux-v2.8-kde-amd64.iso.sha256" rel="noopener"><code>…iso.sha256</code></a></td>
+          <td>96 B</td>
+          <td>—</td>
+          <td>el hash en fichero aparte, para <code>sha256sum -c</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="botones">
+    <a class="boton" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/releases/tag/v2.8" rel="noopener">Descargar desde la release v2.8</a>
+    <button class="boton secundario" data-copiar-hash type="button" disabled>copiar SHA-256</button>
+    <a class="boton secundario" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/releases" rel="noopener">ediciones anteriores</a>
+  </div>
+
+  <p class="reg" id="datos-aviso" hidden>
+    No se pudo leer <code>datos-iso.json</code> (¿estás abriendo la página con
+    <code>file://</code>?). Los valores escritos a mano siguen ahí; la tabla de arriba es la misma
+    que publica el JSON.
+  </p>
+
+  <div class="bueno">
+    <p><strong>Antes de grabar, verifica.</strong> Ninguna de las verificaciones que han valido en
+    este proyecto vino del log de compilación: vinieron de mirar el artefacto. El SHA-256 es el
+    primer vistazo, y con las recompilaciones del mismo día es la <em>única</em> forma de saber qué
+    imagen probaste.</p>
+  </div>
+</section>
+
+<section id="verificar">
+  <h2>Verificar la descarga</h2>
+
+  <h3>Linux, WSL o macOS</h3>
+  <pre><code>sha256sum willylinux-v2.8-kde-amd64.iso
+# 825ec3bba88b4610244f1de889951c13e343b53f014d0bbb223a6d55874041bb  willylinux-v2.8-kde-amd64.iso
+
+sha256sum -c willylinux-v2.8-kde-amd64.iso.sha256      # si bajaste también el .sha256</code></pre>
+
+  <h3>Windows</h3>
+  <pre><code>Get-FileHash -Algorithm SHA256 .\willylinux-v2.8-kde-amd64.iso
+# o, con el fichero .sha256 al lado:
+certutil -hashfile .\willylinux-v2.8-kde-amd64.iso SHA256</code></pre>
+
+  <p>
+    Si el hash <strong>no coincide</strong>, no la grabes: vuelve a descargar. Un USB con una ISO
+    truncada arranca y falla de formas que parecen defectos del sistema.
+  </p>
+
+  <h3>Verificar lo que hay dentro (opcional, para el que audita)</h3>
+  <pre><code>mkdir -p /mnt/willy &amp;&amp; sudo mount -o loop,ro willylinux-v2.8-kde-amd64.iso /mnt/willy
+ls /mnt/willy/live/            # filesystem.packages  filesystem.squashfs  initrd.img  vmlinuz
+grep -c . /mnt/willy/live/filesystem.packages          # 1712 paquetes en esta edición
+
+mkdir -p /tmp/wsq &amp;&amp; sudo mount -o loop,ro /mnt/willy/live/filesystem.squashfs /tmp/wsq
+awk -F: '$3==1000 {print $1, substr($2,1,7)"…"}' /tmp/wsq/etc/shadow   # tiene que salir un hash
+test -x /tmp/wsq/usr/bin/cfdisk &amp;&amp; echo "cfdisk está"                  # faltaba en la del 20-10</code></pre>
+  <p class="reg">
+    El guion <code>src/pruebas/verificar-2.8.sh</code> hace todo eso y más (sintaxis de los 22
+    guiones propios, binarios de GRUB, perfiles ALSA, <code>ping_group_range</code>) y saca
+    <code>OK</code> o <code>MAL</code> por línea.
+  </p>
+</section>
+
+<section id="grabar">
+  <h2>Grabar el USB</h2>
+
+  <h3>Windows — Rufus</h3>
+  <ol class="pasos">
+    <li><h3>Dispositivo</h3><p>El USB. Se pierde todo lo que hubiera dentro.</p></li>
+    <li><h3>Imagen de arranque</h3><p>La ISO de Willy Linux recién verificada.</p></li>
+    <li><h3>Modo de particionado: DD</h3><p>Rufus pregunta; elige <em>«Modo imagen DD»</em>. El
+    modo ISOHybrid también vale, pero DD es el que está probado en todos los equipos.</p></li>
+    <li><h3>Espera a «LISTO»</h3><p>Y expulsa el USB antes de apagar.</p></li>
+  </ol>
+
+  <h3>Linux o macOS — <code>dd</code></h3>
+  <pre><code>sudo umount /dev/sdX*                  # sin el * final si no está montado
+sudo dd if=willylinux-v2.8-kde-amd64.iso of=/dev/sdX bs=4M status=progress oflag=sync
+sync</code></pre>
+  <div class="malo">
+    <p>Escribe en <code>/dev/sdX</code> (el disco entero), <strong>nunca</strong> en
+    <code>/dev/sdX1</code> (una partición). Y <strong>copiar la ISO con el explorador de archivos
+    no deja un disco arrancable</strong>: es el fallo de arranque más común que reportan.</p>
+  </div>
+
+  <h3>Tamaño mínimo del USB</h3>
+  <div class="tabla-envoltura">
+    <table>
+      <thead><tr><th>Uso</th><th>Tamaño</th><th>Por qué</th></tr></thead>
+      <tbody>
+        <tr><td>solo live</td><td>8 GB</td><td>la ISO ocupa 1819 MB y el sistema se descomprime en RAM</td></tr>
+        <tr><td>live con <code>/home</code> guardado</td><td>16 GB</td><td>la partición <code>persistence</code> se crea en el propio USB</td></tr>
+        <tr><td>live con todo guardado</td><td>32 GB</td><td>entran también las actualizaciones del sistema</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="arrancar">
+  <h2>Arrancar y probar</h2>
+  <p>
+    Entra al firmware con <kbd>F12</kbd>, <kbd>F8</kbd>, <kbd>Esc</kbd>, <kbd>F2</kbd> o
+    <kbd>Del</kbd> y elige el USB en el menú de arranque temporal. Desactiva
+    <strong>Secure Boot</strong> o pon «Other OS». Si tu equipo muestra las dos entradas del USB,
+    usa la <strong>UEFI</strong>: arranca más rápido y el instalador puede registrar GRUB en el
+    firmware.
+  </p>
+  <div class="tabla-envoltura">
+    <table>
+      <thead><tr><th>Entrada del menú</th><th>Para qué</th></tr></thead>
+      <tbody>
+        <tr><td><code>Willy Linux 2.8</code> (por defecto)</td><td>sesión live normal</td></tr>
+        <tr><td><code>modo seguro</code></td><td>sin aceleración gráfica, para equipos raros; equivale a añadir <code>nomodeset</code></td></tr>
+        <tr><td><code>Comprobar la integridad del USB</code></td><td>verifica la imagen contra el propio medio</td></tr>
+        <tr><td><code>Utilidades → Deteccion de hardware (HDT)</code></td><td>informe de hardware por pantalla</td></tr>
+        <tr><td><code>Opciones avanzadas de arranque</code> / <code>Ajustes del firmware UEFI</code></td><td>solo en el menú GRUB (UEFI)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    En la live: usuario <code>live</code>, contraseña <code>willy</code>. <code>sudo</code> no pide
+    contraseña <em>mientras se arranca desde USB</em>. El asistente de bienvenida se abre solo; si
+    lo cierras, vuelve con <code>willy-bienvenida</code> o con el icono del lobito.
+  </p>
+  <div class="aviso">
+    <p><strong>En las ISO quemadas antes del 2026-11-07</strong> (incluida la 2.8 del 2026-10-20)
+    la cuenta live no traía hash y, si la pantalla se bloqueaba, <code>willy</code> no la abría.
+    Arreglo a mano nada más arrancar:
+    <code>echo willy:willy | sudo chpasswd</code>. La release actual ya lleva la contraseña escrita
+    en la imagen. Detalle en <a href="ayuda.html#bloqueo">solución de problemas</a>.</p>
+  </div>
+</section>
+
+<section id="instalar">
+  <h2>Instalar en el disco</h2>
+  <p>
+    Asistente → <strong>11 · Instalar en el disco</strong>, o <code>willy-instalar</code> en un
+    terminal. Pide el disco, exige escribir <code>BORRAR</code>, avisa si hay NTFS o BitLocker, y
+    entonces particiona y copia.
+  </p>
+  <div class="tabla-envoltura">
+    <table>
+      <thead><tr><th>Orden</th><th>Qué hace</th><th>Si algo falta</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><em>preflight</em>: <code>grub-install</code>, <code>grub-bios-setup</code>, <code>efibootmgr</code> y medio live real</td><td>aborta <strong>sin borrar nada</strong></td></tr>
+        <tr><td>2–4</td><td>elige disco, escribe <code>BORRAR</code>, avisa de Secure Boot / BitLocker</td><td>sale sin tocar el disco</td></tr>
+        <tr><td>5</td><td>esquema: GPT+ESP (UEFI) o <code>msdos</code> (BIOS), raíz ext4, swap si hay &lt; 8 GB de RAM</td><td>también hay rama manual con <code>cfdisk</code></td></tr>
+        <tr><td>6–7</td><td>formatea, <code>rsync --one-file-system</code>, <code>fstab</code> por UUID, purga live y regenera initramfs</td><td>corta si la raíz sale sin UUID</td></tr>
+        <tr><td>8–9</td><td>crea tu usuario con tu contraseña, quita el autologin de SDDM, <code>grub-install</code> + <code>grub-mkconfig</code> con os-prober</td><td>Windows aparece en el menú si está en el equipo</td></tr>
+        <tr><td>10</td><td>apaga, quita el USB, arranca del disco</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="reg">
+    <strong>Nunca formatea la partición EFI de Windows</strong>: usa la ESP que ya existe y solo
+    escribe ahí su entrada. Para quitar Willy Linux: <code>efibootmgr -b &lt;número&gt; -B</code> y
+    formatear sus particiones; el arranque de Windows sigue intacto.
+  </p>
+</section>
+
+<section id="ediciones">
+  <h2>Todas las ediciones</h2>
+  <div class="tabla-envoltura">
+    <table>
+      <thead><tr><th>Edición</th><th>Qué es</th><th>USB</th><th>RAM</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td><strong>2.8</strong></td><td>Plasma 6 completo, instalador corregido y arreglos del ensayo</td><td>8 GB</td><td>6–7 GB</td><td><span class="siy">release actual</span></td></tr>
+        <tr><td>2.5.5</td><td>la misma imagen que 2.5 con su etiqueta de versión</td><td>8 GB</td><td>6–7 GB</td><td><span class="reg">entregada 2026-10-17</span></td></tr>
+        <tr><td>2.5</td><td>primer escritorio KDE Plasma 6 completo</td><td>8 GB</td><td>6–7 GB</td><td><span class="reg">entregada 2026-10-17</span></td></tr>
+        <tr><td>2.1</td><td>la ligera con instalador, USB persistente, impresión y Bluetooth</td><td>4 GB</td><td>3–4 GB</td><td><span class="reg">entregada 2026-10-12</span></td></tr>
+        <tr><td>2.0</td><td>la más ligera (IceWM)</td><td>4 GB</td><td>3–4 GB</td><td><span class="no">congelada, con 2 defectos visuales</span></td></tr>
+        <tr><td>1.1</td><td>ligera con más programas</td><td>3 GB</td><td>2–3 GB</td><td><span class="reg">histórica</span></td></tr>
+        <tr><td>1.0</td><td>primera prueba arrancable</td><td>2 GB</td><td>equipos muy viejos</td><td><span class="reg">histórica</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="aviso">
+    <p><strong>Ninguna ISO compilada antes del 2026-10-14 instala a disco</strong>: le faltaban
+    <code>grub-install</code> y <code>grub-bios-setup</code>, copiaba el sistema y dejaba el disco
+    sin arrancar. Desde la 2.5 del 14-10 el instalador comprueba esas herramientas antes de borrar
+    nada.</p>
+  </div>
+  <p class="reg">
+    Los ficheros de 1,8 GB no viven en Git (GitHub rechaza lo de más de 100 MB en el árbol): las
+    ISO se publican como <em>assets</em> de las Releases, que admiten hasta 2 GB por fichero, y se
+    conservan en disco con su <code>.sha256</code>. Ninguna imagen anterior se borra: se renombra a
+    <code>.bak-día.hora</code>.
+  </p>
+</section>
+
+</main>
+
+<footer class="pie">
+  <div class="interior">
+    <nav aria-label="Pie">
+      <a href="index.html">Portada</a>
+      <a href="capturas.html">Capturas</a>
+      <a href="documentacion.html">Documentación</a>
+      <a href="ayuda.html">Ayuda</a>
+      <a href="licencias.html">Licencias</a>
+    </nav>
+    <p>Willy Linux 2.8 — basada en Debian 13 (trixie) y KDE Plasma 6.</p>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>

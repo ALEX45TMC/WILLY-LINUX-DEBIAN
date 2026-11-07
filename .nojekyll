@@ -1,0 +1,2 @@
+# Desactiva Jekyll en GitHub Pages: la página se sirve tal cual, sin
+# procesamiento de Liquid ni filtrado de rutas.

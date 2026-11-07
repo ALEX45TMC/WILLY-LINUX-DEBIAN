@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentación de Willy Linux — cómo se construye, qué trae y cómo se verifica</title>
+<meta name="description" content="Documentación de Willy Linux: live-build con --apt-recommends false, hooks de personalización, instalador propio, verificación del artefacto montando la ISO, historial de ediciones y cómo compilar.">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="img/logo-128.png">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-datos="datos-iso.json">
+
+<header class="cabecera">
+  <div class="interior">
+    <a class="marca" href="index.html">
+      <img src="img/logo-128.png" alt="Logo de Willy Linux (lobito)">
+      <span>Willy&nbsp;Linux</span>
+    </a>
+    <nav class="navegacion" aria-label="Secciones">
+      <a href="index.html">Portada</a>
+      <a href="descargas.html">Descargas</a>
+      <a href="capturas.html">Capturas</a>
+      <a href="documentacion.html" aria-current="page">Documentación</a>
+      <a href="ayuda.html">Ayuda</a>
+      <a href="licencias.html">Licencias</a>
+      <a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN" rel="noopener">GitHub</a>
+    </nav>
+    <button id="tema" type="button">Tema: auto</button>
+  </div>
+</header>
+
+<main class="interior">
+
+<section id="indice">
+  <h1>Documentación</h1>
+  <p>
+    El texto completo vive en el repositorio, en <code>docs/</code>, y se mantiene en español.
+    Aquí está lo esencial de cada documento, con enlace al original para leerlo entero.
+  </p>
+  <div class="enlaces">
+    <a class="enlace-tarjeta" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/blob/main/docs/especificaciones.md" rel="noopener">
+      <strong>Especificaciones</strong><span>live-build, arranque, menús, listas de paquetes</span></a>
+    <a class="enlace-tarjeta" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/blob/main/docs/compilar.md" rel="noopener">
+      <strong>Cómo compilar</strong><span>WSL2, live-build, puertas previas</span></a>
+    <a class="enlace-tarjeta" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/blob/main/docs/verificar-la-iso.md" rel="noopener">
+      <strong>Verificar la ISO</strong><span>montar, cruzar declarado ↔ artefacto</span></a>
+    <a class="enlace-tarjeta" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/blob/main/docs/arranque-e-instalacion.md" rel="noopener">
+      <strong>Arranque e instalación</strong><span>requisitos, USB, instalador, persistencia</span></a>
+    <a class="enlace-tarjeta" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/blob/main/docs/uso-diario.md" rel="noopener">
+      <strong>Uso diario</strong><span>guiones propios, bóveda, tienda, actualizaciones</span></a>
+    <a class="enlace-tarjeta" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/blob/main/docs/ediciones.md" rel="noopener">
+      <strong>Tabla de ediciones</strong><span>tamaños, paquetes y SHA-256 de cada ISO</span></a>
+    <a class="enlace-tarjeta" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/blob/main/docs/historial.md" rel="noopener">
+      <strong>Historial</strong><span>qué cambió en cada quemado y qué salió mal</span></a>
+    <a class="enlace-tarjeta" href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/blob/main/docs/licencia.md" rel="noopener">
+      <strong>Licencia</strong><span>qué se puede hacer con la imagen</span></a>
+  </div>
+</section>
+
+<section id="recomendaciones">
+  <h2>La decisión que lo explica casi todo: <code>--apt-recommends false</code></h2>
+  <p>
+    Con las recomendaciones activadas, una live de Plasma se dispara de tamaño y arrastra samba,
+    servicios y dependencias que los equipos objetivo no necesitan. Apagándolas,
+    <strong>cada paquete que entra en la ISO está escrito a mano</strong> en
+    <code>config/package-lists/*.list.chroot</code> y el control del tamaño es exacto.
+  </p>
+  <p>El precio es una familia de defectos que hay que conocer:</p>
+  <div class="aviso">
+    <p>Si un paquete necesita un <em>Recommends</em> para funcionar y nadie lo escribió,
+    <strong>la ISO compila bien, arranca bien y falla en un detalle</strong>. Pasó, documentado, con:</p>
+    <ul>
+      <li><code>pipewire-audio</code> → la barra de volumen no subía nada;</li>
+      <li><code>alsa-ucm-conf</code> / <code>alsa-topology-conf</code> → sin perfiles de portátil;</li>
+      <li>los 6 paquetes VA-API → vídeo decodificado en el procesador;</li>
+      <li><code>grub2-common</code> y <code>grub-pc</code> → <strong>el disco instalado no arrancaba</strong>
+      (todas las ISO anteriores al 2026-10-14);</li>
+      <li><code>desktop-file-utils</code> → lo instalado de Flathub no aparecía en el menú;</li>
+      <li><code>libcanberra-pulse</code> → sin pitido al cambiar el volumen;</li>
+      <li><code>fdisk</code> → <code>cfdisk</code> no estaba y la rama manual del instalador no arrancaba.</li>
+    </ul>
+  </div>
+  <p>
+    Por eso existe un barrido sistemático: para cada paquete declarado se listan sus
+    <code>Recommends</code> con <code>apt-cache show</code> y se comprueba cuáles no están en la
+    imagen. Y por eso <code>scripts/check-packages.sh</code> corre <em>antes</em> de compilar, como
+    puerta del build.
+  </p>
+</section>
+
+<section id="verificar">
+  <h2>Verificar sin fiarse del log</h2>
+  <p>
+    Regla del proyecto: <code>P: Build completed successfully</code> no significa que la ISO esté
+    bien. En todos los defectos graves encontrados, el build había terminado limpio. La única prueba
+    válida es <strong>montar la imagen y mirar dentro</strong>.
+  </p>
+  <pre><code>sudo mount -o loop,ro willylinux-v2.8-kde-amd64.iso /mnt/willy
+sudo mount -o loop,ro /mnt/willy/live/filesystem.squashfs /tmp/wsq</code></pre>
+  <div class="tabla-envoltura">
+    <table>
+      <thead><tr><th>Comprobar</th><th>Dentro del squashfs</th><th>Por qué</th></tr></thead>
+      <tbody>
+        <tr><td>GRUB del instalador</td><td><code>usr/sbin/grub-install</code>, <code>grub-bios-setup</code>, <code>usr/bin/efibootmgr</code></td><td>sin ellos el disco instalado no arranca</td></tr>
+        <tr><td>Módulos GRUB</td><td><code>usr/lib/grub/i386-pc/</code> y <code>usr/lib/grub/x86_64-efi/</code></td><td>uno por cada modo de arranque</td></tr>
+        <tr><td>Contraseña de la live</td><td><code>etc/shadow</code>, campo 2 del uid 1000 empezando por <code>$</code></td><td>sin hash, el bloqueo de Plasma deja la sesión fuera de uso</td></tr>
+        <tr><td><code>cfdisk</code></td><td><code>usr/bin/cfdisk</code></td><td>la rama manual del instalador</td></tr>
+        <tr><td>VA-API</td><td><code>usr/bin/vainfo</code> y <code>…/dri/*_drv_video.so</code></td><td>decodificación de vídeo por GPU</td></tr>
+        <tr><td>Perfiles ALSA</td><td><code>usr/share/alsa/ucm2/</code></td><td>que la barra de volumen mande de verdad</td></tr>
+        <tr><td>Identidad</td><td><code>etc/os-release</code>, <code>etc/hostname</code>, <code>etc/hosts</code> con contenido</td><td>el <code>sudo</code> se cuelga si <code>hosts</code> está vacío</td></tr>
+        <tr><td>Rutas del medio</td><td><code>grep -R "/lib/live/mount" usr/local/bin</code> = 0</td><td>live-boot cambió a <code>/run/live/medium</code></td></tr>
+        <tr><td>Sintaxis</td><td><code>bash -n</code> / <code>sh -n</code> sobre los ~22 guiones de <code>usr/local/bin</code></td><td>un error de sintaxis no aparece hasta que se usa</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="reg">
+    Dos trampas al cruzar declarado ↔ construido: <code>filesystem.packages</code> usa
+    <code>nombre:arquitectura&lt;TAB&gt;versión</code>, así que un <code>grep -P "^paquete( |$)"</code>
+    da falsos negativos; y <code>dpkg-query --root=/tmp/wsq</code> miente, porque la base de dpkg del
+    squashfs no refleja el estado final de la imagen.
+  </p>
+</section>
+
+<section id="arbol">
+  <h2>Qué hay en el árbol</h2>
+  <pre><code>src/tree-2.8/
+  auto/config                     opciones de lb config; volumen WILLYLINUX28
+  config/package-lists/*.list.chroot   19 listas, 250 paquetes únicos declarados
+  config/hooks/live/*.hook.chroot      identidad, menús, herramientas, instalador, asistente, Plasma
+  config/includes.chroot/etc/          hostname, hosts, sysctl, skel
+  scripts/                        check-packages.sh, check-size.sh, comprobar-parted-mkpart.sh
+src/pruebas/                      verificar-2.8.sh, probar-instalacion-vbox.ps1, probar-parted-real.sh…
+docs/                             la documentación que estás leyendo resumida
+.github/workflows/build-iso.yml compile la ISO en Actions y la deja como artefacto (no publica)</code></pre>
+  <div class="tabla-envoltura">
+    <table>
+      <thead><tr><th>Hook</th><th>Qué instala</th></tr></thead>
+      <tbody>
+        <tr><td><code>0050-willylinux.hook.chroot</code></td><td>identidad visual, <code>LOGO=</code> en <code>os-release</code> y <strong>la contraseña <code>willy</code> escrita en la imagen</strong></td></tr>
+        <tr><td><code>0200-bootmenu.hook.binary</code></td><td>menús BIOS y UEFI en español, colores, <code>timeout</code>, splash</td></tr>
+        <tr><td><code>0300-herramientas.hook.chroot</code></td><td><code>willy-info</code>, <code>willy-monitor</code>, <code>willy-captura</code>, <code>willy-red</code>, <code>willy-ajustes</code></td></tr>
+        <tr><td><code>0400-instalador.hook.chroot</code></td><td><code>willy-instalar</code>, <code>willy-persistencia</code>, <code>willy-actualizar</code></td></tr>
+        <tr><td><code>0500-bienvenida.hook.chroot</code></td><td><code>willy-bienvenida</code>, el asistente de 16 opciones</td></tr>
+        <tr><td><code>0600-plasma.hook.chroot</code></td><td>panel, fondo, <code>willy-panel</code>, <code>willy-primera-vez</code> y el arranque automático de la bienvenida</td></tr>
+        <tr><td><code>0700-medio.hook.chroot</code></td><td><code>willy-medio</code>, el helper que localiza el USB entre las cuatro rutas posibles</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="compilar">
+  <h2>Cómo compilar</h2>
+  <ol class="pasos">
+    <li>
+      <h3>Ambiente</h3>
+      <p>Debian trixie (o WSL2 con trixie), <code>live-build</code>, <code>debootstrap</code>,
+      <code>squashfs-tools</code>, <code>xorriso</code>, <code>isolinux</code>,
+      <code>syslinux-common</code>, <code>grub-efi-amd64-bin</code> y <code>grub-pc-bin</code>.
+      40 GB libres: el chroot, el stage y la ISO conviven.</p>
+    </li>
+    <li>
+      <h3>Puertas antes de lanzar</h3>
+      <p>El guion de compilación aborta si hay otro build corriendo, si falta espacio, si los hooks
+      no son idénticos entre árboles, si alguna <code>mkpart</code> de la rama BIOS lleva nombre de
+      partición o si falta <code>grub2-common</code> en la receta.</p>
+    </li>
+    <li>
+      <h3>Configurar y construir</h3>
+      <pre><code>cd src/tree-2.8
+lb config noauto &amp;&amp; lb build 2&gt;&amp;1 | tee /tmp/lb-build.log</code></pre>
+      <p><code>auto/config</code> lleva dentro las opciones de <code>lb config</code>; las variables
+      <code>WILLY_ARCH</code>, <code>WILLY_DIST</code>, <code>WILLY_LOCALE</code>,
+      <code>WILLY_KEYBOARD</code> y <code>WILLY_TZ</code> permiten cambiar idioma, teclado y zona sin
+      editar el archivo.</p>
+    </li>
+    <li>
+      <h3>Verificar el artefacto</h3>
+      <p><code>src/pruebas/verificar-2.8.sh</code> monta la ISO recién quemada y da
+      <code>OK</code>/<code>MAL</code> por comprobación, incluido el hash de la cuenta live y la
+      sintaxis de los guiones.</p>
+    </li>
+    <li>
+      <h3>Entregar</h3>
+      <p>Se copia con <code>rsync --append --partial</code> (el canal 9p de WSL puede fallar a mitad
+      con <code>Cannot allocate memory</code>), se escribe el <code>.sha256</code> al lado y la ISO
+      anterior <strong>se renombra a <code>.bak-día.hora</code>, nunca se borra</strong>.
+      <code>lb clean</code> se lleva por delante la ISO generada: primero se copia y se verifica, y
+      solo después se limpia.</p>
+    </li>
+  </ol>
+  <p class="reg">
+    El mismo proceso corre en GitHub Actions con
+    <a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/actions/workflows/build-iso.yml" rel="noopener"><code>build-iso.yml</code></a>,
+    que usa <code>container: debian:trixie</code> con <code>--privileged</code> porque el
+    <code>debootstrap</code> de Ubuntu no conoce trixie. El trabajo <strong>no publica</strong>: deja
+    la ISO como artefacto y la release se hace a mano.
+  </p>
+</section>
+
+<section id="ediciones">
+  <h2>Tabla de ediciones</h2>
+  <div class="tabla-envoltura">
+    <table>
+      <thead><tr><th>Edición</th><th>ISO</th><th>Paquetes en la imagen</th><th>SHA-256</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td><strong>2.8</strong> (Actions, 2026-11-07)</td><td>1.906.999.296 B</td><td>1712</td><td><code>825ec3bb…874041bb</code></td><td><span class="siy">release actual</span></td></tr>
+        <tr><td>2.8 (WSL, 2026-10-20)</td><td>1.849.540.608 B</td><td>1639</td><td><code>d20a9eb1…eea97c9f7</code></td><td><span class="reg">ensayada; 3 defectos</span></td></tr>
+        <tr><td>2.5.5</td><td>1.849.540.608 B</td><td>~1592</td><td>—</td><td><span class="reg">entregada 2026-10-17</span></td></tr>
+        <tr><td>2.5</td><td>1.849.540.608 B</td><td>~1592</td><td>—</td><td><span class="reg">entregada 2026-10-17</span></td></tr>
+        <tr><td>2.1</td><td>1.142.931.456 B</td><td>—</td><td><code>10432e43…cbc5c77</code></td><td><span class="no">su instalador no localiza el USB</span></td></tr>
+        <tr><td>2.0</td><td>1.110.900.736 B</td><td>—</td><td>—</td><td><span class="no">congelada a propósito</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="reg">
+    Los SHA-256 completos, el listado de los 36 binarios en disco con bytes, fecha y ruta, y las
+    guardas <code>.bak-*</code> están en
+    <a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/blob/main/MANIFIESTO-SHA256.txt" rel="noopener"><code>MANIFIESTO-SHA256.txt</code></a>.
+    Ninguna ISO vive en el árbol de Git: GitHub rechaza ficheros de más de 100 MB.
+  </p>
+</section>
+
+<section id="historial">
+  <h2>Historial: qué salió mal y cómo se arregló</h2>
+  <p>
+    El <a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/blob/main/docs/historial.md" rel="noopener">historial completo</a>
+    está en el repositorio. Estos son los cinco momentos que explican la 2.8:
+  </p>
+  <div class="grid">
+    <div class="tarjeta">
+      <h3>2026-10-14 — el disco no arrancaba</h3>
+      <p>Todas las ISO anteriores copiaban el sistema pero les faltaban <code>grub-install</code> y
+      <code>grub-bios-setup</code>. Desde entonces el instalador hace <em>preflight</em> y aborta
+      antes de borrar nada.</p>
+    </div>
+    <div class="tarjeta">
+      <h3>2026-10-17 — el USB mal localizado</h3>
+      <p>live-boot 1:20250815 monta en <code>/run/live/medium</code> y las comprobaciones estaban
+      escritas con la ruta vieja: tomaban el USB por disco instalado. Nace el helper
+      <code>willy-medio</code>.</p>
+    </div>
+    <div class="tarjeta">
+      <h3>2026-10-20 — <code>parted</code> en BIOS</h3>
+      <p><code>parted: invalid token: Willy</code>: en tabla <code>msdos</code> los nombres de
+      partición no existen, va el tipo. La 2.8 separa las dos ramas y enseña el error real.</p>
+    </div>
+    <div class="tarjeta">
+      <h3>2026-11-07 — la live quedaba fuera de uso</h3>
+      <p>Instalando la 2.8 de verdad, la pantalla se bloqueó sola y <strong>ni <code>willy</code> ni
+      <code>live</code> la abrían</strong>: la cuenta live no tenía hash y Plasma no admite cuenta sin
+      contraseña. La contraseña se escribe ya en la imagen.</p>
+    </div>
+    <div class="tarjeta">
+      <h3>2026-11-07 — autologin que no se quitaba</h3>
+      <p>El disco instalado entraba directo, sin pedir la contraseña elegida. SDDM mezcla
+      <code>/etc/sddm.conf</code> y <code>/etc/sddm.conf.d/*.conf</code>: comentar en uno no anula la
+      línea del otro. Hace falta <code>User=</code> vacío en los dos.</p>
+    </div>
+    <div class="tarjeta">
+      <h3>2026-11-07 — la barra a la izquierda (arreglo aún abierto)</h3>
+      <p><code>plasmashell</code> aún montaba el árbol de widgets cuando <code>willy-panel</code>
+      preguntaba, así que la operación no encontraba a quién aplicarse. La receta añadió reintentos
+      y respaldo escrito en <code>plasmashellrc</code>. <strong>En la live del quemado del
+      2026-11-07 ninguna de las dos rutas aplica</strong> —la API no contesta y el fichero todavía no
+      existe—, y la barra sale a la izquierda. Queda como defecto abierto de la 2.8; se resuelve a
+      mano y está explicado en
+      <a href="ayuda.html#panel-izquierda">la ayuda</a>.</p>
+    </div>
+  </div>
+</section>
+
+<section id="uso">
+  <h2>Uso diario: los guiones propios</h2>
+  <div class="tabla-envoltura">
+    <table>
+      <thead><tr><th>Guion</th><th>Para qué</th></tr></thead>
+      <tbody>
+        <tr><td><code>willy-bienvenida</code></td><td>el asistente de 16 opciones</td></tr>
+        <tr><td><code>willy-instalar</code></td><td>instalar al disco (particiona, copia, deja GRUB)</td></tr>
+        <tr><td><code>willy-persistencia</code></td><td>guardar los cambios en el USB: nada, solo <code>/home</code> o todo</td></tr>
+        <tr><td><code>willy-actualizar</code></td><td>apt + flatpak, con resumen de lo que cambia</td></tr>
+        <tr><td><code>willy-info</code></td><td>edición, versión, hardware y si estás en live o instalado</td></tr>
+        <tr><td><code>willy-guardado</code></td><td>modo de persistencia actual: <code>volatil</code>, <code>persistente</code> o <code>instalado</code></td></tr>
+        <tr><td><code>willy-medio</code></td><td>dónde está montado el medio live (las cuatro rutas posibles)</td></tr>
+        <tr><td><code>willy-panel</code></td><td>centrar o mover la barra; escribe en <code>plasmashellrc</code> si Plasma no contesta. En la live esa segunda ruta tampoco existe, por eso el centrado automático sigue abierto</td></tr>
+        <tr><td><code>willy-red</code></td><td>interfaz, puerta, pérdida, retardo, temblor, DNS y velocidad HTTPS real, con veredicto</td></tr>
+        <tr><td><code>willy-monitor</code>, <code>willy-captura</code>, <code>willy-trafico</code></td><td>estado del equipo, captura de pantalla y tráfico</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="reg">
+    Todos viven en <code>/usr/local/bin</code> y están escritos en POSIX shell o <code>bash</code>
+    sin compilar. Se les pasa <code>bash -n</code> / <code>sh -n</code> en la verificación del
+    artefacto: un error de sintaxis en un hook no aparece hasta que alguien usa esa opción.
+  </p>
+</section>
+
+</main>
+
+<footer class="pie">
+  <div class="interior">
+    <nav aria-label="Pie">
+      <a href="index.html">Portada</a>
+      <a href="descargas.html">Descargas</a>
+      <a href="capturas.html">Capturas</a>
+      <a href="ayuda.html">Ayuda</a>
+      <a href="licencias.html">Licencias</a>
+    </nav>
+    <p>Documentación original en <code>docs/</code> dentro del repositorio, en español.</p>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>

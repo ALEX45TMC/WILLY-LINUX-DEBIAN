@@ -326,17 +326,33 @@ sudo sed -i 's|^User=.*|User=|' /etc/sddm.conf /etc/sddm.conf.d/willy.conf
 
 ### El panel sale pegado a la izquierda en vez de centrado
 
-Pasa al arrancar la live recién construida sin el arreglo del 2026-11-07: `willy-panel` pregunta
-por el árbol de widgets y `plasmashell` todavía lo está montando, así que la operación no
-encuentra a quién aplicarse. Se ve en la captura del escritorio nada más entrar y no deja de
-aplicarse sola.
+Sigue pasando en la ISO quemada en GitHub Actions el 2026-11-07, probado en VirtualBox. Lo que
+devuelve el guion:
 
-```sh
-willy-panel        # reaplicar la posición del panel
+```
+$ willy-panel centrar
+willy-panel: Plasma no respondio por la API de scripts, pruebo con el fichero.
+willy-panel: no encontre ni la API ni /home/live/.config/plasmashellrc; no he tocado nada.
 ```
 
-En la receta corregida el hook espera a que `plasmashell` tenga el árbol listo antes de
-configurar el panel.
+Las dos rutas que tiene el arreglo fallan a la vez en la live: `plasmashell` no contesta por la API
+de scripts (el árbol de widgets todavía se está montando cuando `willy-primera-vez` pregunta, y los
+cinco reintentos no lo alcanzan) y el respaldo por fichero no encuentra
+`~/.config/plasmashellrc`, que en una sesión live recién creada **todavía no existe**.
+
+**Lo que sí funciona es el propio Plasma**, sin guiones:
+
+1. Clic derecho en la barra → *Configurar la barra de tareas* (en algunos idiomas,
+   *Configurar el gestor de tareas de solo iconos*).
+2. **Alineación → Centrado**. Aceptar.
+
+Eso escribe la clave donde Plasma la lee y se mantiene al reiniciar. `willy-panel` sigue sirviendo
+para lo contrario (devolver la barra a la izquierda) cuando el fichero de configuración ya existe,
+que es el caso normal en un disco instalado después de la primera sesión.
+
+> Defecto abierto de la 2.8: el arreglo automático hay que buscarlo por otra vía (crear el
+> `plasmashellrc` desde el esqueleto, o esperar a que el árbol esté listo con una comprobación
+> distinta a la de `barras=`). Hasta entonces, dos clics.
 
 ### Quiero que el equipo no pida contraseña al arrancar
 

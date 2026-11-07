@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Licencias de Willy Linux — GPL-3.0, CC BY-SA 4.0 y qué aporta Debian</title>
+<meta name="description" content="Licencias de Willy Linux: el material propio bajo GPL-3.0 o posterior, el arte bajo CC BY-SA 4.0, la base Debian 13 con sus propias licencias, qué puedes hacer con la ISO y qué debes conservar al redistribuirla.">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="img/logo-128.png">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-datos="datos-iso.json">
+
+<header class="cabecera">
+  <div class="interior">
+    <a class="marca" href="index.html">
+      <img src="img/logo-128.png" alt="Logo de Willy Linux (lobito)">
+      <span>Willy&nbsp;Linux</span>
+    </a>
+    <nav class="navegacion" aria-label="Secciones">
+      <a href="index.html">Portada</a>
+      <a href="descargas.html">Descargas</a>
+      <a href="capturas.html">Capturas</a>
+      <a href="documentacion.html">Documentación</a>
+      <a href="ayuda.html">Ayuda</a>
+      <a href="licencias.html" aria-current="page">Licencias</a>
+      <a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN" rel="noopener">GitHub</a>
+    </nav>
+    <button id="tema" type="button">Tema: auto</button>
+  </div>
+</header>
+
+<main class="interior">
+
+<section id="resumen">
+  <h1>Licencias</h1>
+  <p>
+    Willy Linux es software de código abierto. <strong>No se atribuyen autorías personales ni créditos
+    individuales</strong>: el proyecto se publica como obra abierta, reutilizable y modificable por
+    cualquier persona.
+  </p>
+  <div class="sello">
+    <h2>En una línea</h2>
+    <p>
+      El código y la documentación propios van con <strong>GPL-3.0 o posterior</strong>; el arte gráfico,
+      con <strong>CC BY-SA 4.0</strong>; y todo lo demás —el kernel, Plasma, las aplicaciones— conserva
+      la licencia que ya traía de Debian.
+    </p>
+  </div>
+</section>
+
+<section id="puedes">
+  <h2>Qué puedes hacer</h2>
+  <div class="tabla-envoltura">
+    <table>
+      <thead><tr><th>Puedes</th><th>Cómo</th></tr></thead>
+      <tbody>
+        <tr><td>Usar</td><td>En cualquier equipo, en casa, en una escuela, en un negocio, sin coste y sin registrar</td></tr>
+        <tr><td>Estudiar</td><td>Todo el árbol de compilación (<code>src/</code>) está en el repositorio</td></tr>
+        <tr><td>Modificar</td><td>Cambiar paquetes, escritorio, fondos, herramientas o el instalador</td></tr>
+        <tr><td>Redistribuir</td><td>Copiar la ISO, grabarla, prestarla, subirla a otro sitio</td></tr>
+        <tr><td>Vender</td><td>Permitido, manteniendo la licencia y el código abierto</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="bases">
+  <h2>Bases legales</h2>
+  <p>
+    Willy Linux no es un sistema operativo independiente: es una <strong>reconstrucción
+    (<code>debian-live</code> / <code>live-build</code>)</strong> sobre <strong>Debian 13 “trixie”</strong>.
+    De ahí que convivan cuatro regímenes distintos dentro de la misma ISO.
+  </p>
+  <div class="grid">
+    <div class="tarjeta">
+      <h3>Debian 13 (la base)</h3>
+      <p>
+        Cada paquete <code>.deb</code> conserva la licencia declarada por su autor upstream: GPL-2.0,
+        GPL-3.0, LGPL, MIT, Apache-2.0, BSD… El índice completo está dentro del sistema instalado en
+        <code>/usr/share/doc/*/copyright</code> y el marco general en
+        <a href="https://www.debian.org/legal/" rel="noopener">debian.org/legal</a>.
+      </p>
+      <p class="reg">Willy Linux no cambia ninguna de esas licencias ni reclama derechos sobre ellas.</p>
+    </div>
+    <div class="tarjeta">
+      <h3>live-build y debian-live</h3>
+      <p>
+        Las herramientas que construyen la imagen son software GPL de Debian. <strong>Se usan tal
+        cual, sin modificar su código</strong>: el árbol <code>src/tree-2.8/</code> son configuraciones,
+        listas y hooks que esas herramientas consumen.
+      </p>
+    </div>
+    <div class="tarjeta">
+      <h3>Material propio — GPL-3.0 o posterior</h3>
+      <p>
+        Los <code>config/hooks/*.chroot</code> y <code>*.binary</code>, los ficheros de
+        <code>config/includes.chroot/</code>, las listas <code>config/package-lists/*.list.chroot</code>,
+        las utilidades <code>willy-*</code>, el instalador <code>willy-instalar</code>, los guiones de
+        <code>auto/</code>, las pruebas de <code>src/pruebas/</code> y esta documentación.
+      </p>
+      <p>
+        Texto íntegro en
+        <a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/blob/main/LICENSE" rel="noopener"><code>LICENSE</code></a>.
+      </p>
+    </div>
+    <div class="tarjeta">
+      <h3>Arte gráfico — CC BY-SA 4.0</h3>
+      <p>
+        El logotipo “lobito” y los fondos de pantalla se publican bajo Creative Commons
+        Reconocimiento-CompartirIgual 4.0 para que puedan reutilizarse y adaptarse libremente.
+      </p>
+    </div>
+  </div>
+
+  <h3>La marca</h3>
+  <p>
+    “Willy Linux” es solo un nombre descriptivo de esta construcción; <strong>no se reivindica registro
+    ni exclusividad</strong>. Una derivada puede llamarse de otra forma o conservar el nombre indicando
+    que es una versión modificada.
+  </p>
+</section>
+
+<section id="redistribuir">
+  <h2>Requisitos al redistribuir o modificar</h2>
+  <ol class="pasos">
+    <li><h3>Incluir la licencia</h3><p>GPL-3.0 para el código, CC BY-SA 4.0 para el arte.</p></li>
+    <li><h3>Publicar los cambios</h3><p>Lo que modifiques del árbol de compilación se publica bajo la misma licencia.</p></li>
+    <li><h3>No suplantar</h3><p>No presentar una derivada como si fuera la construcción original.</p></li>
+    <li><h3>Conservar los avisos</h3><p>Los avisos de terceros de los paquetes de Debian siguen donde estaban.</p></li>
+  </ol>
+</section>
+
+<section id="aviso-uso">
+  <h2>Aviso de uso</h2>
+  <div class="aviso">
+    <p>
+      El instalador particiona discos. Aunque nunca toca la partición EFI de Windows y avisa antes de
+      formatear, <strong>una instalación mal dirigida puede borrar datos</strong>. Se ofrece tal cual,
+      sin garantía de idoneidad para un fin concreto, tal y como permite la GPL-3.0 (§15).
+      <strong>Haz copia de seguridad antes de instalar.</strong>
+    </p>
+  </div>
+  <p class="reg">
+    Lo mismo aplica a <em>Guardar mis cambios</em>: escribe una partición <code>persistence</code> en el
+    propio USB. Si el USB tiene otros datos, cámbialo antes de usar esa opción.
+  </p>
+</section>
+
+<section id="terceros">
+  <h2>Terceros que no están en la ISO</h2>
+  <p>
+    Los códecs multimedia, el plugin Widevine de Firefox y las aplicaciones de Flathub
+    <strong>no forman parte de esta imagen</strong>: se instalan en el equipo del usuario y cada elemento
+    bajo sus propios términos. El proyecto no los embute ni los redistribuye.
+  </p>
+  <div class="tabla-envoltura">
+    <table>
+      <thead><tr><th>Elemento</th><th>Situación en Willy Linux</th></tr></thead>
+      <tbody>
+        <tr><td>Códecs restringidos</td><td>No van en la ISO; se instalan en el equipo del usuario, con su licencia</td></tr>
+        <tr><td>Widevine (Netflix, Disney+, …)</td><td>No existe en los repositorios de Debian; <code>firefox-esr</code> solo trae <code>gmp-clearkey</code></td></tr>
+        <tr><td>Apps de Flathub</td><td>Remoto configurado, pero cada app mantiene su propia licencia y la gestiona <code>flatpak</code></td></tr>
+        <tr><td>Controladores propietarios</td><td>No embutidos; se buscan en los repositorios de Debian según la tarjeta</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="documento">
+  <h2>El documento original</h2>
+  <p>
+    El texto completo, con las tablas y los avisos sin resumir, está en
+    <a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/blob/main/docs/licencia.md" rel="noopener"><code>docs/licencia.md</code></a>
+    y la licencia íntegra en
+    <a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/blob/main/LICENSE" rel="noopener"><code>LICENSE</code></a>,
+    dentro del repositorio.
+  </p>
+  <div class="enlaces">
+    <a class="enlace-tarjeta" href="https://www.gnu.org/licenses/gpl-3.0.html" rel="noopener">
+      <strong>GNU GPL v3</strong><span>texto oficial de la licencia del código</span></a>
+    <a class="enlace-tarjeta" href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" rel="noopener">
+      <strong>CC BY-SA 4.0</strong><span>resumen en español del permiso del arte</span></a>
+    <a class="enlace-tarjeta" href="https://www.debian.org/legal/" rel="noopener">
+      <strong>Debian — Legal</strong><span>marco legal de la base del sistema</span></a>
+    <a class="enlace-tarjeta" href="https://packages.debian.org/trixie/live-build" rel="noopener">
+      <strong>live-build</strong><span>las herramientas de construcción, en los repositorios de Debian</span></a>
+  </div>
+</section>
+
+</main>
+
+<footer class="pie">
+  <div class="interior">
+    <nav aria-label="Pie">
+      <a href="index.html">Portada</a>
+      <a href="descargas.html">Descargas</a>
+      <a href="capturas.html">Capturas</a>
+      <a href="documentacion.html">Documentación</a>
+      <a href="ayuda.html">Ayuda</a>
+    </nav>
+    <p>Texto original en <code>docs/licencia.md</code> y <code>LICENSE</code> dentro del repositorio.</p>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>

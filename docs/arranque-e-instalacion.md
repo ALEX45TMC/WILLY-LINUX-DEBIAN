@@ -214,10 +214,13 @@ persistente):
 | Disco instalado entra sin pedir contraseña | ❌ SDDM conserva el autologin | ❌ |
 | Textos del asistente en el disco | ❌ habla de «USB persistente» y de la clave de la live | ❌ |
 
-Los ❌ son de la ISO quemada el 2026-10-20 y están corregidos en la receta; cada uno tiene su
-entrada en [solución de problemas](solucion-de-problemas.md) y su explicación en
-[ediciones](ediciones.md). El de la live es el más serio: **si la pantalla se bloquea, el USB deja
-de servir para nada** hasta que se arregla a mano desde un terminal que siga abierto.
+Los ❌ son de la ISO quemada el 2026-10-20; cada uno tiene su entrada en
+[solución de problemas](solucion-de-problemas.md) y su explicación en
+[ediciones](ediciones.md). En la receta están corregidos el de la contraseña de la live, el del
+autologin de SDDM y el de los textos del asistente; **el del panel centrado no**: ensayado de nuevo
+con el quemado del 2026-11-07, sigue saliendo a la izquierda (abajo). El de la live es el más serio
+por su cuenta: **si la pantalla se bloquea, el USB deja de servir para nada** hasta que se arregla a
+mano desde un terminal que siga abierto.
 
 La partición de BIOS está verificada además por otros dos caminos: `comprobar-parted-mkpart.sh`
 revisa el texto del hook (ninguna `mkpart` de la rama msdos puede llevar nombre) y
@@ -232,6 +235,43 @@ en **UEFI** y `u-40-boot-disco.png` / `u-41-escritorio-uefi.png` el disco arranc
 > **Windows + Hyper-V/WSL2 y VirtualBox no conviven.** Si tienes WSL2 activo, VirtualBox se cae
 > al arrancar la VM. Hay que apagar la plataforma de hipervisor y reiniciar para probar en
 > VirtualBox, y volver a encenderla para compilar en WSL2.
+
+### Qué se ensayó el 2026-11-07 con la ISO quemada en Actions
+
+Segunda máquina virtual (`willy28-acciones`, BIOS, 4 GB, 2 CPU, VDI de 20 GB) con la ISO que salió
+del `build-iso.yml` del 2026-11-07 — la que se publica como `v2.8`. Capturas en
+`E:\Willy Linux\2.8\ensayo-instalacion\shots-acciones\`, prefijo `b-*`.
+
+El primer intento **no arrancó nada**: la pantalla quedó en negro y el PNG pesaba 2 KB. Al abrirla
+se leía `This kernel requires an x86-64 CPU, but only detected an i686 CPU`. Era la VM, no la ISO:
+se había creado con `ostype="Debian (32-bit)"` y `longmode=off`, así que VirtualBox ocultaba el modo
+largo. Con `modifyvm --ostype Debian64 --longmode on` arrancó al segundo. Queda escrito porque es de
+esas trampas que se le echan a la imagen encima.
+
+| Comprobación | Resultado | Cómo se sabe |
+|---|---|---|
+| Arranque live hasta el escritorio | ✅ pintado a los 80 s | serie de capturas cada 20 s (`b-0020` en negro, `b-0080` ya con escritorio) |
+| Identidad de la sesión | ✅ `Willy Linux 2.8`, `Linux 6.12.115+deb13.1-amd64`, `KDE Plasma 6 · usuario live` | `willy-info` en pantalla (`b-info-05.png`) |
+| Las 19 herramientas propias | ✅ presentes | lista de autocompletado `willy-` en el shell |
+| Bienvenida automática con las 16 opciones | ✅ en español, y muestra la contraseña de la live | `b-0100.png` |
+| **Bloqueo de pantalla y desbloqueo con `willy`** | ✅ **arreglado y probado** | `willy-lock` → `b-lock-01.png` (bloqueo con el lobito) → teclear `willy` → `b-lock-02.png` (escritorio de vuelta) |
+| Panel centrado | ❌ **sigue a la izquierda** | `b-esc-01.png`, y `willy-panel centrar` responde: «Plasma no respondio por la API de scripts, pruebo con el fichero» / «no encontre ni la API ni `/home/live/.config/plasmashellrc`; no he tocado nada» |
+| Instalación al disco desde esta ISO | ⚠️ **sin terminar** | llegó al selector de disco (`/dev/sda 21 GB VBOX HARDDISK`) y al aviso de `BORRAR`, y después el instalador salió con `/tmp/willy-instalar.log` vacío |
+
+**Lo del panel es un dato nuevo, no una sospecha.** La receta del 2026-11-07 añade reintentos sobre
+el árbol de widgets y una escritura directa a `plasmashellrc`, pero en la live el fichero todavía no
+existe cuando se pregunta, así que **ninguna de las dos rutas aplica**. El arreglo manual que sí
+funciona es del propio Plasma: clic derecho en la barra → *Configurar la barra de tareas* →
+**Alineación: Centrado**. Queda como defecto abierto de la 2.8.
+
+**Lo de la instalación no se puede contar como probado.** La causa está en este PC, no en la ISO:
+las teclas se envían por scancodes crudos y el invitado responde con teclado latam, así que caen
+letras sueltas, se pierden pulsaciones y caracteres como `-` salen en la posición equivocada. El
+flujo del instalador necesita escribir texto (`BORRAR`, usuario, contraseña) y con ese teclado no es
+fiable. La instalación de la 2.8 **queda probada con la ISO del 2026-10-20 en BIOS y en UEFI**
+(tabla de arriba), y de los dos cambios que se hicieron después en el instalador —quitar el
+autologin de SDDM y corregir los textos del asistente en el disco— **solo está verificado el código,
+no la máquina**. Quien reinstale desde esta ISO que lo cuente como tal.
 
 ## 9. Si el equipo no arranca desde el USB
 

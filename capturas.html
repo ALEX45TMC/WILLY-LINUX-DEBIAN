@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capturas de Willy Linux 2.8 — escritorio, asistente e instalador</title>
+<meta name="description" content="Capturas reales de Willy Linux 2.8: el escritorio KDE Plasma 6, el asistente de 16 opciones en español, el bloqueo de la live y el instalador pidiendo BORRAR antes de tocar el disco. Incluye qué se probó en máquina y qué no.">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="img/logo-128.png">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body data-datos="datos-iso.json">
+
+<header class="cabecera">
+  <div class="interior">
+    <a class="marca" href="index.html">
+      <img src="img/logo-128.png" alt="Logo de Willy Linux (lobito)">
+      <span>Willy&nbsp;Linux</span>
+    </a>
+    <nav class="navegacion" aria-label="Secciones">
+      <a href="index.html">Portada</a>
+      <a href="descargas.html">Descargas</a>
+      <a href="capturas.html" aria-current="page">Capturas</a>
+      <a href="documentacion.html">Documentación</a>
+      <a href="ayuda.html">Ayuda</a>
+      <a href="licencias.html">Licencias</a>
+      <a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN" rel="noopener">GitHub</a>
+    </nav>
+    <button id="tema" type="button">Tema: auto</button>
+  </div>
+</header>
+
+<main class="interior">
+
+<section id="galeria">
+  <h1>Capturas</h1>
+  <p class="reg">
+    Todas son pantallazos <strong>reales</strong> de máquinas virtuales del proyecto (VirtualBox,
+    1280×800, 4 GB de RAM), no montajes. Cada pie dice de qué edición y de qué ensayo vienen, porque
+    en este proyecto la fecha del quemado cambia lo que se ve en la pantalla.
+  </p>
+
+  <div class="galeria">
+    <figure class="figura">
+      <img src="img/captura-live-escritorio.png" alt="Escritorio Plasma 6 de la sesión live de la ISO 2.8 quemada en GitHub Actions" loading="lazy">
+      <figcaption><strong>La live recién encendida.</strong> Quemado de GitHub Actions del
+      2026-11-07, arrancada en BIOS en VirtualBox: el escritorio pintó a los 80 s con el fondo del
+      lobito y la barra abajo. <strong>Los iconos siguen a la izquierda</strong> — mira el pie de
+      «Qué falta y qué se corrigió» más abajo.</figcaption>
+    </figure>
+
+    <figure class="figura">
+      <img src="img/captura-bloqueo.png" alt="Pantalla de bloqueo de Willy Linux con el lobito, la hora y la fecha en español" loading="lazy">
+      <figcaption><strong>La pantalla de bloqueo, y su prueba.</strong> Se bloqueó la sesión live de
+      la ISO del 2026-11-07 con <code>willy-lock</code> y <strong>volvió a entrar con la contraseña
+      <code>willy</code></strong>. En la ISO del 2026-10-20 no abría ni <code>willy</code> ni
+      <code>live</code>: la cuenta live no tenía hash en <code>/etc/shadow</code>. Este es el defecto
+      más serio que salió del ensayo, y aquí es donde se ve arreglado.</figcaption>
+    </figure>
+
+    <figure class="figura">
+      <img src="img/captura-terminal-info.png" alt="Salida de willy-info en la consola de la sesión live" loading="lazy">
+      <figcaption><strong><code>willy-info</code> en la live.</strong> Sistema <em>Willy Linux 2.8</em>,
+      kernel <code>6.12.115+deb13.1-amd64</em>, sesión KDE Plasma 6 con usuario <code>live</code> y
+      contraseña <code>willy</code>. La lista de comandos <code>willy-*</code> que aparece arriba es
+      real: 19 herramientas propias en <code>/usr/local/bin</code>.</figcaption>
+    </figure>
+
+    <figure class="figura">
+      <img src="img/captura-asistente-completo.png" alt="Asistente de bienvenida de Willy Linux con sus 16 opciones" loading="lazy">
+      <figcaption><strong>El asistente, de una pantalla.</strong> Las 16 opciones numeradas: idioma,
+      fondo, colores, bloqueo, usuario y contraseña, volumen, bóveda, tienda, actualizar, instalar,
+      teclado, barra, guardar en el USB. Sale solo al entrar en la live.</figcaption>
+    </figure>
+
+    <figure class="figura">
+      <img src="img/captura-bienvenida-live.png" alt="Bienvenida de Willy Linux 2.8 en la live, con la contraseña del usuario live escrita" loading="lazy">
+      <figcaption><strong>Bienvenida de la ISO del 2026-11-07.</strong> La cabecera ya trae la línea
+      «Contra del usuario live para el bloqueo: <code>willy</code>» — abreviatura del guion, no errata
+      de la captura. Es la contraseña que <code>willy-primera-vez</code> escribe en la imagen y la que
+      abre el bloqueo de la captura anterior.</figcaption>
+    </figure>
+
+    <figure class="figura">
+      <img src="img/captura-instalador-borrar.png" alt="Diálogo del instalador pidiendo escribir BORRAR sobre /dev/sda de 20G" loading="lazy">
+      <figcaption><strong>El freno del instalador.</strong> Antes de formatear pide que se escriba
+      <code>BORRAR</code> y muestra el disco exacto (<code>/dev/sda 20G</code>). Sin esas seis letras
+      no continúa. Captura del ensayo UEFI del 2026-11-07 con la 2.8; en la lista ya no aparece el
+      disco entero ni <code>zram0</code>, que eran los dos defectos de la 2.5.</figcaption>
+    </figure>
+
+    <figure class="figura">
+      <img src="img/captura-escritorio-instalado.png" alt="Escritorio de Willy Linux 2.8 instalado en disco, con la bienvenida abierta" loading="lazy">
+      <figcaption><strong>Disco instalado arrancando en EFI.</strong> El mismo sistema, ya sin USB,
+      con la bienvenida abierta. Se ve la barra a la izquierda: es la ISO del 2026-10-20. La
+      reintentona del quemado de Actions sigue sin centrarla en la live — está contado en el apartado
+      de abajo, con la salida del guion que lo intenta.</figcaption>
+    </figure>
+
+    <figure class="figura">
+      <img src="img/captura-disco-bios.png" alt="Sesión instalada arrancada en modo BIOS con el asistente" loading="lazy">
+      <figcaption><strong>El mismo disco, arrancado en BIOS.</strong> Ensayo del 2026-11-07 sobre
+      tabla <code>msdos</code>, que es la rama donde <code>parted</code> rechazaba los nombres de
+      partición en la 2.5.</figcaption>
+    </figure>
+
+    <figure class="figura">
+      <img src="img/captura-esquema.png" alt="Preferencias del sistema de Plasma 6 en español" loading="lazy">
+      <figcaption><strong>Plasma 6 traducido.</strong> «Región e idioma» con español de España, hora
+      de Bogotá y formato de números <code>1000.01</code>. Los menús de KDE vienen del paquete de
+      idioma <code>plasma-l10n</code> declarado en la lista de escritorio.</figcaption>
+    </figure>
+
+    <figure class="figura">
+      <img src="img/captura-audio.png" alt="Mezclador de volumen de PipeWire con dispositivos" loading="lazy">
+      <figcaption><strong>Audio que funciona de fábrica.</strong> PipeWire + WirePlumber con
+      <code>alsa-ucm-conf</code> y <code>alsa-topology-conf</code>, que es lo que hace que la barra
+      mande algo en portátiles Realtek e Intel.</figcaption>
+    </figure>
+
+    <figure class="figura">
+      <img src="img/captura-instalador.png" alt="Ventana del instalador eligiendo disco" loading="lazy">
+      <figcaption><strong>Elección de disco.</strong> Lista con tamaño y modelo; el instalador detecta
+      si hay Windows en el mismo disco para añadirlo al menú GRUB sin tocar su partición EFI.</figcaption>
+    </figure>
+
+    <figure class="figura">
+      <img src="img/captura-arranque.png" alt="Menú de arranque del USB" loading="lazy">
+      <figcaption><strong>El menú de arranque en español.</strong> Isolinux en BIOS y GRUB en UEFI,
+      con <code>modo seguro</code> y «Comprobar la integridad del USB». Los textos los reescribe un
+      hook de fase <em>binary</em>, sobre la ISO ya generada.</figcaption>
+    </figure>
+
+    <figure class="figura">
+      <img src="img/fondo-lobito.png" alt="Fondo de pantalla del lobito" loading="lazy">
+      <figcaption><strong>Fondo del lobito.</strong> Uno de los tres fondos propios que trae la imagen
+      (<code>/usr/share/backgrounds/willylinux/</code>); el asistente los cambia con una opción.</figcaption>
+    </figure>
+
+    <figure class="figura">
+      <img src="img/fondo-agua.png" alt="Fondo de agua" loading="lazy">
+      <figcaption><strong>Fondo «agua».</strong> El otro fondo claro del catálogo, pensado para el
+      tema de colores claro.</figcaption>
+    </figure>
+
+    <figure class="figura">
+      <img src="img/fondo-arranque.png" alt="Fondo usado en la pantalla de arranque" loading="lazy">
+      <figcaption><strong>Arranque.</strong> El mismo arte sirve de splash en SDDM y de imagen del
+      menú de arranque.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="pendientes">
+  <h2>Qué se probó en máquina el 2026-11-07 y qué no</h2>
+  <p>
+    Este proyecto prefiere escribir qué no está probado a publicar una galería que mienta. La ISO
+    quemada en GitHub Actions el 2026-11-07 se arrancó en VirtualBox (BIOS, 4 GB de RAM, 2 CPU) y
+    esto es lo que dio:
+  </p>
+  <div class="tabla-envoltura">
+    <table>
+      <thead><tr><th>Comprobado en la live</th><th>Resultado</th><th>Cómo se sabe</th></tr></thead>
+      <tbody>
+        <tr><td>Arranque hasta el escritorio</td><td><span class="siy">sí</span>, pintado a los 80 s</td><td>secuencia de capturas cada 20 s</td></tr>
+        <tr><td>Identidad y kernel</td><td><span class="siy">sí</span> — Willy Linux 2.8, <code>6.12.115+deb13.1-amd64</code></td><td><code>willy-info</code> en pantalla</td></tr>
+        <tr><td>Los 19 guiones <code>willy-*</code> presentes</td><td><span class="siy">sí</span></td><td>lista de autocompletado del shell</td></tr>
+        <tr><td>Bienvenida automática con las 16 opciones</td><td><span class="siy">sí</span>, en español</td><td>captura de la bienvenida</td></tr>
+        <tr><td>Bloqueo de pantalla y desbloqueo con <code>willy</code></td><td><span class="siy">sí</span></td><td><code>willy-lock</code> → captura del bloqueo → <code>willy</code> → escritorio de vuelta</td></tr>
+        <tr><td>Barra centrada al estilo Windows 11</td><td><span class="no">no</span></td><td>el escritorio sale con los iconos a la izquierda y <code>willy-panel centrar</code> responde que no encuentra ni la API de scripts ni <code>/home/live/.config/plasmashellrc</code></td></tr>
+        <tr><td>Instalar al disco desde esta live</td><td><span class="no">no terminado</span></td><td>el asistente se abre y pregunta disco y confirmación, pero el ensayo no llegó al final: desde el host el envío de teclas a la VM no es fiable y hay pasos que no se pudieron completar. La instalación sí está ensayada de principio a fin con la ISO del 2026-10-20, en BIOS y en UEFI</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="aviso">
+    <p><strong>La barra centrada sigue sin arreglarse sola.</strong> La receta del 2026-11-07 añade
+    reintentos y una escritura directa a <code>plasmashellrc</code>, pero en la live el archivo no
+    existe todavía y la API de scripts de <code>plasmashell</code> no contesta, así que ninguna de las
+    dos rutas aplica. Se corrige a mano con dos clics: clic derecho en la barra →
+    <em>Configurar barra de tareas</em> → <strong>Alineación: Centrada</strong>. Queda abierto en el
+    repositorio como defecto de la 2.8 para resolver en la siguiente compilación.</p>
+  </div>
+
+  <h3>Lo que sigue sin captura</h3>
+  <ul>
+    <li><strong>Hardware real.</strong> Todo lo fotografiado es VirtualBox. En VM el vídeo se
+    decodifica por software (<code>llvmpipe</code>), así que un 1080p60 se atraganta y es esperado;
+    no sirve como captura de rendimiento.</li>
+    <li><strong>Arranque UEFI de esta ISO.</strong> El EFI de VirtualBox ignora el orden de arranque
+    y obedece a las entradas NVRAM, así que la VM con disco instalado arranca el disco en vez del DVD.
+    En máquina real esto no pasa, pero aquí no se ha podido fotografiar.</li>
+    <li><strong>La sesión instalada de la ISO de Actions.</strong> El ensayo al disco no se terminó
+    (ver la tabla), así que no hay captura de un disco instalado desde este quemado. Lo que sí hay
+    son las capturas del instalador y del arranque desde el disco de la ISO del 2026-10-20.</li>
+  </ul>
+  <p class="reg">
+    Si quieres aportar capturas de un equipo físico, se aceptan como incidencias en
+    <a href="https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/issues" rel="noopener">GitHub</a>:
+    indica siempre el SHA-256 de la ISO que usaste.
+  </p>
+</section>
+
+</main>
+
+<footer class="pie">
+  <div class="interior">
+    <nav aria-label="Pie">
+      <a href="index.html">Portada</a>
+      <a href="descargas.html">Descargas</a>
+      <a href="documentacion.html">Documentación</a>
+      <a href="ayuda.html">Ayuda</a>
+      <a href="licencias.html">Licencias</a>
+    </nav>
+    <p>Capturas tomadas en VirtualBox sobre la edición 2.8. Willy Linux no está afiliado a Debian ni a KDE.</p>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>
