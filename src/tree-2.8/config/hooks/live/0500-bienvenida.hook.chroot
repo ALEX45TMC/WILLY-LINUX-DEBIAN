@@ -116,10 +116,20 @@ boveda() {
 # la VM) las tres ultimas filas de la lista se cortaban, asi que se baja el logo y
 # se sube la ventana hasta 620 px, que sigue dentro de un portatil de 768.
 while true; do
-	sel=$(yad --title="Bienvenida a Willy Linux 2.8" --center --width=520 --height=620 \
-		--image=/usr/share/icons/hicolor/64x64/apps/willylinux.png --image-on-top \
-		--text="<b>Willy Linux 2.8</b> (KDE Plasma 6)\nEs tu sistema: cambia lo que quieras y se queda guardado.\nContra del usuario live para el bloqueo: <b>willy</b>" \
-		--list --column="" --column="Ajuste" --hide-column=1 \
+	# El texto y las filas tienen que decir la verdad del equipo en que se abre:
+	# en el USB sin persistente lo cambiado se pierde al apagar (decir "se queda
+	# guardado" era mentira), y en un disco instalado la clave no es "willy" sino
+	# la que se eligio al instalar, y no hay USB donde guardar nada.
+	GUARDADO=$(willy-guardado 2>/dev/null || echo instalado)
+	case "$GUARDADO" in
+		instalado)
+			CABECERA="<b>Willy Linux 2.8</b> (KDE Plasma 6)\nEs tu sistema: cambia lo que quieras y se queda guardado.\nLa contrasena de acceso es la que elegiste al instalar." ;;
+		volatile)
+			CABECERA="<b>Willy Linux 2.8</b> (KDE Plasma 6)\nSesion live desde USB: lo que cambies se PIERDE al apagar.\nContra del usuario live para el bloqueo: <b>willy</b>" ;;
+		*)
+			CABECERA="<b>Willy Linux 2.8</b> (KDE Plasma 6)\nSesion live con USB persistente: lo que cambias se guarda en el USB.\nContra del usuario live para el bloqueo: <b>willy</b>" ;;
+	esac
+	set -- \
 		"1" "Idioma y region (pais, hora, moneda)" \
 		"2" "Fondo de pantalla y aspecto" \
 		"3" "Colores e iconos" \
@@ -134,8 +144,13 @@ while true; do
 		"12" "Panel de Willy (energia, teclado, hora)" \
 		"13" "Teclado: distribucion latam, es, us..." \
 		"14" "Barra de tareas: centrar o mover los iconos" \
-		"15" "Mi usuario: contrasena y nombres" \
-		"16" "Guardar mis cambios (USB persistente)" 2>/dev/null | cut -d'|' -f1)
+		"15" "Mi usuario: contrasena y nombres"
+	# Guardar en el USB solo tiene sentido mientras se arranca desde un USB.
+	[ "$GUARDADO" = instalado ] || set -- "$@" "16" "Guardar mis cambios (USB persistente)"
+	sel=$(yad --title="Bienvenida a Willy Linux 2.8" --center --width=520 --height=620 \
+		--image=/usr/share/icons/hicolor/64x64/apps/willylinux.png --image-on-top \
+		--text="$CABECERA" \
+		--list --column="" --column="Ajuste" --hide-column=1 "$@" 2>/dev/null | cut -d'|' -f1)
 	[ -n "$sel" ] || break
 	case "$sel" in
 	1) ajuste kcm_regionandlang ;;

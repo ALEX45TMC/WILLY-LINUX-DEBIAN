@@ -35,6 +35,23 @@ printf 'live ALL=(ALL:ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/willy-live
 chmod 440 /etc/sudoers.d/willy-live
 visudo -c -q -f /etc/sudoers.d/willy-live 2>/dev/null || rm -f /etc/sudoers.d/willy-live
 
+# La contrasena "willy" se fija YA en la imagen. Pasar solo por willy-primera-vez
+# no basta: probando la 2.8 en VirtualBox la pantalla se bloqueo sola y ni "willy"
+# ni "live" abrian la sesion, porque la cuenta live seguia sin hash y el
+# desbloqueo de Plasma no admite cuenta sin contrasena. auto/config fija
+# username=live, asi que ese es el nombre; el uid 1000 queda de respaldo por si
+# alguien cambia el usuario de la live sin tocar este hook.
+USUARIO_LIVE=live
+if ! getent passwd live >/dev/null 2>&1; then
+	USUARIO_LIVE=$(awk -F: '$3 >= 1000 && $3 < 65000 {print $1; exit}' /etc/passwd)
+fi
+if [ -n "$USUARIO_LIVE" ]; then
+	printf '%s:%s\n' "$USUARIO_LIVE" willy | chpasswd
+	echo "0050-willylinux: contrasena fijada en la imagen para $USUARIO_LIVE" >&2
+else
+	echo "aviso 0050-willylinux: no hay usuario live al construir" >&2
+fi
+
 # Bajo consumo: swap en RAM (zram) y anti-congelacion (earlyoom) activos al arrancar.
 mkdir -p /etc/systemd/system/multi-user.target.wants
 for unit in zramswap earlyoom; do
@@ -42,6 +59,16 @@ for unit in zramswap earlyoom; do
 		ln -sf "/lib/systemd/system/$unit.service" "/etc/systemd/system/multi-user.target.wants/$unit.service"
 	fi
 done
+
+# Cortafuegos activo desde el primer arranque, como hacen Windows y macOS: entra al
+# equipo solo lo que el propio equipo pidio. Las politicas por defecto (DROP en la
+# entrada, ALLOW en la salida) ya vienen en /etc/default/ufw; lo que falta es que
+# ufw.service arranque y que su config diga ENABLED=yes. El widget "Cortafuegos"
+# del panel (plasma-firewall) no funciona sin esto: avisa de que no hay ninguno.
+if [ -f /etc/ufw/ufw.conf ]; then
+	sed -i 's|^ENABLED=.*|ENABLED=yes|' /etc/ufw/ufw.conf
+	ln -sf /lib/systemd/system/ufw.service /etc/systemd/system/multi-user.target.wants/ufw.service
+fi
 
 # Firefox sin cache en disco: en la sesion live el USB es lento y se desgasta.
 for d in /usr/lib/firefox-esr/defaults/pref /usr/lib/firefox-esr/defaults/preferences; do

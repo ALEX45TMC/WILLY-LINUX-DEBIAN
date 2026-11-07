@@ -344,8 +344,23 @@ $SUDO rm -f "$OBJ/etc/sudoers.d/willy-live"
 printf '%s:%s\n' "$YO" "$CLAVE" | $SUDO chroot "$OBJ" chpasswd >>"$LOG" 2>&1 \
 	|| F "aviso: no se pudo poner la contrasena en el disco"
 # En el disco se entra escribiendo la contrasena: se quita el acceso directo de la live.
-if [ -f "$OBJ/etc/sddm.conf.d/willy.conf" ]; then
-	$SUDO sed -i 's|^User=.*|;User=|' "$OBJ/etc/sddm.conf.d/willy.conf"
+# El autologin viene de DOS archivos y hay que vaciar los dos:
+#   /etc/sddm.conf             -> user-setup lo deja escrito con User=live al construir la live
+#   /etc/sddm.conf.d/willy.conf-> el nuestro, para que el USB entre solo
+# SDDM mezcla los archivos y el que se lee despues solo anula las lineas que repite:
+# comentar "User=" en willy.conf dejaba vivo el User=live del otro archivo y el equipo
+# instalado entraba sin pedir la clave que se habia elegido. La linea vacia si anula.
+for SCF in "$OBJ/etc/sddm.conf" "$OBJ/etc/sddm.conf.d/willy.conf"; do
+	[ -f "$SCF" ] || continue
+	$SUDO sed -i 's|^User=.*|User=|' "$SCF"
+done
+# Se comprueba el resultado en lugar de fiarse del sed: si en cualquier config de SDDM
+# queda un usuario de acceso directo, el equipo instalado volveria a entrar solo.
+QUEDA_SCU=$($SUDO grep -h '^User=[^[:space:]]' "$OBJ/etc/sddm.conf" "$OBJ/etc/sddm.conf.d"/*.conf 2>/dev/null | head -1)
+if [ -n "$QUEDA_SCU" ]; then
+	F "aviso: el disco aun entra sin clave ($QUEDA_SCU)"
+else
+	F "al encender el disco se pedira la contrasena"
 fi
 # Cada equipo instalado necesita su propia identidad de systemd y de dbus.
 $SUDO truncate -s 0 "$OBJ/etc/machine-id" >>"$LOG" 2>&1 || true
@@ -354,6 +369,54 @@ $SUDO chroot "$OBJ" systemd-machine-id-setup >>"$LOG" 2>&1 || true
 $SUDO chroot "$OBJ" update-initramfs -u -k all >>"$LOG" 2>&1 || F "aviso: update-initramfs fallo"
 grep -q '^GRUB_DISABLE_OS_PROBER=false' "$OBJ/etc/default/grub" 2>/dev/null || \
 	printf 'GRUB_DISABLE_OS_PROBER=false\n' | $SUDO tee -a "$OBJ/etc/default/grub" >/dev/null
+
+# 7b) Idioma, zona horaria y teclado en el disco.
+# La sesion live toma estos valores de la linea de arranque. El idioma y el teclado los
+# escribe live-config en /etc/default y rsync los copia, pero "timezone=" no es un
+# parametro de live-config: el reloj del live se ajusta solo por entorno y el disco se
+# quedaba en UTC, con la hora mal desde el primer arranque.
+ZONA=""
+IDIOMA=""
+TECLADO=""
+for kv in $(cat /proc/cmdline 2>/dev/null); do
+	case "$kv" in
+		timezone=*) ZONA=${kv#timezone=} ;;
+		locales=*) IDIOMA=${kv#locales=} ;;
+		keyboard-layouts=*) TECLADO=${kv#keyboard-layouts=} ;;
+	esac
+done
+[ -n "$ZONA" ] || ZONA=$(cat /etc/timezone 2>/dev/null)
+if [ -n "$ZONA" ] && [ -e "/usr/share/zoneinfo/$ZONA" ]; then
+	$SUDO ln -sf "/usr/share/zoneinfo/$ZONA" "$OBJ/etc/localtime"
+	printf '%s\n' "$ZONA" | $SUDO tee "$OBJ/etc/timezone" >/dev/null
+	F "zona horaria del disco: $ZONA"
+else
+	F "aviso: no hay zona horaria valida ($ZONA); el disco queda en UTC"
+fi
+[ -n "$IDIOMA" ] || IDIOMA=$(sed -n 's/^LANG=//p' /etc/default/locale 2>/dev/null | tr -d '"')
+[ -n "$IDIOMA" ] || IDIOMA=es_ES.UTF-8
+if [ -f "$OBJ/etc/locale.gen" ]; then
+	grep -q "^${IDIOMA}[[:space:]]" "$OBJ/etc/locale.gen" 2>/dev/null || \
+		printf '%s UTF-8\n' "$IDIOMA" | $SUDO tee -a "$OBJ/etc/locale.gen" >/dev/null
+fi
+$SUDO chroot "$OBJ" locale-gen "$IDIOMA" >>"$LOG" 2>&1 || F "aviso: locale-gen fallo para $IDIOMA"
+$SUDO chroot "$OBJ" update-locale LANG="$IDIOMA" >>"$LOG" 2>&1 || F "aviso: update-locale fallo"
+F "idioma del disco: $IDIOMA"
+if [ ! -s "$OBJ/etc/default/keyboard" ] && [ -n "$TECLADO" ]; then
+	printf 'XKBLAYOUT="%s"\nXKBMODEL="pc105"\nXKBVARIANT=""\nXKBOPTIONS=""\n' "$TECLADO" \
+		| $SUDO tee "$OBJ/etc/default/keyboard" >/dev/null
+	F "teclado del disco: $TECLADO"
+else
+	F "teclado del disco: $(sed -n 's/^XKBLAYOUT=//p' "$OBJ/etc/default/keyboard" 2>/dev/null | tr -d '"')"
+fi
+
+# 7c) Historial del sistema en el disco. El USB usa journald en volatile para no escribir
+# en la memoria; instalado, eso deja sin logs cuando algo falla y no hay nada que revisar.
+if [ -f "$OBJ/etc/systemd/journald.conf.d/90-willylinux.conf" ]; then
+	$SUDO sed -i 's|^Storage=.*|Storage=persistent|' "$OBJ/etc/systemd/journald.conf.d/90-willylinux.conf"
+	printf 'SystemMaxUse=500M\n' | $SUDO tee -a "$OBJ/etc/systemd/journald.conf.d/90-willylinux.conf" >/dev/null
+	F "journald pasado a persistentes"
+fi
 
 # 8) GRUB
 # El comprobacion de antes (grub.cfg no vacio) no prueba que el disco arranque:
@@ -497,8 +560,21 @@ cat > "$BIN/willy-actualizar-run" <<'WLYUPDATE'
 echo "== Actualizando Willy Linux · $(date) =="
 sudo apt-get update || echo "(aviso: no baje las listas; mira la conexion)"
 sudo apt-get -y --no-install-recommends dist-upgrade || echo "(aviso: la actualizacion no termino)"
+GUARDADO=$(willy-guardado 2>/dev/null || echo instalado)
+# La limpieza solo tiene sentido en el disco: en la live todo vuelve a nacer del
+# squashfs al apagar, y autoremove ahi podria desmontar piezas de la propia sesion.
+if [ "$GUARDADO" = instalado ]; then
+	# Lo que ya no hace falta se acumula con los anos y ocupa disco sin que nadie
+	# lo vea; los Flatpak guardan ademas cada version antigua descargada.
+	sudo apt-get -y --purge autoremove || echo "(aviso: no se pudo quitar lo sobrante)"
+	command -v flatpak >/dev/null 2>&1 && flatpak uninstall --unused -y || true
+fi
 echo
-echo "En una sesion live sin USB persistente, esto se pierde al apagar."
+case "$GUARDADO" in
+	volatile) echo "Ojo: esta sesion live no tiene USB persistente; al apagar se pierde lo actualizado." ;;
+	persistente) echo "Lo actualizado queda guardado en el USB." ;;
+	*) echo "Lo actualizado queda instalado en el disco." ;;
+esac
 printf 'Pulsa Intro para cerrar: '
 read -r _
 WLYUPDATE

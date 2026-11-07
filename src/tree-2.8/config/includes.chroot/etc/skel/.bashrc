@@ -89,12 +89,11 @@ ayuda() {
 	cat <<'AYUDA'
 Willy Linux 2.8
 
-Atajos de teclado
-  Terminal      Ctrl+Alt+T        Archivos     Ctrl+Alt+E
-  Firefox       Ctrl+Alt+F        NetSurf      Ctrl+Alt+N
-  Writer/Calc   Ctrl+Alt+W / C    Impress      Ctrl+Alt+P
-  Ajustes       Ctrl+Alt+A        Bloquear     Ctrl+Alt+L
-  Menú          clic derecho en el escritorio   Captura  Impr Pant
+Atajos de teclado (los que trae Plasma en esta version)
+  Captura        Impr Pant         Buscador     Alt+Espacio
+  Menu           tecla Super       Cambiar ventana  Alt+Tab
+  Bloquear       se hace con el comando  willy-lock
+  Tecla extra a gusto de cada uno en Ajustes del sistema > Atajos de teclado
 
 Comandos de sistema
   equipo      resumen del equipo        monitor   panel de consumo (RAM/CPU/red/batería)

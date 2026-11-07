@@ -69,13 +69,29 @@ grep -q 'UUIDRAIZ' "$CODIGO" \
 	&& OK "corta si la raiz sale sin UUID (no escribe fstab roto)" || MAL "puede escribir un fstab con UUID vacio"
 grep -q 'GRUBOK' "$CODIGO" \
 	&& OK "aborta si grub-install no deja cargador" || MAL "grub-install puede fallar y aun decir 'instalado' (disco sin arrancar)"
+# --- ensayo real del 7-11 sobre la 2.8 entregada: el disco instalaba pero entraba
+# solo, sin pedir la contrasena elegida. El instalador comentaba "User=" en
+# willy.conf y dejaba vivo el User=live de /etc/sddm.conf.
+grep -q ';User=' "$CODIGO" \
+	&& MAL "el instalador vuelve a COMMENTAR User= en vez de vaciarlo (SDDM mantiene el valor del otro archivo)" \
+	|| OK "el instalador vacia User= (no lo comenta)"
+grep -q '"\$OBJ/etc/sddm.conf"' "$CODIGO" \
+	&& OK "el instalador limpia tambien /etc/sddm.conf del disco" \
+	|| MAL "el instalador no toca /etc/sddm.conf: ahi vive el autologin de user-setup"
+grep -q 'al encender el disco se pedira la contrasena\|el disco aun entra sin clave' "$CODIGO" \
+	&& OK "el instalador comprueba y registra que no queda autologin" \
+	|| MAL "el instalador no verifica el autologin despues de editar"
+# Zona horaria, idioma e historial: sin esto el disco arrancaba en UTC y sin logs.
+grep -q 'timezone=\*' "$CODIGO" && OK "lleva la zona horaria al disco" || MAL "el disco queda en UTC (timezone= no se copia)"
+grep -q 'locale-gen' "$CODIGO" && OK "genera el idioma en el disco" || MAL "no ejecuta locale-gen en el disco"
+grep -q 'Storage=persistent' "$CODIGO" && OK "journald del disco en persistentes" || MAL "el disco instalado no deja historial (Storage=volatile)"
 
 # ---------- 3) binarios que llama el instalador ----------
 echo; echo "=== 3) herramientas del instalador y de la barra ==="
 for b in usr/sbin/parted usr/sbin/partprobe usr/bin/rsync usr/sbin/mkfs.ext4 usr/sbin/mkfs.vfat \
 	usr/sbin/grub-install usr/sbin/grub-bios-setup usr/sbin/grub-mkconfig usr/bin/efibootmgr \
 	usr/bin/yad usr/bin/konsole usr/bin/kwriteconfig6 usr/bin/kreadconfig6 \
-	usr/bin/dbus-send usr/bin/killall usr/sbin/chpasswd usr/bin/cfdisk; do
+	usr/bin/dbus-send usr/bin/killall usr/sbin/chpasswd usr/sbin/cfdisk; do
 	[ -f "$R/$b" ] && OK "/$b" || MAL "/$b"
 done
 
@@ -128,6 +144,54 @@ grep -q 'willy-panel centrar' "$R/usr/local/bin/willy-primera-vez" 2>/dev/null \
 grep -v '^[[:space:]]*#' "$PV" > "$TMP/panel.codigo" 2>/dev/null || : > "$TMP/panel.codigo"
 grep -q 'panelIds' "$TMP/panel.codigo" \
 	&& MAL "willy-panel sigue leyendo el global inexistente panelIds" || OK "willy-panel usa el arbol Cm.rootItem"
+# La primera sesion intentaba centrar UNA vez y callaba: en la prueba del 7-11 la
+# barra salio a la izquierda en la live y en el disco instalado.
+grep -q 'sin-reiniciar' "$R/usr/local/bin/willy-primera-vez" 2>/dev/null \
+	&& OK "la primera sesion reintenta el centrado y deja el rc escrito" \
+	|| MAL "willy-primera-vez sigue con un solo intento de centrado (barra a la izquierda)"
+
+# ---------- 5b) que mande NUESTRA config de SDDM ----------
+echo; echo "=== 5b) autologin y sesion en la imagen ==="
+if grep -q '^[[:space:]]*User=[^[:space:]]' "$R/etc/sddm.conf" 2>/dev/null; then
+	MAL "/etc/sddm.conf de la imagen tiene User= en firme: SDDM entra solo y elige la sesion de ahi"
+else
+	OK "/etc/sddm.conf no fija usuario (manda sddm.conf.d/willy.conf)"
+fi
+grep -q '^User=live' "$R/etc/sddm.conf.d/willy.conf" 2>/dev/null \
+	&& OK "la live si entra directa (User=live en willy.conf)" || MAL "willy.conf no tiene User=live: la live pedira clave"
+SES_IMAGEN=$(sed -n 's|^Session=||p' "$R/etc/sddm.conf.d/willy.conf" 2>/dev/null | head -1)
+case "$SES_IMAGEN" in
+	*.desktop) [ -f "$R/usr/share/xsessions/$SES_IMAGEN" ] || [ -f "$R/usr/share/wayland-sessions/$SES_IMAGEN" ] \
+		&& OK "la sesion pedida ($SES_IMAGEN) existe en la imagen" \
+		|| MAL "willy.conf pide $SES_IMAGEN y no existe: SDDM arranca la primera que encuentra" ;;
+	*) MAL "willy.conf no declara Session=" ;;
+esac
+
+# ---------- 5c) cortafuegos y herramientas de uso diario ----------
+echo; echo "=== 5c) cortafuegos activo y textos honestos ==="
+[ -f "$R/usr/sbin/ufw" ] && OK "/usr/sbin/ufw" || MAL "/usr/sbin/ufw (el widget Cortafuegos del panel no tendra a quien mandar)"
+grep -q '^ENABLED=yes' "$R/etc/ufw/ufw.conf" 2>/dev/null \
+	&& OK "ufw ENABLED=yes en la imagen" || MAL "ufw queda desactivado: el equipo entra sin filtrar"
+[ -L "$R/etc/systemd/system/multi-user.target.wants/ufw.service" ] \
+	&& OK "ufw.service habilitado al arrancar" || MAL "ufw.service no esta habilitado"
+# Probado el 7-11 en VirtualBox (UEFI): a los minutos de estar la live parada se
+# bloqueo la pantalla y ni "willy" ni "live" la abrian. La cuenta live vena sin
+# hash en /etc/shadow y el desbloqueo de Plasma no admite cuenta sin contrasena,
+# asi que la sesion quedaba inservible. El hash debe venir puesto en la imagen.
+HASH_LIVE=$(awk -F: '$3 == 1000 {print $2; exit}' "$R/etc/shadow" 2>/dev/null)
+case "$HASH_LIVE" in
+	'$'*) OK "la cuenta live trae contrasena en la imagen (se puede desbloquear)" ;;
+	'')   MAL "/etc/shadow no tiene ninguna cuenta uid 1000" ;;
+	*)    MAL "la cuenta live esta sin contrasena ($HASH_LIVE): el bloqueo deja fuera del sistema" ;;
+esac
+# La bienvenida y el "Acerca de" prometian la clave "willy" tambien en un disco
+# instalado, y ofrecian guardar en un USB que no existe.
+for b in willy-bienvenida willy-ajustes; do
+	grep -q 'willy-guardado' "$R/usr/local/bin/$b" 2>/dev/null \
+		&& OK "$b adapta el texto al medio" || MAL "$b habla de USB y de la clave live en un disco instalado"
+done
+grep -q 'NetSurf' "$R/etc/skel/.bashrc" 2>/dev/null \
+	&& MAL ".bashrc anuncia atajos que no existen en esta version" || OK ".bashrc no promete atajos inventados"
 
 # ---------- 6) el artefacto vs el arbol del que se compilo ----------
 echo; echo "=== 6) same codigo en el arbol y en la ISO ==="

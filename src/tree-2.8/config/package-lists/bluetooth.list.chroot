@@ -2,3 +2,6 @@
 bluez
 bluedevil
 bluez-obexd
+# Sin el backend de PipeWire el auricular bluetooth se empareja pero no suena: con
+# --apt-recommends false este paquete no llega de rebote.
+libspa-0.2-bluetooth

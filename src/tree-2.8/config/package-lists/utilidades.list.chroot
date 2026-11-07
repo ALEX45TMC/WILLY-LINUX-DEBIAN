@@ -13,3 +13,8 @@ tmux
 libarchive-tools
 imagemagick
 unzip
+# Ark (el gestor de comprimidos del escritorio) necesita los backend reales: sin
+# ellos un .7z o un .rar se abre con "formato no reconocido". Con
+# --apt-recommends false los recommends de ark no llegan.
+7zip
+unar

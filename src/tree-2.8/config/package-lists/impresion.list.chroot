@@ -2,7 +2,13 @@
 cups
 cups-ipp-utils
 cups-browsed
-avahi-daemon
 system-config-printer
 printer-driver-gutenprint
 printer-driver-cups-pdf
+# hplip: las HP (gama LaserJet/DeskJet/OfficeJet, las mas comunes) no funcionan
+# con el controlador generico; hacen falta el backend y el utilitario hp-systray.
+hplip
+# Escaner: sin libsane un escaner USB no se ve en ninguna app. skanpage es la
+# interfaz de KDE (funciona con gwenview/dolphin) y sustituye a Simple Scan.
+sane-utils
+skanpage

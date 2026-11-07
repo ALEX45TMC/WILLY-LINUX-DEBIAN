@@ -28,6 +28,9 @@ kde-config-sddm
 breeze
 breeze-gtk-theme
 breeze-icon-theme
+# adwaita-icon-theme: las apps GTK3/GTK4 y muchos Flatpak buscan este tema de
+# iconos por nombre; sin el salen con iconos rotos aunque Breeze este instalado.
+adwaita-icon-theme
 breeze-cursor-theme
 plasma-desktoptheme
 plasma-integration
@@ -67,3 +70,6 @@ xdg-user-dirs
 dolphin-plugins
 kdegraphics-thumbnailers
 ffmpegthumbs
+# Formatos de imagen que Qt no trae de fabrica (HDR, QOI, PSD, EXR): sin esto
+# gwenview y spectacle abren menos tipos de foto que la camera del movil.
+kimageformat-plugins

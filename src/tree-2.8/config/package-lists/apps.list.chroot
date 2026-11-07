@@ -3,6 +3,12 @@ libreoffice
 libreoffice-base
 libreoffice-l10n-es
 libreoffice-help-es
+# Fuentes metricamente compatibles con las de Windows. Sin ellas un documento
+# que llega en Arial, Times, Calibri o Cambria se reenvasa y cambia de paginas:
+# es la queja mas frecuente al pasar de Windows a Linux.
+fonts-liberation
+fonts-crosextra-carlito
+fonts-crosextra-caladea
 firefox-esr
 firefox-esr-l10n-es-es
 thunderbird

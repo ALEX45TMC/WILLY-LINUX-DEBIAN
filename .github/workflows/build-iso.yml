@@ -1,0 +1,94 @@
+name: Construir ISO
+
+# La ISO se compila aqui, no en el ordenador de casa: live-build necesita Debian
+# trixie y permisos de montaje. El contenedor trae el debootstrap de trixie (el de
+# Ubuntu no conoce la distribucion) y --privileged deja montar el squashfs.
+#
+# El trabajo deja la ISO como artefacto. NO publica nada: la release se crea despues
+# de instalar la ISO en VirtualBox (BIOS y UEFI) y de comprobar que arranca.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version que va en el nombre de la ISO (sin v)"
+        required: true
+        default: "2.8"
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  iso:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    container:
+      image: debian:trixie
+      options: --privileged
+
+    steps:
+      - name: Herramientas de construccion
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates curl git jq tar gzip \
+            live-build debootstrap \
+            squashfs-tools xorriso isolinux syslinux-common \
+            grub-efi-amd64-bin grub-pc-bin grub-common \
+            dosfstools mtools fdisk parted e2fsprogs cpio
+
+      - uses: actions/checkout@v4
+
+      - name: Comprobar los paquetes declarados
+        working-directory: src/tree-2.8
+        run: sh scripts/check-packages.sh
+
+      - name: Configurar live-build
+        working-directory: src/tree-2.8
+        run: |
+          chmod +x auto/config scripts/*.sh
+          chmod +x config/hooks/live/*.hook.binary config/hooks/live/*.hook.chroot 2>/dev/null || true
+          lb config
+
+      - name: Compilar la ISO
+        working-directory: src/tree-2.8
+        run: lb build 2>&1 | tee /tmp/lb-build.log
+
+      - name: Renombrar y firmar la ISO
+        id: iso
+        working-directory: src/tree-2.8
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ -n "$VERSION_INPUT" ]; then
+            VERSION="$VERSION_INPUT"
+          else
+            VERSION="${REF_NAME#v}"
+          fi
+          ISO="willylinux-v${VERSION}-kde-amd64.iso"
+          test -s live-image-amd64.hybrid.iso
+          mv live-image-amd64.hybrid.iso "$ISO"
+          sha256sum "$ISO" > "$ISO.sha256"
+          ls -l "$ISO"
+          cat "$ISO.sha256"
+          echo "iso=$ISO" >> "$GITHUB_OUTPUT"
+
+      - name: Artefacto con la ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.iso.outputs.iso }}
+          path: |
+            src/tree-2.8/${{ steps.iso.outputs.iso }}
+            src/tree-2.8/${{ steps.iso.outputs.iso }}.sha256
+          compression-level: 0
+          if-no-files-found: error
+
+      - name: Log de la compilacion si falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lb-build-log
+          path: /tmp/lb-build.log

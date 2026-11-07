@@ -20,7 +20,14 @@ c "Grafica  :" "$(lspci -mm 2>/dev/null | awk -F'"' '/VGA|3D controller|Display/
 c "Discos   :" "$(lsblk -dno NAME,SIZE,MODEL --exclude=loop,ram 2>/dev/null | tr '\n' ' ')"
 c "Red      :" "$(ip -brief -4 addr show scope global 2>/dev/null | awk '{printf "%s=%s  ", $1, $3}')"
 c "Pantalla :" "$(xrandr --query 2>/dev/null | awk '/\*/ {printf "%s  ", $1}')"
-c "Sesion   :" "KDE Plasma 6  ·  usuario $(id -un)  ·  contrasena: willy"
+# La contrasena no es siempre "willy": en el disco instalado es la que se eligio al
+# instalar, y escribir la otra aqui es un dato falso (y una pista falsa de seguridad).
+case "$(willy-guardado 2>/dev/null || echo instalado)" in
+	instalado)   CLAVE="la que se eligio al instalar" ;;
+	persistente) CLAVE="willy, guardada en el USB" ;;
+	*)           CLAVE="willy, solo esta sesion" ;;
+esac
+c "Sesion   :" "KDE Plasma 6  ·  usuario $(id -un)  ·  contrasena: $CLAVE"
 c "Activo   :" "$(uptime -p 2>/dev/null | sed 's/^up //')"
 EOF
 
@@ -360,11 +367,18 @@ boveda() {
 
 acerca() {
 	. /etc/os-release
+	# En el disco instalado la clave es la que se eligio al instalar: decir "willy"
+	# ahi seria mentira y ademas una pista falsa de seguridad.
+	CLAVE_LIVE=""
+	case "$(willy-guardado 2>/dev/null || echo instalado)" in
+		instalado) ;;
+		*) CLAVE_LIVE="
+Contrasena del usuario live: willy" ;;
+	esac
 	aviso "$PRETTY_NAME
 Base Debian 13 trixie · kernel $(uname -r)
 RAM: $(free -h | awk '/Mem/{print $2}') · swap en RAM (zram) y earlyoom activos
-Herramientas: willy-info · willy-monitor · willy-captura · willy-red · willy-lock
-Contrasena del usuario live: willy"
+Herramientas: willy-info · willy-monitor · willy-captura · willy-red · willy-lock$CLAVE_LIVE"
 }
 
 while :; do
@@ -377,7 +391,7 @@ $Aviso" --button="Salir:1" --button="Aplicar:0" \
 		"2" "Zona horaria" "Pais y ciudad para la hora" \
 		"3" "Reloj" "NTP o poner la hora a mano" \
 		"4" "Idioma" "espanol, ingles y otros" \
-		"5" "Contrasena" "Cambiar la del usuario live" \
+		"5" "Contrasena" "Cambiar la de tu usuario" \
 		"6" "Nombre del equipo" "Como aparece en la red" \
 		"7" "Apariencia y pantallas" "Temas, iconos, escalado y resolucion" \
 		"8" "Fondo de pantalla" "Escritorio y pantalla de bloqueo" \

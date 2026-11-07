@@ -2,7 +2,16 @@
 network-manager
 network-manager-openvpn
 modemmanager
+# Sin la base de APN el modulo 4G se conecta a la red del operador pero no sabe
+# que datos mandar: la conexion de banda ancha movil queda inservible.
+mobile-broadband-provider-info
 wpasupplicant
 iw
 wireless-regdb
 avahi-daemon
+# smbclient es el que permite a Dolphin y a kio entrar en una carpeta compartida
+# por Windows o por un NAS. Sin el, "smb://" sale con error de protocolo.
+smbclient
+# El widget "Cortafuegos" del panel (plasma-firewall) necesita un cortafuegos al
+# que mandar las ordenes; sin ufw el icono abre y avisa de que no hay ninguno.
+ufw
