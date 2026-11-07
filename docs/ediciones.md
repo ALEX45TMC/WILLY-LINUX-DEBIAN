@@ -15,7 +15,7 @@ borra**, las versiones previas quedan como `.bak-día.hora` junto a su `.sha256`
 | Escritorio | IceWM | IceWM | IceWM | IceWM | **KDE Plasma 6** | KDE Plasma 6 | KDE Plasma 6 |
 | RAM objetivo | 2 GB | 2–3 GB | 3–4 GB | 3–4 GB | 6–7 GB | 6–7 GB | 6–7 GB |
 | Paquetes instalados | 565 | 710 | 896 | 965 | ~1592 | ~1592 | 1638 |
-| Arranque BIOS + UEFI | sí | sí | sí | sí | sí | sí | sin ensayo propio en VM |
+| Arranque BIOS + UEFI | sí | sí | sí | sí | sí | sí | **sí, ensayado en VM el 2026-11-07** |
 | Instalador a disco | no | no | no | **sí** | sí | sí | sí (particionado corregido) |
 | USB persistente | no | no | no | **sí** | sí | sí | sí |
 | Impresión (CUPS) | no | no | no | **sí** | sí | sí | sí |
@@ -170,16 +170,19 @@ el mismo sistema.
 ## 2.8 — el instalador deja de mentirle a `parted`
 
 Edición KDE Plasma 6 que no añade escritorio nuevo: su razón de ser es el **instalador a disco**,
-que en la 2.5.5 estropeaba el arranque en algunos equipos. El árbol está en [`src/tree-2.8`](../src/tree-2.8)
-y es idéntico al de la 2.5 salvo en cuatro sitios: `auto/config` (etiqueta `WILLYLINUX28` /
-"Willy Linux 2.8"), los ocho hooks de `config/hooks/live/`, `etc/skel/.bashrc` y tres
-`package-lists`.
+que en la 2.5.5 estropeaba el arranque en algunos equipos. El árbol está en [`src/tree-2.8`](../src/tree-2.8).
 
-- ISO: `willylinux-v2.8-kde-amd64.iso`, 1.849.540.608 B (1763 MB, 21 % del tope de 8 GB),
-  SHA-256 `d20a9eb14b2be93421e3200317af1e6c085898083bb5b50e6e931ceeea97c9f7`, entregada el
-  2026-10-20 a las 20:59. Su guarda `.bak-20.21.26` mide lo mismo y tiene SHA-256
-  `8f7c678d383cf8dd0be2f3e042de1e1a3eee7c83b405cb35896616306c635af7`: son dos quemados seguidos
-  del mismo árbol, no dos ediciones.
+Hay **dos quemados distintos** con el mismo número de versión, y la diferencia importa:
+
+| quemado | de dónde salió | qué lleva |
+|---|---|---|
+| 2026-10-20 20:59 | WSL, árbol de antes de la auditoría | particionado corregido, tres paquetes de panel |
+| el que compila GitHub Actions | el árbol de este repo, ya corregido | lo anterior **más** los arreglos del 07-11 (ver abajo) |
+
+- ISO del 20-10: `willylinux-v2.8-kde-amd64.iso`, 1.849.540.608 B (1763 MB, 21 % del tope de 8 GB),
+  SHA-256 `d20a9eb14b2be93421e3200317af1e6c085898083bb5b50e6e931ceeea97c9f7`. Su guarda
+  `.bak-20.21.26` mide lo mismo y tiene SHA-256 `8f7c678d383cf8dd0be2f3e042de1e1a3eee7c83b405cb35896616306c635af7`:
+  son dos quemados seguidos del mismo árbol, no dos ediciones.
 - `.disk/info` dentro del ISO: `Debian GNU/Linux 2.8 "Trixie" - Snapshot amd64 LIVE Binary
   20261020-20:59`; `os-release` dice `PRETTY_NAME="Willy Linux 2.8"`, `VERSION_ID="2.8"`.
   squashfs de 1.759.268.864 B.
@@ -203,32 +206,67 @@ plasmashell), `libkf6config-bin` (`kreadconfig6`/`kwriteconfig6`, para escribir
 `plasmashellrc` sin romperlo) y `psmisc` (`killall`, con el que el panel reinicia
 plasmashell). Los tres **sí aparecen dentro del ISO** verificado.
 
-### Dos defectos abiertos, escritos como se vieron
+### Ensayo en máquina (2026-11-07, VirtualBox, ISO del 20-10)
 
-- **`fdisk` está en `instalador.list.chroot` (línea 21, añadida a las 20:11, antes del quemado
-  de las 20:59) y `cfdisk` NO está dentro del squashfs.** La opción «particionar antes a mano»
-  del instalador sigue sin binario. El verificador del 20-10 ya lo anotó como `FALTA` y sigue
-  sin explicación: o la lista no llegó al árbol de compilación (se copia a `/root/willy-linux-2.8`
-  al lanzar), o `lb` no volvió a ejecutar `binary_packages`. **Hay que resolverlo antes de dar la
-  2.8 por buena para instalar.**
-- **`grub-install` puede fallar y el instalador decir «instalado»**, con el disco sin arrancar.
-  La 2.5 del 14-10 ya comprueba que existan `grub-install` y `grub-bios-setup` *antes* de borrar
-  nada; lo que falta es comprobar que la instalación **terminó bien**.
-- Además, la 2.8 **no se ha ensayado en máquina**: las capturas y el ensayo completo de
-  VirtualBox son de la 2.5. Hasta que no se instale de verdad en UEFI y en BIOS, su estado es
-  «quemada y verificada por dentro», no «probada».
+Se instaló de verdad en las dos firmware, con disco de 20 GB vacío y sin USB persistente:
+
+| prueba | resultado |
+|---|---|
+| **BIOS** | instalada de punta a punta; el disco arranca solo tras quitar la ISO |
+| **UEFI** | instalada de punta a punta (5.073 MB copiados); con la ISO retirada y `boot1=disk` **arranca en EFI**: `willyroot: clean, 122559/1146880 files` y escritorio |
+| contraseña elegida en el disco | **no se pedía al encender**: entraba directo como `live` |
+| bloqueo de pantalla en la live | a los 5 minutos se bloqueó y **ninguna clave la abría** (`willy` y `live` fallaron con el tecleo verificado en pantalla) |
+| barra de tareas | salió a la izquierda, no centrada |
+| textos del asistente | en el disco instalado ofrecía «Guardar mis cambios (USB persistente)» y prometía la clave de la live |
+
+### Lo que se corrigió después de ese ensayo (está en `src/tree-2.8`, NO en la ISO del 20-10)
+
+- **Acceso al disco instalado**: `User=` se vacía en `/etc/sddm.conf` *y* en
+  `sddm.conf.d/willy.conf` (SDDM mezcla los dos archivos y comentar en uno dejaba vivo el
+  autologin del otro) y el instalador comprueba el resultado antes de dar por buena la instalación.
+- **Contraseña de la cuenta live**: se escribe ya en la imagen (`chpasswd` en el hook 0050), con
+  verificación en el primer arranque. Sin hash, el bloqueo de Plasma deja la sesión fuera de uso.
+- **Entorno del disco**: zona horaria, idioma y teclado de la línea de arranque llegan al disco y
+  `journald` pasa a `Storage=persistent` (antes el disco arrancaba en UTC y sin historial).
+- **Cortafuegos**: `ufw` activado desde el primer arranque, que es lo que necesitaba el widget
+  *Cortafuegos* del panel.
+- **Barra centrada**: reintentos en la primera sesión y respaldo en `plasmashellrc` sin reiniciar.
+- **Paquetes de uso diario**: audio bluetooth (`libspa-0.2-bluetooth`), carpetas `smb://`,
+  APN de 4G, impresoras HP, escáner, `.7z`/`.rar`, HEIF, iconos Adwaita y fuentes métricas.
+- **Textos honestos**: bienvenida, *Acerca de* y *Mis ajustes* se adaptan al medio real
+  (`willy-guardado`) en vez de hablar de USB persistente en un disco instalado.
+
+### Defectos que siguen vivos en la ISO del 20-10 y cómo taparlos a mano
+
+- El disco instalado entra sin pedir contraseña. Se arregla en el propio disco con:
+  `sudo sed -i 's|^User=.*|User=|' /etc/sddm.conf /etc/sddm.conf.d/willy.conf`
+- En la live, si la pantalla se bloquea no hay forma de volver dentro: apaga y vuelve a encender
+  (o entra por una consola de tty con `sudo -n chpasswd` y escribe `live:willy`).
+- `cfdisk` (la opción «particionar antes a mano») no estaba en la imagen del 20-10 aunque
+  `fdisk` sí figura en `instalador.list.chroot`; se resolvió con el quemado nuevo.
+
+**Nunca se declaró la 2.8 como «probada» hasta este ensayo; ahora está probada en BIOS y en UEFI,
+con los defectos de arriba escritos como se vieron.**
 
 ## Dónde viven los binarios
 
-Ninguna ISO va a este repositorio: GitHub rechaza ficheros de más de 100 MB y pesan GB. Se
-conservan en disco, cada una con su `.sha256` al lado, y las entregas se publican como *Releases*.
+Ninguna ISO se guarda *dentro* del repositorio: Git rechaza ficheros de más de 100 MB y estas
+imágenes pesan GB. Lo que sí admite GitHub son **assets de Release hasta 2 GB**, y ahí están las
+ISO de 2.5, 2.5.5 y 2.8. En disco local se conserva cada una con su `.sha256` al lado.
+
+Desde el 2026-11-07 la ISO también se puede **compilar en GitHub Actions**
+([`build-iso.yml`](../.github/workflows/build-iso.yml)): corre `live-build` dentro de un
+contenedor `debian:trixie` con `--privileged`, comprueba primero que todos los paquetes declarados
+existen en trixie y deja la imagen como artefacto. El trabajo **no publica nada**: la release se
+crea después de instalar esa ISO en VirtualBox y ver que arranca.
 
 | bulto | dónde está |
 |---|---|
 | 1.0, 1.1 | `E:\WILLIAM\willylinux-amd64.iso`, `Willy Linux 1.1.rar` |
 | 2.0, 2.1 | `E:\Willy Linux\2.0\iso\`, `E:\Willy Linux\2.1\iso\` y sus `.rar` en `E:\WILLIAM` |
 | 2.5, 2.5.5 | `E:\Willy Linux\2.5\iso\` (ocho guardas `.bak-*`) y copias en `E:\WILLIAM` |
-| 2.8 | `E:\Willy Linux\2.8\iso\` y su guarda `.bak-20.21.26` |
+| 2.8 (20-10) | `E:\Willy Linux\2.8\iso\` y su guarda `.bak-20.21.26`; asset de la release `v2.8` |
+| 2.8 (Actions) | artefacto de la workflow `Construir ISO`; al bajarla se guarda en `E:\Willy Linux\2.8\iso\` |
 | ensayo con `archiso` (2026-10-17) | `E:\Willy Linux\archiso-corregida\willy-linux-2026.10.17-x86_64.iso`, 2.457.649.152 B, SHA-256 `7c464aebe0487aa05f5d9944ad0a168bf25c9bb44f5da31241dbcb3d2e2a6fe5` — quedó como experimento, no como edición |
 | disco de la VM de prueba | `E:\Willy Linux\2.5\vm\willy-inst-efi.vdi`, 5.392.826.368 B |
 

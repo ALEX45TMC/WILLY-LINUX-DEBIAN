@@ -280,8 +280,63 @@ Cierto y aceptado: en la imagen solo hay estilos de Qt6 (`breeze6.so`), y VLC es
 
 ### La pantalla de bloqueo pide una contraseña que no me sé
 
-En el USB live es `willy` (el asistente lo recuerda en su cabecera). En un disco instalado, es la
-que escribiste durante la instalación: la contraseña `willy` **no** se copia al disco.
+En un disco instalado, es la que escribiste durante la instalación: la contraseña `willy` **no**
+se copia al disco.
+
+**En el USB live hay que distinguir qué ISO tienes.** Desde la receta corregida el 2026-11-07, la
+contraseña `willy` se escribe **en la propia imagen** (hook `0050-willylinux.hook.chroot`), así que
+el desbloqueo funciona sin haber hecho nada. En las ISO quemadas antes de esa corrección — entre
+ellas **la 2.8 del 2026-10-20** — la cuenta live se creaba sin hash en `/etc/shadow`: el
+desbloqueo de Plasma **no admite una cuenta sin contraseña**, y ni `willy` ni `live` abrían la
+sesión («El desbloqueo ha fallado»). Se comprobó el 2026-11-07 en VirtualBox, con la pantalla
+bloquesola por inactividad.
+
+Arreglo a mano en una ISO anterior a la corrección, desde una terminal que todavía esté abierta:
+
+```sh
+echo willy:willy | sudo chpasswd     # la cuenta live se llama live
+```
+
+**Hazlo nada más arrancar el USB**, antes de que la pantalla se bloquee sola. Si ya estás fuera
+de la sesión y no hay ninguna terminal abierta, no hay atajo dentro de la propia live: la pantalla
+de bloqueo es justamente lo que no deja entrar. Reinicia el USB, abre un terminal en cuanto aparezca
+el escritorio y ejecuta ese comando; o, si necesitas la imagen para algo serio, vuelve a grabarla
+con la receta actual, que ya trae la contraseña escrita en la imagen.
+
+### El disco instalado arranca y entra al escritorio sin pedir contraseña
+
+No es que la instalación no haya guardado la clave: la guarda. Es **SDDM**, que lee
+`/etc/sddm.conf` **y además** `/etc/sddm.conf.d/*.conf`, y el instalador dejaba `Autologin` en uno
+de los dos. Comprobarlo:
+
+```sh
+grep -rn -A2 '\[Autologin\]' /etc/sddm.conf /etc/sddm.conf.d/ 2>/dev/null
+```
+
+Si sale `User=live` o `Session=`, el equipo entra solo. Tapete a mano:
+
+```sh
+sudo sed -i 's|^User=.*|User=|' /etc/sddm.conf /etc/sddm.conf.d/willy.conf
+```
+
+> **El detalle que hace que esto sea fácil de pasar por alto:** dejar comentada la línea `User=`
+> en el archivo que va después **no anula** la del archivo anterior. SDDM mezcla los dos y la
+> opción sigue activa. Solo un `User=` vacío la desactiva. Por eso el instalador falló aunque el
+> cambio parecía correcto.
+
+### El panel sale pegado a la izquierda en vez de centrado
+
+Pasa al arrancar la live recién construida sin el arreglo del 2026-11-07: `willy-panel` pregunta
+por el árbol de widgets y `plasmashell` todavía lo está montando, así que la operación no
+encuentra a quién aplicarse. Se ve en la captura del escritorio nada más entrar y no deja de
+aplicarse sola.
+
+```sh
+willy-panel        # reaplicar la posición del panel
+```
+
+En la receta corregida el hook espera a que `plasmashell` tenga el árbol listo antes de
+configurar el panel.
 
 ### Quiero que el equipo no pida contraseña al arrancar
 

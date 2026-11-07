@@ -15,7 +15,7 @@
 | Instalador de Debian | `none` (el instalador es propio, `willy-instalar`) |
 | Imagen | `--binary-image iso-hybrid`: un mismo fichero arranca en BIOS y en UEFI |
 | Compresión del sistema | squashfs con `gzip` (arranca en cualquier equipo, sin depender de zstd/xz) |
-| Volumen ISO | `WILLYLINUX` (ediciones ligeras) / `WILLYLINUX255` (2.5.x) |
+| Volumen ISO | `WILLYLINUX` (ediciones ligeras) / `WILLYLINUX255` (2.5.x) / `WILLYLINUX28` (2.8) |
 
 ### Por qué `--apt-recommends false`
 
@@ -39,9 +39,10 @@ boot=live components quiet persistence username=live hostname=willylinux
 locales=es_ES.UTF-8 keyboard-layouts=latam timezone=America/Bogota
 ```
 
-Definidos en `src/tree-2.5/auto/config` (y su equivalente en `src/tree-2.0/auto/config`, sin
-`persistence`). Las variables de entorno `WILLY_ARCH`, `WILLY_DIST`, `WILLY_LOCALE`,
-`WILLY_KEYBOARD` y `WILLY_TZ` permiten cambiarlas sin editar el archivo.
+Definidos en `src/tree-2.8/auto/config` (y en `src/tree-2.5/auto/config`, idénticos;
+`src/tree-2.0/auto/config` va sin `persistence`). Las variables de entorno `WILLY_ARCH`,
+`WILLY_DIST`, `WILLY_LOCALE`, `WILLY_KEYBOARD` y `WILLY_TZ` permiten cambiarlas sin editar el
+archivo.
 
 ## Menús de arranque
 
@@ -82,6 +83,29 @@ Definidos en `src/tree-2.5/auto/config` (y su equivalente en `src/tree-2.0/auto/
 | `utilidades` | 14 | `mc`, compresores, edición, descarga |
 | `juegos` | 5 | juegos de mesa ligeros |
 | `ajustes` | 1 | `yad`, para los diálogos propios |
+
+### Edición 2.8 — 250 paquetes únicos en las mismas 19 listas
+
+Son las mismas listas de la 2.5 con 18 entradas más, repartidas en 8 listas (recuento del
+2026-11-07 sobre `src/tree-2.8/config/package-lists`, comparado con `tree-2.5`):
+
+| Lista | 2.5 | 2.8 | Qué entró |
+|---|---|---|---|
+| `core` | 15 | 18 | `dbus-x11`, `libkf6config-bin`, `psmisc` — los tres que necesitaba `willy-panel` |
+| `escritorio` | 56 | 58 | `adwaita-icon-theme`, `kimageformat-plugins` |
+| `apps` | 19 | 22 | `fonts-liberation`, `fonts-crosextra-caladea`, `fonts-crosextra-carlito` |
+| `red` | 7 | 10 | `ufw`, `smbclient`, `mobile-broadband-provider-info` |
+| `impresion` | 7 | 9 | `hplip`, `sane-utils`, `skanpage` |
+| `utilidades` | 14 | 16 | `7zip`, `unar` |
+| `instalador` | 11 | 12 | `fdisk`, que trae `cfdisk` |
+| `bluetooth` | 3 | 4 | `libspa-0.2-bluetooth` (audio por Bluetooth) |
+| las otras 11 | — | — | idénticas a la 2.5 |
+
+El motivo de cada paquete está en [Tamaños reales](#tamaños-reales). Que `fdisk` entrara en la
+lista **no garantizaba** que `cfdisk` estuviera en la ISO: se comprobó montando la 2.8 del 20-10 y
+no estaba, porque el paquete se añadió media hora antes del quemado y el build ya iba lanzado. Por
+eso `scripts/check-packages.sh` y `verificar-2.8.sh` cruzan declarado ↔ artefacto, no declarado ↔
+log.
 
 ### Ediciones ligeras (2.0 / 2.1) — 126 paquetes declarados en 14 listas
 
@@ -139,24 +163,59 @@ en vivo como instalado.
 
 | | ISO | squashfs | Sistema descomprimido |
 |---|---|---|---|
+| 2.8 | 1.849.540.608 B (1763 MB) | ~1,7 GB | ~4,1 GB |
 | 2.5 / 2.5.5 | 1.849.540.608 B (1763 MB) | ~1,7 GB | ~4,1 GB |
 | 2.1 | 1.142.931.456 B (1089 MB) | ~1,0 GB | ~2,6 GB |
 | 2.0 | 1.110.900.736 B (1059 MB) | ~1,0 GB | ~2,4 GB |
 
+La 2.8 **ocupa lo mismo que la 2.5** pese a los 18 paquetes más: son utilidades pequeñas
+(`fdisk`, `psmisc`, `ufw`, `smbclient`, `unar`, `7zip`, iconos, fuentes métricas y códecs de
+imagen), y el squashfs se comprime igual. En el disco instalado, en cambio, la 2.8 sí llena más:
+el ensayo del 07-11 copió 5.073 MB y el VDI de destino llegó a 5,7 GB.
+
 El tope de cada edición se comprueba al final del build (`scripts/check-size.sh`); hay que
 actualizarlo si se cambia el tope.
+
+## Paquetes declarados
+
+| Edición | Listas | Paquetes únicos declarados | Instalados en la imagen |
+|---|---|---|---|
+| 2.5 / 2.5.5 | 19 | 234 | ~1592 (con dependencias) |
+| 2.8 | 19 | **250** | **1638** |
+
+Los 18 que se añadieron en la 2.8, y por qué:
+
+| Paquete | Para qué |
+|---|---|
+| `fdisk` | trae `cfdisk`, la rama manual del instalador |
+| `dbus-x11`, `libkf6config-bin`, `psmisc` | los tres que necesitaba `willy-panel` y que la 2.5 no tenía |
+| `ufw` | el widget *Cortafuegos* del panel avisaba de que no había ninguno |
+| `libspa-0.2-bluetooth` | audio por Bluetooth (era *Recommends* de PipeWire) |
+| `smbclient` | carpetas `smb://` en Dolphin |
+| `mobile-broadband-provider-info` | APN de operadoras para módems 4G |
+| `hplip`, `skanpage`, `sane-utils` | impresoras HP y escáneres |
+| `7zip`, `unar` | abrir `.7z` y `.rar` bajados de cualquier sitio |
+| `kimageformat-plugins` | HEIF/AVIF en visionador y en el escritorio |
+| `adwaita-icon-theme` | iconos para las apps GTK que Discover instale |
+| `fonts-liberation`, `fonts-crosextra-caladea`, `fonts-crosextra-carlito` | métricas compatibles con Arial/Times en LibreOffice |
 
 ## Estructura del árbol de configuración
 
 ```
-tree-2.5/
-  auto/config                     opciones de lb config
+tree-2.8/                       (lo mismo hay en tree-2.5, tree-2.1 y tree-2.0)
+  auto/config                     opciones de lb config; volumen WILLYLINUX28
   config/
-    package-lists/*.list.chroot   cada paquete, declarado a mano
+    package-lists/*.list.chroot   cada paquete, declarado a mano (19 listas)
     hooks/live/*.hook.chroot      herramientas, instalador, asistente, Plasma, identidad
     includes.chroot/etc/          hostname, hosts, sysctl, skel
     bootloaders/                  splash.svg
-  scripts/check-size.sh           control del tope
+  scripts/                        check-packages.sh, check-size.sh, comprobar-parted-mkpart.sh
 ```
 
-Los dos árboles completos están en [`src/`](../src).
+En `auto/config`, la línea `--bootappend-live` es la que fija idioma, teclado y zona horaria desde
+el arranque; las variables `WILLY_ARCH`, `WILLY_DIST`, `WILLY_LOCALE`, `WILLY_KEYBOARD` y
+`WILLY_TZ` permiten cambiarlas sin editar el archivo.
+
+Los árboles completos están en [`src/`](../src) y la ISO se puede compilar en GitHub Actions
+([`.github/workflows/build-iso.yml`](../.github/workflows/build-iso.yml)), que usa
+`container: debian:trixie` con `--privileged` porque el `debootstrap` de Ubuntu no conoce trixie.

@@ -2,15 +2,15 @@
 
 ## 1. Requisitos
 
-| | 1.1 | 2.0 / 2.1 | 2.5 / 2.5.5 |
-|---|---|---|---|
-| Arquitectura | 64 bits (`amd64`) | 64 bits | 64 bits |
-| RAM mínima para probar | 2 GB | 3 GB | 4 GB |
-| RAM recomendada | 3 GB | 4 GB | 6–7 GB |
-| USB para live | 2 GB | 4 GB | 8 GB |
-| USB con persistencia | 8 GB | 16 GB | 32 GB |
-| Disco para instalar | — | 20 GB | 25 GB (recomendado 40 GB) |
-| EFI o BIOS | ambos | ambos | ambos |
+| | 1.1 | 2.0 / 2.1 | 2.5 / 2.5.5 | 2.8 |
+|---|---|---|---|---|
+| Arquitectura | 64 bits (`amd64`) | 64 bits | 64 bits | 64 bits |
+| RAM mínima para probar | 2 GB | 3 GB | 4 GB | 4 GB |
+| RAM recomendada | 3 GB | 4 GB | 6–7 GB | 6–7 GB |
+| USB para live | 2 GB | 4 GB | 8 GB | 8 GB |
+| USB con persistencia | 8 GB | 16 GB | 32 GB | 32 GB |
+| Disco para instalar | — | 20 GB | 25 GB (recomendado 40 GB) | 25 GB (recomendado 40 GB) |
+| EFI o BIOS | ambos | ambos | ambos | ambos, **instalados y arrancados en VM el 2026-11-07** |
 
 La 2.5 crea swap automáticamente si el equipo tiene menos de 8192 MB de RAM y un disco de al
 menos 20 GB, así que en un portátil de 6 GB queda memoria de reserva sin que tengas que hacer
@@ -99,6 +99,12 @@ locales=es_ES.UTF-8 keyboard-layouts=latam timezone=America/Bogota
 | Nombre del equipo | `willylinux` |
 | Idioma / teclado / hora | español, latam, `America/Bogota` |
 
+> **En qué ISO eso es cierto.** La contraseña `willy` se escribe en la propia imagen desde la
+> receta corregida el 2026-11-07. Las ISO quemadas antes de esa fecha —la 2.8 del 2026-10-20
+> entre ellas— llevaban la cuenta live **sin hash** en `/etc/shadow`, y al bloquearse la pantalla
+> no había forma de volver dentro. Está en
+> [solución de problemas](solucion-de-problemas.md#la-pantalla-de-bloqueo-pide-una-contraseña-que-no-me-sé).
+
 En la 2.5 el asistente de bienvenida se abre solo al entrar. Si se cierra, vuelve con
 `willy-bienvenida` o con el icono del lobito de la barra.
 
@@ -133,6 +139,12 @@ Qué hace, en orden:
    (`update-initramfs -u -k all`) para que no quede rastro del arranque live.
 8. Crea el usuario con la contraseña que pediste (`chroot chpasswd`), lo añade a `sudo`,
    ejecuta `dpkg --configure -a`, quita el autologin de SDDM y renueva `machine-id`.
+
+   > **Ojo con el autologin en ISO anteriores al arreglo del 2026-11-07.** SDDM lee
+   > `/etc/sddm.conf` **y** `/etc/sddm.conf.d/*.conf` y mezcla los dos; dejar comentada la línea
+   > `User=` en uno no anula la del otro. En el ensayo del 07-11 el disco instalado entraba al
+   > escritorio sin pedir contraseña. Compruébalo con
+   > `grep -rn -A2 '\[Autologin\]' /etc/sddm.conf /etc/sddm.conf.d/`.
 9. `grub-install` + `grub-mkconfig` con `GRUB_DISABLE_OS_PROBER=false`, montando `efivarfs` para
    registrarse en el NVRAM. **Windows aparece en el menú si está en el mismo equipo.**
 10. Al terminar, apaga, quita el USB y arranca del disco.
@@ -184,6 +196,38 @@ Vale VirtualBox, GNOME Boxes o similar, con estos ajustes:
 En la VM el vídeo se decodifica por software (`llvmpipe`): un 1080p60 de YouTube se atraganta y
 **es esperado**, no es un defecto de la ISO. El audio y la tienda sí se pueden probar ahí, y de
 hecho así se verificaron.
+
+### Qué se ensayó el 2026-11-07 con la ISO 2.8
+
+Instalación real, de principio a fin, en VirtualBox, **en los dos modos de arranque**, cada uno en
+su máquina virtual (`willy28-bios` y `willy28-uefi`, disco VDI de 20 GB vacío, sin USB
+persistente):
+
+| | UEFI | BIOS |
+|---|---|---|
+| Particionado del esquema recomendado | ✅ GPT + ESP | ✅ msdos, sin el `invalid token` que tenía la 2.5 |
+| Confirmación escribiendo `BORRAR` | ✅ | ✅ |
+| Copia del sistema | ✅ 5.073 MB | ✅ (VDI de destino creció a 5,7 GB) |
+| Arranque **desde el disco**, con la ISO retirada | ✅ `willyroot: clean` y escritorio | ✅ escritorio a las 11:15, con la bienvenida |
+| Panel centrado | ❌ sale a la izquierda | ❌ igual |
+| Bloqueo de pantalla en la live | ❌ ni `willy` ni `live` abren (cuenta sin hash) | ❌ |
+| Disco instalado entra sin pedir contraseña | ❌ SDDM conserva el autologin | ❌ |
+| Textos del asistente en el disco | ❌ habla de «USB persistente» y de la clave de la live | ❌ |
+
+Los ❌ son de la ISO quemada el 2026-10-20 y están corregidos en la receta; cada uno tiene su
+entrada en [solución de problemas](solucion-de-problemas.md) y su explicación en
+[ediciones](ediciones.md). El de la live es el más serio: **si la pantalla se bloquea, el USB deja
+de servir para nada** hasta que se arregla a mano desde un terminal que siga abierto.
+
+La partición de BIOS está verificada además por otros dos caminos: `comprobar-parted-mkpart.sh`
+revisa el texto del hook (ninguna `mkpart` de la rama msdos puede llevar nombre) y
+`probar-parted-real.sh` corre ese `preparar()` contra un `parted` real sobre imágenes en
+`/dev/loop`.
+
+Los pantallazos numerados están en `E:\Willy Linux\2.8\ensayo-instalacion\shots\`: `r-*` y
+`disco-*` son el flujo y el arranque del disco en **BIOS** (11:01–11:16), `u-2*` a `u-3*` el flujo
+en **UEFI** y `u-40-boot-disco.png` / `u-41-escritorio-uefi.png` el disco arrancando en EFI. Las
+`bios-*` del 03-11 son de la sesión live en BIOS, no del instalador.
 
 > **Windows + Hyper-V/WSL2 y VirtualBox no conviven.** Si tienes WSL2 activo, VirtualBox se cae
 > al arrancar la VM. Hay que apagar la plataforma de hipervisor y reiniciar para probar en

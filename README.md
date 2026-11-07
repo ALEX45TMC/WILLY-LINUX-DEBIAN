@@ -32,7 +32,7 @@ desde **USB grabado** (Rufus en modo DD o `dd`) y en **máquina virtual**.
 | **2.1 Minimalista** | 2.0 + instalador, USB persistente, impresión, Bluetooth y actualizar | 4 GB | 3–4 GB | entregada 2026-10-12 |
 | **2.5** | escritorio completo KDE Plasma 6 | 8 GB | 6–7 GB | entregada 2026-10-17 |
 | **2.5.5** | misma imagen que 2.5 con su etiqueta de versión | 8 GB | 6–7 GB | entregada 2026-10-17 |
-| **2.8** | 2.5 con el particionado del instalador corregido y tres paquetes que faltaban | 8 GB | 6–7 GB | quemada 2026-10-20, **sin ensayar en máquina** |
+| **2.8** | 2.5 con el particionado corregido, tres paquetes que faltaban y los arreglos del ensayo en máquina | 8 GB | 6–7 GB | **instalada y arrancada en BIOS y UEFI (2026-11-07)** |
 
 Comparativa completa, con tamaño real, número de paquetes y SHA-256 de cada ISO:
 [tabla de ediciones](docs/ediciones.md) e [historial con todos los cambios](docs/historial.md).
@@ -99,15 +99,20 @@ Fondos de pantalla e icono incluidos en la imagen:
 
 ## Descargas
 
-Las ISO pesan entre 671 MB y 1763 MB, **demasiado para un repositorio de Git** (GitHub rechaza
-ficheros de más de 100 MB en el árbol y limita los repos). Por eso:
+**Página del proyecto:** <https://alex45tmc.github.io/WILLY-LINUX-DEBIAN/>
+
+Las ISO pesan entre 671 MB y 1763 MB. Git no admite ficheros de más de 100 MB en el árbol, así
+que la receta está aquí y las imágenes se publican como *Releases* (los assets de release sí
+llegan hasta 2 GB). Por eso:
 
 - **Este repositorio contiene la receta completa** (config, hooks, listas de paquetes,
   instalador, utilidades y documentación). Con ella se reconstruye cualquier edición, byte a
-  byte, con `live-build`.
-- **Las ISO publicadas van en la pestaña *Releases* de este repositorio**, una etiqueta por
-  versión, con su `.iso`, su `.sha256` y las notas del [historial](docs/historial.md).
-- Verifica siempre el hash antes de grabar: [cómo verificar la ISO](docs/verificar-la-iso.md).
+  byte, con `live-build`, o se deja que la compile **GitHub Actions**
+  ([`build-iso.yml`](.github/workflows/build-iso.yml)).
+- **La última versión es la 2.8**: [release v2.8](https://github.com/ALEX45TMC/WILLY-LINUX-DEBIAN/releases/tag/v2.8),
+  con su `.iso`, su `.sha256` y las notas de lo que lleva dentro y de lo que le falta.
+- **Descarga y verifica siempre el hash** antes de grabar:
+  [cómo verificar la ISO](docs/verificar-la-iso.md).
 
 ---
 

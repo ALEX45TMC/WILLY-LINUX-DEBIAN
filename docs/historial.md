@@ -5,6 +5,33 @@ Las imágenes anteriores **nunca se borran**: se renombran `.bak-día.hora` con 
 
 ---
 
+## 2026-11-07 — la 2.8 se instala de verdad y salen siete defectos
+
+**Qué se hizo:** instalación completa de la `willylinux-v2.8-kde-amd64.iso` del 20-10 en
+VirtualBox, en las dos firmware, con disco de 20 GB vacío y sin USB persistente.
+
+| prueba | resultado |
+|---|---|
+| BIOS | instalada y arrancando desde el disco |
+| UEFI | instalada (5.073 MB copiados) y **arrancando desde el disco en EFI** (`willyroot: clean`) |
+| contraseña elegida | **no se pedía**: el disco entraba directo como `live` |
+| pantalla bloqueada en la live | **inutilizable**: ni `willy` ni `live` abrían la sesión |
+| barra de tareas | salió a la izquierda en la live y en el disco |
+| textos del asistente | hablaban de USB persistente y de la clave live en un disco instalado |
+| entorno del disco | arrancaba en UTC, sin locale y sin historial de `journald` |
+
+**Arreglos en el árbol** (todos en `src/tree-2.8`): `User=` vaciado en los dos archivos de SDDM
+con comprobación posterior; contraseña `willy` fijada **en la imagen** para la cuenta live; zona
+horaria, idioma, teclado y `journald` llevados al disco; `ufw` activado; reintentos para centrar
+la barra; bienvenida / *Acerca de* / *Mis ajustes* adaptados al medio real; y paquetes de uso
+diario (audio bluetooth, SMB, 4G, HP, escáner, 7z/rar, HEIF, iconos Adwaita, fuentes métricas).
+
+**La compilación deja de depender de tener WSL encendido en casa:** el workflow
+[`build-iso.yml`](../.github/workflows/build-iso.yml) compila el árbol en un contenedor
+`debian:trixie` de GitHub Actions, empieza pasando `scripts/check-packages.sh` (avisa de cualquier
+paquete declarado que no exista en trixie) y deja la ISO como artefacto. **No publica nada por sí
+mismo**: la release se crea después de instalar esa ISO y ver que arranca.
+
 ## 2026-10-20 — 2.8: el particionado del instalador, separado por tabla de particiones
 
 **ISO:** `willylinux-v2.8-kde-amd64.iso`, 1.849.540.608 B (1763 MB, 21 % del tope de 8 GB),
@@ -26,7 +53,7 @@ squashfs. `instalador.list.chroot` suma `fdisk` para traer `cfdisk`.
 de la 2.8 pese a que `fdisk` entró en la lista a las 20:11, media hora antes del quemado. Y el
 instalador todavía puede decir «instalado» si `grub-install` falla. Ninguna de las dos cosas
 aparecía en el log del build. Detalle en
-[ediciones](ediciones.md#dos-defectos-abiertos-escritos-como-se-vieron).
+[ediciones](ediciones.md#defectos-que-sigen-vivos-en-la-iso-del-20-10-y-como-taparlos-a-mano).
 
 **Estado:** verificada por dentro (`.disk/info` = `Debian GNU/Linux 2.8 "Trixie" - Snapshot amd64
 LIVE Binary 20261020-20:59`, `os-release` `VERSION_ID="2.8"`, volumen `WILLYLINUX28`), **no
@@ -286,6 +313,9 @@ Sirven como lección: en todos los casos el build decía `P: Build completed suc
 | Filas empaquetadas en `yad --list` | captura de pantalla del asistente | argumento = una celda |
 | Iconos de catálogo inexistentes | `find` dentro del squashfs de `/usr/share/icons` | tema Adwaita symbolic |
 | `mkpart` con nombre en tabla msdos (la 2.1 y la 2.5 en BIOS) | ensayo de instalación real en VirtualBox: `parted: invalid token: Willy` en `/tmp/willy-instalar.log` | la burla de `parted` no valida sintaxis |
+| el disco instalado entraba sin pedir contraseña | instalación real del 07-11: arranque directo al escritorio; el `sed` del instalador solo comentaba `User=` en uno de los dos archivos | SDDM mezcla `sddm.conf` y `sddm.conf.d/*.conf`; comentar no anula la línea del otro archivo |
+| la live quedaba fuera de uso al bloquearse la pantalla | `Ctrl+Alt+Supr` no hacía falta: se bloqueó sola a los 5 min y «El desbloqueo ha fallado» con `willy` y con `live` | la cuenta live se creaba sin hash y `willy-primera-vez` no avisaba de que `chpasswd` había fallado |
+| la barra salía a la izquierda | captura del escritorio recién arrancado, en la live y en el disco | `plasmashell` aún estaba montando el árbol de widgets cuando `willy-panel` preguntaba |
 
 **Regla que salió de todo esto:** antes de dar una ISO por buena, se monta y se mira dentro.
 Ver [verificar-la-iso](verificar-la-iso.md).

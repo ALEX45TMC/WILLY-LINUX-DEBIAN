@@ -34,7 +34,27 @@ Sin `squashfs-tools` o sin root, alternativa: `unsquashfs -d /tmp/wsq /mnt/willy
 | Asistente | `usr/local/bin/willy-bienvenida` con 16 filas sueltas y 0 empaquetadas | `--hide-column` ocultaba media lista |
 | Menú de red | `willy-ajustes` con el caso `14) … willy-red` y `willy-red` existente | la opción debe existir |
 | Rutas del medio | `grep -R "/lib/live/mount" usr/local/bin` debe dar **0** guardas antiguas | live-boot cambió a `/run/live/medium` |
+| Contraseña de la live | `etc/shadow`, campo 2 de la cuenta uid 1000, ha de empezar por `$` | sin hash, el bloqueo de Plasma deja la live fuera de uso |
+| `cfdisk` | `usr/bin/cfdisk` (viene de `fdisk`, está en `instalador.list.chroot`) | la rama manual del instalador no arranca sin él |
 | Sintaxis | `bash -n` / `sh -n` sobre los ~22 scripts de `usr/local/bin` | un error de sintaxis no aparece hasta que se usa |
+
+### La cuenta live: el hash, no la intención
+
+Comprobar que el hook *quiere* poner contraseña no sirve; hay que mirar el artefacto:
+
+```sh
+awk -F: '$3 == 1000 {print $1" -> "$2}' /tmp/wsq/etc/shadow
+```
+
+Debe salir algo como `live -> $y$j9T$…`. Si sale `!`, `*` o vacío, la imagen **no** arranca con
+contraseña y en cuanto la pantalla se bloquea sola la sesión queda cerrada por fuera: el
+desbloqueo de Plasma 6 autentica contra la clave del usuario y no admite una cuenta sin hash. Esto
+pasaba en la 2.8 quemada el 2026-10-20 y se descubrió usándola en VirtualBox el 2026-11-07, no en
+el log. `verificar-2.8.sh` lo vuelve puerta (`OK` / `MAL`) desde entonces.
+
+El complemento en tiempo de ejecución: `willy-primera-vez` ya no se fía del código de salida de
+`chpasswd`, sino que vuelve a leer `/etc/shadow` con `passwd -S` y avisa por stderr si el estado no
+es `P`.
 
 ## 2. El formato de `filesystem.packages`
 
